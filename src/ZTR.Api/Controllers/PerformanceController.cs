@@ -81,7 +81,11 @@ public class PerformanceController : ControllerBase
     [ProducesResponseType<ApiResponse>(StatusCodes.Status400BadRequest)]
     public ActionResult<ApiResponse> SetPowerLimits([FromBody] SetPowerLimitRequest request)
     {
-        var result = _modeControl.SetPowerLimits(request.SPL, request.SPPT, request.FPPT);
+        int spl = request.SPL ?? _powerManager.GetPowerState().SPL;
+        int sppt = request.SPPT ?? _powerManager.GetPowerState().SPPT;
+        int fppt = request.FPPT ?? _powerManager.GetPowerState().FPPT;
+
+        var result = _modeControl.SetPowerLimits(spl, sppt, fppt);
         if (!result)
         {
             return BadRequest(new ApiResponse(false, "Failed to set power limits"));
