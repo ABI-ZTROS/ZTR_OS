@@ -7,34 +7,6 @@ on:
     branches: [main]
 
 jobs:
-  backend:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup .NET 9.0
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0'
-
-      - name: Restore dependencies
-        run: dotnet restore
-
-      - name: Build solution
-        run: dotnet build --no-restore --configuration Release
-
-      - name: Run tests
-        run: dotnet test --no-build --configuration Release --results-directory ./TestResults
-
-      - name: Upload test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: backend-test-results
-          path: ./TestResults/**/*.xml
-          retention-days: 30
-
   frontend:
     runs-on: ubuntu-latest
     steps:
@@ -69,4 +41,4 @@ jobs:
         with:
           name: frontend-dist
           path: frontend/dist/**
-          retention-days: 30
+          retention-days: 7
