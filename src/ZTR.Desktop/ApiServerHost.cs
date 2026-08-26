@@ -193,7 +193,7 @@ public class ApiUrlInjectorMiddleware
 
                 byte[] bytes = System.Text.Encoding.UTF8.GetBytes(html);
                 context.Response.ContentLength = bytes.Length;
-                await context.Response.WriteAsync(bytes);
+                await context.Response.Body.WriteAsync(new ReadOnlyMemory<byte>(bytes));
             }
             else
             {
