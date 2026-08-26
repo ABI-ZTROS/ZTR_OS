@@ -14,6 +14,11 @@ public interface IAtkDevice : IDisposable
     bool IsAvailable { get; }
 
     /// <summary>
+    /// Gets the device path that was successfully opened.
+    /// </summary>
+    string OpenedPath { get; }
+
+    /// <summary>
     /// Sends an IO control command to the device with just a success/failure result.
     /// </summary>
     /// <param name="inBuffer">The input buffer.</param>
@@ -32,14 +37,41 @@ public interface IAtkDevice : IDisposable
 
 /// <summary>
 /// Default implementation of <see cref="IAtkDevice"/> using DeviceIoControl via P/Invoke.
+/// Tries multiple ATK device paths for compatibility with different ASUS models.
 /// </summary>
 public class AtkDevice : IAtkDevice
 {
     private const uint ControlCode = 0x0022240C;
+    private const uint GenericRead = 0x80000200;
     private readonly IntPtr _handle;
 
     /// <inheritdoc />
     public bool IsAvailable { get; }
+
+    /// <inheritdoc />
+    public string OpenedPath { get; }
+
+    private static readonly string[] DevicePaths = new[]
+    {
+        @"\\.\ATKACPI",
+        @"\\.\ATK0100",
+        @"\\.\ATK0101",
+        @"\\.\ATK0102",
+        @"\\.\ATK0103",
+        @"\\.\ATK0104",
+        @"\\.\ATK0105",
+        @"\\.\ATK0106",
+        @"\\.\ATK0107",
+        @"\\.\ATK0108",
+        @"\\.\ATK0109",
+        @"\\.\ATK010A",
+        @"\\.\ATK010B",
+        @"\\.\ATK010C",
+        @"\\.\ATK010D",
+        @"\\.\ATK010E",
+        @"\\.\ATK010F",
+        @"\\.\ATK0110",
+    };
 
     [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
     private static extern IntPtr CreateFile(
@@ -59,24 +91,12 @@ public class AtkDevice : IAtkDevice
 
     /// <summary>
     /// Creates a new instance of the <see cref="AtkDevice"/> class.
+    /// Tries multiple ATK device paths to find the correct one.
     /// </summary>
     public AtkDevice()
     {
-        try
-        {
-            _handle = CreateFile(@"\\.\ATKACPI", 0xC0000000, 0, IntPtr.Zero, 3, 0x80, IntPtr.Zero);
-            IsAvailable = _handle != IntPtr.Zero;
-        }
-        catch (DllNotFoundException)
-        {
-            _handle = IntPtr.Zero;
-            IsAvailable = false;
-        }
-        catch (EntryPointNotFoundException)
-        {
-            _handle = IntPtr.Zero;
-            IsAvailable = false;
-        }
+        (_handle, OpenedPath) = TryOpenDevice();
+        IsAvailable = _handle != IntPtr.Zero;
     }
 
     /// <summary>
@@ -88,6 +108,28 @@ public class AtkDevice : IAtkDevice
     {
         _handle = handle;
         IsAvailable = handle != IntPtr.Zero;
+        OpenedPath = "pre-existing";
+    }
+
+    private static (IntPtr handle, string path) TryOpenDevice()
+    {
+        foreach (var path in DevicePaths)
+        {
+            try
+            {
+                var handle = CreateFile(path, 0xC0000000, 0, IntPtr.Zero, 3, 0x80, IntPtr.Zero);
+                if (handle != IntPtr.Zero)
+                {
+                    return (handle, path);
+                }
+            }
+            catch
+            {
+                // Try next path
+            }
+        }
+
+        return (IntPtr.Zero, string.Empty);
     }
 
     /// <inheritdoc />

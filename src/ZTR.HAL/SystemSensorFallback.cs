@@ -17,6 +17,7 @@ public interface ISystemSensorFallback
     BatteryState GetBatteryState();
     int GetFanSpeed();
     bool IsAvailable { get; }
+    int GetInitializationProgress();
 }
 
 [SupportedOSPlatform("windows")]
@@ -29,27 +30,34 @@ public class SystemSensorFallback : ISystemSensorFallback
     private int _lastCpuUsage;
     private int _lastGpuUsage;
     private DateTime _lastUpdate = DateTime.MinValue;
+    private int _initProgress;
 
     public bool IsAvailable { get; private set; }
+
+    public int GetInitializationProgress() => _initProgress;
 
     public SystemSensorFallback(ILogger<SystemSensorFallback>? logger = null)
     {
         _logger = logger;
-        Initialize();
+        _ = InitializeAsync();
     }
 
-    private void Initialize()
+    private async Task InitializeAsync()
     {
+        _initProgress = 10;
+
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            _logger?.LogWarning("SystemSensorFallback: Not running on Windows");
+            IsAvailable = false;
+            _initProgress = 100;
+            return;
+        }
+
         try
         {
-            if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                _logger?.LogWarning("SystemSensorFallback: Not running on Windows");
-                IsAvailable = false;
-                return;
-            }
-
             _logger?.LogInformation("SystemSensorFallback: Initializing performance counters");
+            _initProgress = 30;
 
             if (PerformanceCounterCategory.Exists("Processor"))
             {
@@ -77,10 +85,12 @@ public class SystemSensorFallback : ISystemSensorFallback
                 }
             }
 
-            PrimeCounters();
+            _initProgress = 60;
+            await PrimeCountersAsync();
 
             _initialized = true;
             IsAvailable = _cpuCounters.Count > 0 || _gpuCounters.Count > 0;
+            _initProgress = 100;
             _logger?.LogInformation("SystemSensorFallback: Initialized successfully (CPU counters: {CpuCount}, GPU counters: {GpuCount})",
                 _cpuCounters.Count, _gpuCounters.Count);
         }
@@ -88,10 +98,11 @@ public class SystemSensorFallback : ISystemSensorFallback
         {
             _logger?.LogWarning(ex, "SystemSensorFallback: Failed to initialize performance counters");
             IsAvailable = false;
+            _initProgress = 100;
         }
     }
 
-    private void PrimeCounters()
+    private async Task PrimeCountersAsync()
     {
         try
         {
@@ -103,7 +114,7 @@ public class SystemSensorFallback : ISystemSensorFallback
             {
                 counter.NextValue();
             }
-            Task.Delay(100).Wait();
+            await Task.Delay(200);
             foreach (var counter in _cpuCounters)
             {
                 counter.NextValue();
