@@ -64,13 +64,13 @@ public static class HardwareMapper
     {
         var fans = new List<FanResponse>
         {
-            new(1, "CPU Fan", fan.CpuFanSpeed),
-            new(2, "GPU Fan", fan.GpuFanSpeed)
+            new(1, "CPU Fan", fan.CpuFanSpeed, fan.CpuFanSpeed, "automatic"),
+            new(2, "GPU Fan", fan.GpuFanSpeed, fan.GpuFanSpeed, "automatic")
         };
 
         if (fan.MidFanSpeed > 0)
         {
-            fans.Add(new FanResponse(3, "Mid Fan", fan.MidFanSpeed));
+            fans.Add(new FanResponse(3, "Mid Fan", fan.MidFanSpeed, fan.MidFanSpeed, "automatic"));
         }
 
         return fans;

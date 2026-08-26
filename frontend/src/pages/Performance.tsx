@@ -120,6 +120,22 @@ export function Performance() {
 
   const cpu = hardware?.cpu
   const gpu = hardware?.gpu
+  const fans = hardware?.fans ?? []
+
+  const getNum = (v: unknown, fallback = 0): number => {
+    if (typeof v === 'number' && Number.isFinite(v)) {
+      if (v < 0 && (v === -1 || v === -2)) return fallback
+      return v
+    }
+    if (typeof v === 'string') {
+      const parsed = Number(v)
+      if (Number.isFinite(parsed)) {
+        if (parsed < 0 && (parsed === -1 || parsed === -2)) return fallback
+        return parsed
+      }
+    }
+    return fallback
+  }
 
   return (
     <PageWrapper
@@ -160,7 +176,7 @@ export function Performance() {
             <Gauge
               config={{
                 label: 'CPU Temp',
-                value: cpu?.temperature ?? 0,
+                value: getNum(cpu?.temperature),
                 max: 100,
                 unit: '°C',
                 color: '#00aaff',
@@ -169,7 +185,7 @@ export function Performance() {
             <Gauge
               config={{
                 label: 'CPU Power',
-                value: cpu?.powerDraw ?? 0,
+                value: getNum(cpu?.powerDraw),
                 max: 250,
                 unit: 'W',
                 color: '#00ffaa',
@@ -178,7 +194,7 @@ export function Performance() {
             <Gauge
               config={{
                 label: 'CPU Usage',
-                value: cpu?.usage ?? 0,
+                value: getNum(cpu?.usage),
                 max: 100,
                 unit: '%',
                 color: '#ffaa00',
@@ -192,7 +208,7 @@ export function Performance() {
             <Gauge
               config={{
                 label: 'GPU Temp',
-                value: gpu?.temperature ?? 0,
+                value: getNum(gpu?.temperature),
                 max: 100,
                 unit: '°C',
                 color: '#ff00aa',
@@ -201,7 +217,7 @@ export function Performance() {
             <Gauge
               config={{
                 label: 'GPU Power',
-                value: gpu?.powerDraw ?? 0,
+                value: getNum(gpu?.powerDraw),
                 max: 450,
                 unit: 'W',
                 color: '#00ffaa',
@@ -210,7 +226,7 @@ export function Performance() {
             <Gauge
               config={{
                 label: 'GPU Usage',
-                value: gpu?.usage ?? 0,
+                value: getNum(gpu?.usage),
                 max: 100,
                 unit: '%',
                 color: '#00aaff',
@@ -307,40 +323,47 @@ export function Performance() {
       )}
 
       <GlowCard title="Connected Fans" glowColor="primary">
-        {hardware?.fans && hardware.fans.length > 0 ? (
+        {fans.length > 0 ? (
           <div className="fans-list">
-            {hardware.fans.map((fan) => (
-              <div key={fan.id} className="fan-item">
-                <div className="fan-info">
-                  <span className="fan-name">{fan.name}</span>
-                  <span className="fan-mode">
-                    <span className={`chip ${fan.mode === 'manual' ? 'chip--active' : 'chip--info'}`}>
-                      {fan.mode}
+            {fans.map((fan, idx) => {
+              const speed = getNum(fan?.speed)
+              const targetSpeed = getNum(fan?.targetSpeed, speed)
+              const mode = typeof fan?.mode === 'string' ? fan.mode : 'automatic'
+              const name = typeof fan?.name === 'string' ? fan.name : 'Unknown Fan'
+              const key = typeof fan?.id === 'number' ? fan.id : idx
+              return (
+                <div key={key} className="fan-item">
+                  <div className="fan-info">
+                    <span className="fan-name">{name}</span>
+                    <span className="fan-mode">
+                      <span className={`chip ${mode === 'manual' ? 'chip--active' : 'chip--info'}`}>
+                        {mode}
+                      </span>
                     </span>
-                  </span>
-                </div>
-                <div className="fan-speed-row">
-                  <span className="fan-speed-label">Current</span>
-                  <div className="progress-bar">
-                    <div
-                      className={`progress-bar-fill ${fan.speed > 80 ? 'progress-bar-fill--danger' : fan.speed > 50 ? 'progress-bar-fill--warning' : 'progress-bar-fill--primary'}`}
-                      style={{ width: `${fan.speed}%` }}
-                    />
                   </div>
-                  <span className="fan-speed-value">{fan.speed.toFixed(0)}%</span>
-                </div>
-                <div className="fan-target-row">
-                  <span className="fan-speed-label">Target</span>
-                  <div className="progress-bar">
-                    <div
-                      className="progress-bar-fill progress-bar-fill--accent"
-                      style={{ width: `${fan.targetSpeed}%` }}
-                    />
+                  <div className="fan-speed-row">
+                    <span className="fan-speed-label">Current</span>
+                    <div className="progress-bar">
+                      <div
+                        className={`progress-bar-fill ${speed > 80 ? 'progress-bar-fill--danger' : speed > 50 ? 'progress-bar-fill--warning' : 'progress-bar-fill--primary'}`}
+                        style={{ width: `${Math.max(0, Math.min(100, speed))}%` }}
+                      />
+                    </div>
+                    <span className="fan-speed-value">{speed.toFixed(0)}%</span>
                   </div>
-                  <span className="fan-speed-value">{fan.targetSpeed.toFixed(0)}%</span>
+                  <div className="fan-target-row">
+                    <span className="fan-speed-label">Target</span>
+                    <div className="progress-bar">
+                      <div
+                        className="progress-bar-fill progress-bar-fill--accent"
+                        style={{ width: `${Math.max(0, Math.min(100, targetSpeed))}%` }}
+                      />
+                    </div>
+                    <span className="fan-speed-value">{targetSpeed.toFixed(0)}%</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         ) : (
           <p className="placeholder-text">

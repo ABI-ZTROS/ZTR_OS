@@ -37,6 +37,6 @@ public record BatteryResponse(
     int PowerDraw
 );
 
-public record FanResponse(int Id, string Name, int Speed);
+public record FanResponse(int Id, string Name, int Speed, int TargetSpeed, string Mode);
 
 public record MemoryResponse(long Used, long Total, long Available);

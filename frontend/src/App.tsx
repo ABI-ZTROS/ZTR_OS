@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { MainLayout } from '@/components/layout/MainLayout'
+import { ErrorBoundary } from '@/components/common/ErrorBoundary'
 import { Dashboard } from '@/pages/Dashboard'
 import { Performance } from '@/pages/Performance'
 import { MlpPage } from '@/pages/MlpPage'
@@ -12,17 +13,19 @@ function AppContent() {
   useSignalR()
 
   return (
-    <Routes>
-      <Route element={<MainLayout />}>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/performance" element={<Performance />} />
-        <Route path="/mlp" element={<MlpPage />} />
-        <Route path="/binding" element={<Binding />} />
-        <Route path="/aura" element={<Aura />} />
-        <Route path="/settings" element={<Settings />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Route>
-    </Routes>
+    <ErrorBoundary>
+      <Routes>
+        <Route element={<MainLayout />}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/performance" element={<Performance />} />
+          <Route path="/mlp" element={<MlpPage />} />
+          <Route path="/binding" element={<Binding />} />
+          <Route path="/aura" element={<Aura />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Route>
+      </Routes>
+    </ErrorBoundary>
   )
 }
 
