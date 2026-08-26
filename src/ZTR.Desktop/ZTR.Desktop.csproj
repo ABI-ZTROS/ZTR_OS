@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net9.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>ZTR.Desktop</RootNamespace>
+    <ApplicationIcon />
+    <StartupObject />
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.34052" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ZTR.Api\ZTR.Api.csproj" />
+    <ProjectReference Include="..\ZTR.HAL\ZTR.HAL.csproj" />
+    <ProjectReference Include="..\ZTR.Intelligence\ZTR.Intelligence.csproj" />
+    <ProjectReference Include="..\ZTR.Models\ZTR.Models.csproj" />
+    <ProjectReference Include="..\ZTR.Common\ZTR.Common.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <FrontendDir>..\..\frontend</FrontendDir>
+    <FrontendBuildDir>$(FrontendDir)\dist</FrontendBuildDir>
+  </PropertyGroup>
+
+  <Target Name="BuildFrontend" BeforeTargets="Build" Condition="'$(BuildFrontend)' == 'true'">
+    <Message Text="Building frontend for desktop..." Importance="high" />
+    <Exec Command="npm ci" WorkingDirectory="$(FrontendDir)" StandardOutputImportance="normal" />
+    <Exec Command="npm run build" WorkingDirectory="$(FrontendDir)" StandardOutputImportance="normal" />
+  </Target>
+
+  <ItemGroup>
+    <Content Include="$(FrontendBuildDir)\**">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <TargetPath>wwwroot\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+      <ExcludeFromSingleFile>false</ExcludeFromSingleFile>
+    </Content>
+  </ItemGroup>
+
+</Project>

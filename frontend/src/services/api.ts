@@ -1,12 +1,11 @@
 import type { ApiResponse } from '@/types'
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+import { getApiUrl } from '@/config/apiConfig'
 
 export async function apiRequest<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<ApiResponse<T>> {
-  const url = path.startsWith('http') ? path : `${API_BASE}${path}`
+  const url = getApiUrl(path)
 
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',

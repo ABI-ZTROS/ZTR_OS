@@ -233,3 +233,92 @@ jobs:
         with:
           files: |
             ZTR_OS-${{ github.event.release.tag_name || github.event.inputs.tag }}-linux-x64.tar.gz
+
+  publish-desktop-win-x64:
+    needs: build-and-test
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Publish ZTR.Desktop (self-contained single-file)
+        run: |
+          dotnet publish src/ZTR.Desktop/ZTR.Desktop.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:EnableCompressionInSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:DebugType=none `
+            -p:DebugSymbols=false `
+            -p:BuildFrontend=false `
+            -o ./artifacts/desktop-win-x64
+        shell: pwsh
+
+      - name: Create README for desktop release
+        run: |
+          @"
+ZTR_OS Desktop - Windows Application
+====================================
+
+Release: ${{ github.event.release.tag_name || github.event.inputs.tag }}
+
+Files:
+- ZTR.Desktop.exe     Main executable (WPF + WebView2 + Embedded API)
+
+Quick Start:
+1. Double-click ZTR.Desktop.exe to launch the application
+2. The application window opens automatically
+3. All API and MLP services run inside the same process
+4. No external dependencies required!
+
+Features:
+- Native Windows application window
+- Embedded WebView2 rendering the React UI
+- Embedded Kestrel server (no external web server needed)
+- MLP neural scheduling engine
+- Full hardware control via HAL
+- System tray integration (optional)
+
+Requirements:
+- Windows 10 21H2+ or Windows 11
+- WebView2 Runtime (pre-installed on Windows 10/11)
+- ASUS ROG/TUF/VivoBook device with ATK driver
+
+Zero installation, zero configuration. Just run!
+"@ | Out-File -FilePath ./artifacts/desktop-win-x64/README.txt -Encoding utf8
+        shell: pwsh
+
+      - name: Package desktop release
+        run: |
+          TAG="${{ github.event.release.tag_name || github.event.inputs.tag }}"
+          Compress-Archive -Path ./artifacts/desktop-win-x64/* -DestinationPath "ZTR_OS-${TAG}-desktop-win-x64.zip" -Force
+          Get-ChildItem "ZTR_OS-${TAG}-desktop-win-x64.zip" | Select-Object Name, Length
+        shell: pwsh
+
+      - name: Upload desktop release to GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ZTR_OS-${{ github.event.release.tag_name || github.event.inputs.tag }}-desktop-win-x64.zip

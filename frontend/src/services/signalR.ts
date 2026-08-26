@@ -1,5 +1,6 @@
 import * as SignalR from '@microsoft/signalr'
 import type { ConnectionStatus, HardwareState, MlpDecision, MlpState } from '@/types'
+import { getHubUrl } from '@/config/apiConfig'
 
 type EventCallback<T> = (data: T) => void
 
@@ -18,8 +19,7 @@ class SignalRService {
 
     this.updateStatus('connecting')
 
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000'
-    const hubUrl = `${apiUrl.replace(/\/$/, '')}/hubs/hardware`
+    const hubUrl = getHubUrl('hardware')
 
     this.connection = new SignalR.HubConnectionBuilder()
       .withUrl(hubUrl, {
