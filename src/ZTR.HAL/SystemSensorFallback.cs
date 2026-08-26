@@ -18,6 +18,7 @@ public interface ISystemSensorFallback
     bool IsAvailable { get; }
 }
 
+[SupportedOSPlatform("windows")]
 public class SystemSensorFallback : ISystemSensorFallback
 {
     private readonly ILogger<SystemSensorFallback>? _logger;
@@ -165,7 +166,7 @@ public class SystemSensorFallback : ISystemSensorFallback
     {
         try
         {
-            using var scope = new System.Management.ManagementScope(@"\\.\WMI");
+            var scope = new System.Management.ManagementScope(@"\\.\WMI");
             using var searcher = new System.Management.ManagementObjectSearcher(
                 scope,
                 new System.Management.ObjectQuery("SELECT CurrentTemperature FROM MSAcpi_ThermalZoneTemperature"));
@@ -187,7 +188,7 @@ public class SystemSensorFallback : ISystemSensorFallback
 
         try
         {
-            using var scope = new System.Management.ManagementScope(@"\\.\Root\WMI");
+            var scope = new System.Management.ManagementScope(@"\\.\Root\WMI");
             using var searcher = new System.Management.ManagementObjectSearcher(
                 scope,
                 new System.Management.ObjectQuery("SELECT CurrentTemperature FROM MSAcpi_ThermalZoneTemperature"));

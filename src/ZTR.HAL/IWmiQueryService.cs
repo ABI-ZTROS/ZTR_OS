@@ -1,4 +1,5 @@
 using System.Management;
+using System.Runtime.InteropServices;
 
 namespace ZTR.HAL;
 
@@ -18,6 +19,7 @@ public interface IWmiQueryService
 /// <summary>
 /// Default implementation of <see cref="IWmiQueryService"/> using System.Management.
 /// </summary>
+[SupportedOSPlatform("windows")]
 public class WmiQueryService : IWmiQueryService
 {
     /// <inheritdoc />

@@ -165,7 +165,7 @@ public class GPUModeControl : IDisposable
                     {
                         if (name.Contains(game, StringComparison.OrdinalIgnoreCase))
                         {
-                            detectedApps.Add(process.ProcessName);
+                            detectedApps.Add(name);
                             break;
                         }
                     }
