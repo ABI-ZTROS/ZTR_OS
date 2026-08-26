@@ -133,6 +133,7 @@ public class BatteryControl : IDisposable
     /// <summary>
     /// Gets comprehensive battery information including charge percentage,
     /// charging state, charge limit, and health status.
+    /// Uses ACPI buffer reading for charge (matching G-Helper protocol).
     /// </summary>
     /// <returns>A <see cref="BatteryInfo"/> instance with current battery details.</returns>
     public BatteryInfo GetBatteryInfo()
@@ -147,18 +148,30 @@ public class BatteryControl : IDisposable
             int chargerModeValue = _acpi.DeviceGet(AsusDevice.ChargerMode);
             info.IsCharging = chargerModeValue >= 0 && (ChargerMode)chargerModeValue != ChargerMode.BatteryOnly;
 
-            int dischargeStatus = _acpi.DeviceGet(AsusDevice.BatteryDischarge);
-            info.Status = dischargeStatus switch
-            {
-                0 => "Idle",
-                1 => "Charging",
-                2 => "Discharging",
-                _ => "Unknown"
-            };
+            var (charge, status) = _acpi.GetBatteryDischarge();
 
-            if (dischargeStatus >= 0)
+            if (charge >= 0)
+            {
+                info.ChargePercent = charge;
+                info.IsCharging = status switch
+                {
+                    1 => true,
+                    2 => false,
+                    _ => info.IsCharging
+                };
+                info.Status = status switch
+                {
+                    0 => "Idle",
+                    1 => "Charging",
+                    2 => "Discharging",
+                    _ => info.IsCharging ? "Charging" : "AC"
+                };
+            }
+            else
             {
                 info.ChargePercent = ReadChargePercentFromWmi();
+                info.IsCharging = ReadChargingStatusFromWmi();
+                info.Status = info.IsCharging ? "Charging" : (info.ChargePercent > 0 ? "Discharging" : "AC");
             }
         }
         catch (Exception ex)
@@ -166,6 +179,7 @@ public class BatteryControl : IDisposable
             _logger?.LogWarning(ex, "Error reading battery info via ACPI, falling back to WMI");
             info.ChargePercent = ReadChargePercentFromWmi();
             info.IsCharging = ReadChargingStatusFromWmi();
+            info.Status = info.IsCharging ? "Charging" : (info.ChargePercent > 0 ? "Discharging" : "AC");
         }
 
         return info;

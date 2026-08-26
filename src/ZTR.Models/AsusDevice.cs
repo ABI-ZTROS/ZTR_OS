@@ -19,46 +19,64 @@ public enum DeviceMethod : uint
     WDOG = 0x474F4457   // Watchdog
 }
 
-// Device control IDs (from G-Helper)
+// Device control IDs (verified against G-Helper's AsusACPI.cs)
 public enum AsusDevice : uint
 {
-    PerformanceMode = 0x00050021,
-    StatusMode = 0x00050012,
+    PerformanceMode = 0x00120075,
+    StatusMode = 0x00090031,
+    PowerSavingMode = 0x00090032,
     CPUBacklight = 0x00050019,
-    BatteryLimit = 0x00050024,
-    BatteryDischarge = 0x00050025,
+    BatteryLimit = 0x00120057,
+    BatteryDischarge = 0x0012005A,
     KeyboardLight = 0x00050027,
-    FnLock = 0x00050028,
+    FnLock = 0x00100023,
     TouchpadToggle = 0x00050029,
-    GPUEco = 0x00050051,
-    GPUMux = 0x00050058,
+    GPUEco = 0x00090020,       // GPUEcoROG
+    GPUMux = 0x00090016,       // GPUMuxROG
     AudioMute = 0x0005002B,
     MicMute = 0x0005002C,
     CameraShutter = 0x0005002D,
     CameraLed = 0x0005002E,
     // Fan control
-    CPU_Fan = 0x00050005,
-    GPU_Fan = 0x00050006,
-    Mid_Fan = 0x00050007,
-    // Power limits
-    PPT_APUA0 = 0x00050060,  // SPL
-    PPT_APUA3 = 0x00050063,  // sPPT
-    PPT_APUC1 = 0x00050071,  // fPPT
+    CPU_Fan = 0x00110013,
+    GPU_Fan = 0x00110014,
+    Mid_Fan = 0x00110031,
+    // Temperature sensors (separate from fan IDs)
+    Temp_CPU = 0x00120094,
+    Temp_GPU = 0x00120097,
+    // Power limits (PPT - Platform Power Tracking)
+    PPT_APUA0 = 0x001200A0,  // SPL (slow boost limit) / PL2
+    PPT_APUA3 = 0x001200A3,  // sPPT
+    PPT_APUC1 = 0x001200C1,  // fPPT (fast boost limit)
+    PPT_APUC2 = 0x001200C2,  // GPU Temp Target
+    PPT_EDCA1 = 0x001200A1,  // CPU EDC
+    PPT_TDCA2 = 0x001200A2,  // CPU TDC
+    PPT_CPUB0 = 0x001200B0,  // CPU PPT on 2022
+    PPT_CPUB1 = 0x001200B1,  // Total PPT on 2022
+    PPT_GPUC0 = 0x001200C0,  // NVIDIA GPU Boost
+    PPT_GPUC2 = 0x001200C2,  // NVIDIA GPU Temp Target
+    PPT_GPUCPU9C = 0x0012009C,  // GPU to CPU Dynamic Boost
+    PPT_TEMP9E = 0x0012009E,   // CPU Temperature Limit
+    PPT_CROSS9F = 0x0012009F,  // Cross Loading Processor Power
     // GPU modes
-    GPUBase = 0x00050050,
-    GPUPower = 0x00050052,
+    GPUBase = 0x00120099,
+    GPUPower = 0x00120098,
     // Screen
-    ScreenOverdrive = 0x00050030,
+    ScreenOverdrive = 0x00050019,
     ScreenFHD = 0x00050031,
     ScreenMiniled1 = 0x00050032,
     ScreenMiniled2 = 0x00050033,
     ScreenOptimalBrightness = 0x00050034,
     // Charger
-    ChargerMode = 0x00050026,
-    // Devices
-    DevsCPUFanCurve = 0x00050040,
-    DevsGPUFanCurve = 0x00050041,
-    DevsMidFanCurve = 0x00050042
+    ChargerMode = 0x0012006C,
+    // Fan curves
+    DevsCPUFanCurve = 0x00110024,
+    DevsGPUFanCurve = 0x00110025,
+    DevsMidFanCurve = 0x00110032,
+    // CPU core config
+    CORES_CPU = 0x001200D2,
+    CORES_MAX = 0x001200D3,
+    CORES_MIN = 0x001200D4
 }
 
 public enum AsusFan

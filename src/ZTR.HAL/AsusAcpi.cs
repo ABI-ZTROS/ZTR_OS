@@ -98,6 +98,7 @@ public class AsusAcpi : IDisposable
 
     /// <summary>
     /// Reads a device value via ACPI.
+    /// G-Helper protocol: returned value is Int32 - 65536.
     /// </summary>
     /// <param name="deviceId">The ASUS device identifier.</param>
     /// <returns>The device value, or -1 if the operation failed.</returns>
@@ -110,7 +111,7 @@ public class AsusAcpi : IDisposable
 
         byte[] buffer = CallMethodBufferWithRetry(method, args, $"DeviceGet({deviceId})");
         if (buffer.Length >= 4)
-            return BitConverter.ToInt32(buffer, 0);
+            return BitConverter.ToInt32(buffer, 0) - 65536;
         return -1;
     }
 
@@ -222,20 +223,49 @@ public class AsusAcpi : IDisposable
 
     /// <summary>
     /// Gets the current CPU temperature in degrees Celsius.
+    /// Uses dedicated Temp_CPU sensor (0x00120094) not CPU_Fan.
     /// </summary>
     /// <returns>The temperature in Celsius, or -1 if unavailable.</returns>
     public int GetCpuTemperature()
     {
-        return DeviceGet(AsusDevice.CPU_Fan);
+        return DeviceGet(AsusDevice.Temp_CPU);
     }
 
     /// <summary>
     /// Gets the current GPU temperature in degrees Celsius.
+    /// Uses dedicated Temp_GPU sensor (0x00120097) not GPU_Fan.
     /// </summary>
     /// <returns>The temperature in Celsius, or -1 if unavailable.</returns>
     public int GetGpuTemperature()
     {
-        return DeviceGet(AsusDevice.GPU_Fan);
+        return DeviceGet(AsusDevice.Temp_GPU);
+    }
+
+    /// <summary>
+    /// Gets the battery discharge status via buffer reading.
+    /// G-Helper protocol: reads BatteryDischarge buffer and parses charge + status.
+    /// </summary>
+    /// <returns>A tuple of (chargePercent, status) or (-1, -1) if unavailable.</returns>
+    public (int charge, int status) GetBatteryDischarge()
+    {
+        if (!IsAvailable) return (-1, -1);
+
+        try
+        {
+            byte[] buffer = DeviceGetBuffer(AsusDevice.BatteryDischarge, 0);
+
+            if (buffer.Length < 4)
+                return (-1, -1);
+
+            int charge = BitConverter.ToInt16(buffer, 0);
+            int status = buffer.Length > 2 ? buffer[2] : -1;
+
+            return (charge, status);
+        }
+        catch
+        {
+            return (-1, -1);
+        }
     }
 
     /// <summary>

@@ -173,9 +173,8 @@ public class SensorPipeline : IDisposable
     private IEnumerable<SensorReading> CollectCpuReadings(DateTime timestamp)
     {
         var readings = new List<SensorReading>();
-        bool useFallback = _acpi == null || !_acpi.IsAvailable;
 
-        int cpuTemp = SafeDeviceGet(AsusDevice.CPU_Fan);
+        int cpuTemp = SafeDeviceGet(AsusDevice.Temp_CPU);
         if (cpuTemp <= 0 && _systemFallback?.IsAvailable == true)
         {
             cpuTemp = _systemFallback.GetCpuTemperature();
@@ -203,12 +202,8 @@ public class SensorPipeline : IDisposable
         {
             cpuUsage = _systemFallback.GetCpuUsage();
         }
-        else
-        {
-            cpuUsage = SafeDeviceGet(AsusDevice.CPU_Fan);
-        }
 
-        if (cpuUsage > 0)
+        if (cpuUsage >= 0)
         {
             readings.Add(new SensorReading
             {
@@ -410,9 +405,14 @@ public class SensorPipeline : IDisposable
                 _degradationHandler.ReportSuccess("GPU TotalVRAM", vram.Value.totalMb, timestamp);
             }
         }
-        else if (_systemFallback?.IsAvailable == true)
+        else
         {
-            int gpuTemp = _systemFallback.GetGpuTemperature();
+            int gpuTemp = SafeDeviceGet(AsusDevice.Temp_GPU);
+            if (gpuTemp <= 0 && _systemFallback?.IsAvailable == true)
+            {
+                gpuTemp = _systemFallback.GetGpuTemperature();
+            }
+
             if (gpuTemp > 0)
             {
                 readings.Add(new SensorReading
@@ -426,7 +426,11 @@ public class SensorPipeline : IDisposable
                 _degradationHandler.ReportSuccess("GPU Temperature", gpuTemp, timestamp);
             }
 
-            int gpuUsage = _systemFallback.GetGpuUsage();
+            int gpuUsage = 0;
+            if (_systemFallback?.IsAvailable == true)
+            {
+                gpuUsage = _systemFallback.GetGpuUsage();
+            }
             readings.Add(new SensorReading
             {
                 Name = "GPU Usage",
