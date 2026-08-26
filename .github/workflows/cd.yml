@@ -1,0 +1,238 @@
+name: CD
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag version'
+        required: true
+        default: 'latest'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint frontend
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Test frontend
+        working-directory: frontend
+        run: npm test
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Restore .NET dependencies
+        run: dotnet restore
+
+      - name: Build solution
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test backend
+        run: dotnet test --no-build --configuration Release --results-directory ./TestResults
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: |
+            ./TestResults/**/*.xml
+            frontend/test-results/**/*
+          retention-days: 30
+
+  publish-win-x64:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Publish ZTR.Api
+        run: >
+          dotnet publish src/ZTR.Api/ZTR.Api.csproj
+          -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:DebugType=none -p:DebugSymbols=false
+          -o ./artifacts/win-x64/api
+
+      - name: Publish ZTR.Service
+        run: >
+          dotnet publish src/ZTR.Service/ZTR.Service.csproj
+          -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:DebugType=none -p:DebugSymbols=false
+          -o ./artifacts/win-x64/service
+
+      - name: Collect frontend
+        run: |
+          mkdir -p ./artifacts/win-x64/frontend
+          cp -r frontend/dist/* ./artifacts/win-x64/frontend/
+
+      - name: Package
+        run: |
+          TAG="${{ github.event.release.tag_name || github.event.inputs.tag }}"
+          cd ./artifacts/win-x64
+          echo "ZTR_OS Windows Release ${TAG}" > README.txt
+          echo "No .NET runtime required. Self-contained single-file." >> README.txt
+          zip -r "../../ZTR_OS-${TAG}-win-x64.zip" .
+          cd ../../
+          ls -lh ZTR_OS-${TAG}-win-x64.zip
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ZTR_OS-${{ github.event.release.tag_name || github.event.inputs.tag }}-win-x64.zip
+
+  publish-linux-x64:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Publish ZTR.Api
+        run: >
+          dotnet publish src/ZTR.Api/ZTR.Api.csproj
+          -c Release -r linux-x64 --self-contained true
+          -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:DebugType=none -p:DebugSymbols=false
+          -o ./artifacts/linux-x64/api
+
+      - name: Collect frontend
+        run: |
+          mkdir -p ./artifacts/linux-x64/frontend
+          cp -r frontend/dist/* ./artifacts/linux-x64/frontend/
+
+      - name: Package
+        run: |
+          TAG="${{ github.event.release.tag_name || github.event.inputs.tag }}"
+          cd ./artifacts/linux-x64
+          echo "ZTR_OS Linux Release ${TAG}" > README.txt
+          echo "No .NET runtime required. Self-contained single-file." >> README.txt
+          tar -czf "../../ZTR_OS-${TAG}-linux-x64.tar.gz" .
+          cd ../../
+          ls -lh ZTR_OS-${TAG}-linux-x64.tar.gz
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ZTR_OS-${{ github.event.release.tag_name || github.event.inputs.tag }}-linux-x64.tar.gz
+
+  publish-desktop-win-x64:
+    needs: build-and-test
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Publish ZTR.Desktop
+        run: |
+          dotnet publish src/ZTR.Desktop/ZTR.Desktop.csproj `
+            -c Release -r win-x64 --self-contained true `
+            -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:DebugType=none -p:DebugSymbols=false `
+            -p:BuildFrontend=false `
+            -o ./artifacts/desktop-win-x64
+        shell: pwsh
+
+      - name: Package
+        run: |
+          TAG="${{ github.event.release.tag_name || github.event.inputs.tag }}"
+          @"
+ZTR_OS Desktop ${TAG}
+Double-click ZTR.Desktop.exe to launch.
+WPF + WebView2 + Embedded Kestrel API.
+No .NET runtime required.
+"@ | Out-File -FilePath ./artifacts/desktop-win-x64/README.txt -Encoding utf8
+          Compress-Archive -Path ./artifacts/desktop-win-x64/* -DestinationPath "ZTR_OS-${TAG}-desktop-win-x64.zip" -Force
+          Get-ChildItem "ZTR_OS-${TAG}-desktop-win-x64.zip" | Select-Object Name, Length
+        shell: pwsh
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ZTR_OS-${{ github.event.release.tag_name || github.event.inputs.tag }}-desktop-win-x64.zip
