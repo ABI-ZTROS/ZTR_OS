@@ -39,6 +39,7 @@ public class DiagnosticsController : ControllerBase
     [ProducesResponseType<ApiResponse<DiagnosticsReport>>(StatusCodes.Status200OK)]
     public ActionResult<ApiResponse<DiagnosticsReport>> Get()
     {
+        var deviceInfo = _deviceProbe.Probe();
         var report = new DiagnosticsReport
         {
             Timestamp = DateTime.UtcNow,
@@ -53,7 +54,7 @@ public class DiagnosticsController : ControllerBase
                 ModeControlActive = true,
                 SystemFallbackAvailable = _systemFallback.IsAvailable,
                 SystemFallbackInitProgress = _systemFallback.GetInitializationProgress(),
-                SupportedDevices = _deviceProbe.SupportedDevices.ToList(),
+                SupportedDevices = deviceInfo.SupportedFeatures.ToList(),
                 AtkDevicePath = GetAtkDevicePath()
             }
         };
@@ -78,11 +79,12 @@ public class DiagnosticsController : ControllerBase
     [ProducesResponseType<ApiResponse<AcpiStatus>>(StatusCodes.Status200OK)]
     public ActionResult<ApiResponse<AcpiStatus>> GetAcpiStatus()
     {
+        var deviceInfo = _deviceProbe.Probe();
         var status = new AcpiStatus
         {
             IsAvailable = _acpi.IsAvailable,
             AtkDevicePath = GetAtkDevicePath(),
-            SupportedDevices = _deviceProbe.SupportedDevices.ToList()
+            SupportedDevices = deviceInfo.SupportedFeatures.ToList()
         };
 
         return Ok(new ApiResponse<AcpiStatus>(true, status));
@@ -110,9 +112,9 @@ public class DiagnosticsController : ControllerBase
     {
         try
         {
-            using var identity = System.Security.Principal.WindowsIdentity.GetCurrent();
-            using var principal = new System.Security.Principal.WindowsPrincipal(identity);
-            return principal.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+            using var identity = WindowsIdentity.GetCurrent();
+            var principal = new WindowsPrincipal(identity);
+            return principal.IsInRole(WindowsBuiltInRole.Administrator);
         }
         catch
         {
