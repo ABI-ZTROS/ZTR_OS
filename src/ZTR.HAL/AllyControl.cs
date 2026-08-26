@@ -98,12 +98,12 @@ public class AllyControl : IDisposable
         try
         {
             _logger?.LogInformation("Setting FPS limit to {Fps}", fps);
-            bool result = _acpi.DeviceSet(AsusDevice.ScreenFHD, fps, $"SetFpsLimit({fps})");
+            int result = _acpi.DeviceSet(AsusDevice.ScreenFHD, fps, $"SetFpsLimit({fps})");
 
-            if (!result)
+            if (result != 1)
                 _logger?.LogWarning("Failed to set FPS limit to {Fps}", fps);
 
-            return result;
+            return result == 1;
         }
         catch (Exception ex)
         {
@@ -145,12 +145,12 @@ public class AllyControl : IDisposable
         try
         {
             _logger?.LogInformation("Setting auto TDP to {Tdp}W", tdp);
-            bool result = _acpi.DeviceSet(AsusDevice.PPT_APUA0, tdp, $"SetAutoTDP({tdp}W)");
+            int result = _acpi.DeviceSet(AsusDevice.PPT_APUA0, tdp, $"SetAutoTDP({tdp}W)");
 
-            if (!result)
+            if (result != 1)
                 _logger?.LogWarning("Failed to set auto TDP to {Tdp}W", tdp);
 
-            return result;
+            return result == 1;
         }
         catch (Exception ex)
         {

@@ -83,12 +83,12 @@ public class BatteryControl : IDisposable
         try
         {
             _logger?.LogInformation("Setting charger mode to {Mode}", mode);
-            bool result = _acpi.DeviceSet(AsusDevice.ChargerMode, (int)mode, $"SetChargerMode({mode})");
+            int result = _acpi.DeviceSet(AsusDevice.ChargerMode, (int)mode, $"SetChargerMode({mode})");
 
-            if (!result)
+            if (result != 1)
                 _logger?.LogWarning("Failed to set charger mode to {Mode}", mode);
 
-            return result;
+            return result == 1;
         }
         catch (Exception ex)
         {
@@ -279,12 +279,12 @@ public class BatteryControl : IDisposable
         try
         {
             _logger?.LogInformation("Setting battery discharge level to {Level}%", level);
-            bool result = _acpi.DeviceSet(AsusDevice.BatteryDischarge, level, $"SetDischargeLevel({level})");
+            int result = _acpi.DeviceSet(AsusDevice.BatteryDischarge, level, $"SetDischargeLevel({level})");
 
-            if (!result)
+            if (result != 1)
                 _logger?.LogWarning("Failed to set discharge level to {Level}%", level);
 
-            return result;
+            return result == 1;
         }
         catch (Exception ex)
         {

@@ -50,12 +50,12 @@ public class ScreenControl : IDisposable
         {
             _logger?.LogInformation("Setting refresh rate to {Rate}Hz", rate);
             int status = rate == 60 ? 0 : rate;
-            bool result = _acpi.DeviceSet(AsusDevice.ScreenFHD, status, $"SetRefreshRate({rate}Hz)");
+            int result = _acpi.DeviceSet(AsusDevice.ScreenFHD, status, $"SetRefreshRate({rate}Hz)");
 
-            if (!result)
+            if (result != 1)
                 _logger?.LogWarning("Failed to set refresh rate to {Rate}Hz", rate);
 
-            return result;
+            return result == 1;
         }
         catch (Exception ex)
         {
@@ -96,12 +96,12 @@ public class ScreenControl : IDisposable
         try
         {
             _logger?.LogInformation("Setting Overdrive to {State}", enable ? "enabled" : "disabled");
-            bool result = _acpi.DeviceSet(AsusDevice.ScreenOverdrive, enable ? 1 : 0, $"SetOverdrive({enable})");
+            int result = _acpi.DeviceSet(AsusDevice.ScreenOverdrive, enable ? 1 : 0, $"SetOverdrive({enable})");
 
-            if (!result)
+            if (result != 1)
                 _logger?.LogWarning("Failed to set Overdrive to {State}", enable ? "enabled" : "disabled");
 
-            return result;
+            return result == 1;
         }
         catch (Exception ex)
         {
@@ -137,10 +137,10 @@ public class ScreenControl : IDisposable
         {
             _logger?.LogInformation("Setting MiniLED mode to {Mode}", mode);
 
-            bool result1 = _acpi.DeviceSet(AsusDevice.ScreenMiniled1, (int)mode, $"SetMiniLed1({mode})");
-            bool result2 = _acpi.DeviceSet(AsusDevice.ScreenMiniled2, (int)mode, $"SetMiniLed2({mode})");
+            int result1 = _acpi.DeviceSet(AsusDevice.ScreenMiniled1, (int)mode, $"SetMiniLed1({mode})");
+            int result2 = _acpi.DeviceSet(AsusDevice.ScreenMiniled2, (int)mode, $"SetMiniLed2({mode})");
 
-            bool allSuccess = result1 && result2;
+            bool allSuccess = result1 == 1 && result2 == 1;
 
             if (!allSuccess)
                 _logger?.LogWarning("Failed to set MiniLED mode to {Mode}", mode);
@@ -183,12 +183,12 @@ public class ScreenControl : IDisposable
         try
         {
             _logger?.LogInformation("Setting HDR to {State}", enable ? "enabled" : "disabled");
-            bool result = _acpi.DeviceSet(AsusDevice.ScreenOverdrive, enable ? 2 : 0, $"SetHDR({enable})");
+            int result = _acpi.DeviceSet(AsusDevice.ScreenOverdrive, enable ? 2 : 0, $"SetHDR({enable})");
 
-            if (!result)
+            if (result != 1)
                 _logger?.LogWarning("Failed to set HDR to {State}", enable ? "enabled" : "disabled");
 
-            return result;
+            return result == 1;
         }
         catch (Exception ex)
         {
@@ -224,12 +224,12 @@ public class ScreenControl : IDisposable
         try
         {
             _logger?.LogInformation("Setting optimal brightness to {State}", enable ? "enabled" : "disabled");
-            bool result = _acpi.DeviceSet(AsusDevice.ScreenOptimalBrightness, enable ? 1 : 0, $"SetOptimalBrightness({enable})");
+            int result = _acpi.DeviceSet(AsusDevice.ScreenOptimalBrightness, enable ? 1 : 0, $"SetOptimalBrightness({enable})");
 
-            if (!result)
+            if (result != 1)
                 _logger?.LogWarning("Failed to set optimal brightness to {State}", enable ? "enabled" : "disabled");
 
-            return result;
+            return result == 1;
         }
         catch (Exception ex)
         {

@@ -219,8 +219,61 @@ public class SystemSensorFallback : ISystemSensorFallback
         return 0;
     }
 
+    private PerformanceCounter? _cpuPowerCounter;
+    private bool _cpuPowerCounterFailed;
+    private int _cpuPowerNullTicks;
+    private const int CpuPowerMaxReadErrors = 3;
+
     public int GetCpuPower()
     {
+        if (_cpuPowerCounterFailed) return 0;
+
+        try
+        {
+            if (_cpuPowerCounter == null)
+            {
+                InitCpuPowerCounter();
+                if (_cpuPowerCounter == null) return 0;
+            }
+
+            float mW = _cpuPowerCounter.NextValue();
+            if (mW > 0) return (int)(mW / 1000f);
+
+            if (++_cpuPowerNullTicks >= CpuPowerMaxReadErrors)
+            {
+                _cpuPowerCounterFailed = true;
+                _logger?.LogDebug("CPU power counter failed after {Errors} null ticks", _cpuPowerNullTicks);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogDebug(ex, "Failed to get CPU power via Performance Counter");
+            _cpuPowerCounterFailed = true;
+        }
+
+        return 0;
+    }
+
+    private void InitCpuPowerCounter()
+    {
+        string[] counterNames = { "Apu Power", "RAPL_Package0_PKG", "CPU Power", "Socket Power", "Current Socket Power" };
+
+        foreach (var name in counterNames)
+        {
+            try
+            {
+                if (PerformanceCounterCategory.Exists("Energy Meter"))
+                {
+                    var counter = new PerformanceCounter("Energy Meter", "Power", name, true);
+                    counter.NextValue();
+                    _cpuPowerCounter = counter;
+                    _logger?.LogInformation("CPU Power source: Energy Meter - {Name}", name);
+                    return;
+                }
+            }
+            catch { }
+        }
+
         try
         {
             using var searcher = new System.Management.ManagementObjectSearcher(
@@ -231,16 +284,18 @@ public class SystemSensorFallback : ISystemSensorFallback
             {
                 if (obj["PowerDraw"] != null)
                 {
-                    return Convert.ToInt32(obj["PowerDraw"]);
+                    int wmiPower = Convert.ToInt32(obj["PowerDraw"]);
+                    if (wmiPower > 0)
+                    {
+                        _logger?.LogInformation("CPU Power source: WMI Win32_Processor");
+                        return;
+                    }
                 }
             }
         }
-        catch (Exception ex)
-        {
-            _logger?.LogDebug(ex, "Failed to get CPU power via WMI");
-        }
+        catch { }
 
-        return 0;
+        _cpuPowerCounterFailed = true;
     }
 
     public int GetGpuUsage()
@@ -499,6 +554,9 @@ public class SystemSensorFallback : ISystemSensorFallback
 
     public void Dispose()
     {
+        _cpuPowerCounter?.Dispose();
+        _cpuPowerCounter = null;
+
         foreach (var counter in _cpuCounters)
         {
             try { counter.Dispose(); } catch { }

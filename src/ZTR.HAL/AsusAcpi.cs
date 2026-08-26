@@ -48,36 +48,52 @@ public class AsusAcpi : IDisposable
 
     /// <summary>
     /// Writes a device value via ACPI.
+    /// G-Helper protocol: returns status code (1=OK).
     /// </summary>
     /// <param name="deviceId">The ASUS device identifier.</param>
     /// <param name="status">The status value to write.</param>
     /// <param name="logName">Optional descriptive name for logging.</param>
-    /// <returns>True if the operation succeeded; otherwise false.</returns>
-    public bool DeviceSet(AsusDevice deviceId, int status, string? logName = null)
+    /// <returns>Status code (1=OK), or -1 on failure.</returns>
+    public int DeviceSet(AsusDevice deviceId, int status, string? logName = null)
     {
-        if (!IsAvailable) return false;
+        if (!IsAvailable) return -1;
 
         var method = DeviceMethod.DEVS;
-        byte[] args = BuildArgs(deviceId, BitConverter.GetBytes(status));
+        byte[] args = BitConverter.GetBytes((uint)deviceId)
+            .Concat(BitConverter.GetBytes((uint)status))
+            .ToArray();
 
-        return CallMethodWithRetry(method, args, logName ?? $"DeviceSet({deviceId})");
+        byte[] result = CallMethodBufferWithRetry(method, args, logName ?? $"DeviceSet({deviceId})");
+        if (result.Length >= 4)
+        {
+            int code = BitConverter.ToInt32(result, 0);
+            _logger?.LogDebug("{Operation} = {Status} : {Code}", logName ?? $"DeviceSet({deviceId})", status, code);
+            return code;
+        }
+        return -1;
     }
 
     /// <summary>
     /// Writes device bytes via ACPI.
+    /// G-Helper protocol: returns full output buffer.
     /// </summary>
     /// <param name="deviceId">The ASUS device identifier.</param>
     /// <param name="parameters">The raw parameter bytes to write.</param>
     /// <param name="logName">Optional descriptive name for logging.</param>
-    /// <returns>True if the operation succeeded; otherwise false.</returns>
-    public bool DeviceSet(AsusDevice deviceId, byte[] parameters, string? logName = null)
+    /// <returns>The output buffer bytes, or empty array on failure.</returns>
+    public byte[] DeviceSet(AsusDevice deviceId, byte[] parameters, string? logName = null)
     {
-        if (!IsAvailable) return false;
+        if (!IsAvailable) return Array.Empty<byte>();
 
         var method = DeviceMethod.DEVS;
-        byte[] args = BuildArgs(deviceId, parameters);
+        byte[] args = BitConverter.GetBytes((uint)deviceId)
+            .Concat(parameters)
+            .ToArray();
 
-        return CallMethodWithRetry(method, args, logName ?? $"DeviceSet({deviceId})");
+        byte[] result = CallMethodBufferWithRetry(method, args, logName ?? $"DeviceSet({deviceId})");
+        _logger?.LogDebug("{Operation} = {Params} : {Result}", logName ?? $"DeviceSet({deviceId})",
+            BitConverter.ToString(parameters), BitConverter.ToString(result));
+        return result;
     }
 
     /// <summary>
@@ -85,15 +101,20 @@ public class AsusAcpi : IDisposable
     /// </summary>
     /// <param name="deviceId">The ASUS device identifier.</param>
     /// <param name="status">The status value to write.</param>
-    /// <returns>True if the operation succeeded; otherwise false.</returns>
-    public bool DeviceSetWmi(AsusDevice deviceId, int status)
+    /// <returns>Status code (1=OK), or -1 on failure.</returns>
+    public int DeviceSetWmi(AsusDevice deviceId, int status)
     {
-        if (!IsAvailable) return false;
+        if (!IsAvailable) return -1;
 
         var method = DeviceMethod.DEVS;
-        byte[] args = BuildArgs(deviceId, BitConverter.GetBytes(status));
+        byte[] args = BitConverter.GetBytes((uint)deviceId)
+            .Concat(BitConverter.GetBytes((uint)status))
+            .ToArray();
 
-        return CallMethodWithRetry(method, args, $"DeviceSetWmi({deviceId})");
+        byte[] result = CallMethodBufferWithRetry(method, args, $"DeviceSetWmi({deviceId})");
+        if (result.Length >= 4)
+            return BitConverter.ToInt32(result, 0);
+        return -1;
     }
 
     /// <summary>
@@ -179,7 +200,7 @@ public class AsusAcpi : IDisposable
     /// <returns>True if the operation succeeded; otherwise false.</returns>
     public bool SetPerformanceMode(AsusMode mode)
     {
-        return DeviceSet(AsusDevice.PerformanceMode, (int)mode, $"SetPerformanceMode({mode})");
+        return DeviceSet(AsusDevice.PerformanceMode, (int)mode, $"SetPerformanceMode({mode})") == 1;
     }
 
     /// <summary>
@@ -189,7 +210,7 @@ public class AsusAcpi : IDisposable
     /// <returns>True if the operation succeeded; otherwise false.</returns>
     public bool SetStatusMode(int status)
     {
-        return DeviceSet(AsusDevice.StatusMode, status, $"SetStatusMode({status})");
+        return DeviceSet(AsusDevice.StatusMode, status, $"SetStatusMode({status})") == 1;
     }
 
     /// <summary>
@@ -208,7 +229,7 @@ public class AsusAcpi : IDisposable
     /// <returns>True if the operation succeeded; otherwise false.</returns>
     public bool SetCpuFanCurve(byte[] curve)
     {
-        return DeviceSet(AsusDevice.DevsCPUFanCurve, curve, "SetCpuFanCurve");
+        return DeviceSet(AsusDevice.DevsCPUFanCurve, curve, "SetCpuFanCurve").Length > 0;
     }
 
     /// <summary>
@@ -218,7 +239,7 @@ public class AsusAcpi : IDisposable
     /// <returns>True if the operation succeeded; otherwise false.</returns>
     public bool SetGpuFanCurve(byte[] curve)
     {
-        return DeviceSet(AsusDevice.DevsGPUFanCurve, curve, "SetGpuFanCurve");
+        return DeviceSet(AsusDevice.DevsGPUFanCurve, curve, "SetGpuFanCurve").Length > 0;
     }
 
     /// <summary>
@@ -275,7 +296,7 @@ public class AsusAcpi : IDisposable
     /// <returns>True if the operation succeeded; otherwise false.</returns>
     public bool SetBatteryLimit(int limit)
     {
-        return DeviceSet(AsusDevice.BatteryLimit, limit, $"SetBatteryLimit({limit}%)");
+        return DeviceSet(AsusDevice.BatteryLimit, limit, $"SetBatteryLimit({limit}%)") == 1;
     }
 
     /// <summary>
@@ -294,7 +315,7 @@ public class AsusAcpi : IDisposable
     /// <returns>True if the operation succeeded; otherwise false.</returns>
     public bool SetKeyboardBrightness(int level)
     {
-        return DeviceSet(AsusDevice.KeyboardLight, level, $"SetKeyboardBrightness({level})");
+        return DeviceSet(AsusDevice.KeyboardLight, level, $"SetKeyboardBrightness({level})") == 1;
     }
 
     /// <summary>
@@ -304,7 +325,7 @@ public class AsusAcpi : IDisposable
     /// <returns>True if the operation succeeded; otherwise false.</returns>
     public bool SetGPUMode(AsusGPU mode)
     {
-        return DeviceSet(AsusDevice.GPUEco, (int)mode, $"SetGPUMode({mode})");
+        return DeviceSet(AsusDevice.GPUEco, (int)mode, $"SetGPUMode({mode})") == 1;
     }
 
     /// <summary>

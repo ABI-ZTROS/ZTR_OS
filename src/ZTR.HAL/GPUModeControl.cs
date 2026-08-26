@@ -94,14 +94,14 @@ public class GPUModeControl : IDisposable
             _logger?.LogInformation("Setting MUX to {State}", enable ? "enabled" : "disabled");
 
             int status = enable ? 1 : 0;
-            bool result = _acpi.DeviceSet(AsusDevice.GPUMux, status, $"SetMux({enable})");
+            int result = _acpi.DeviceSet(AsusDevice.GPUMux, status, $"SetMux({enable})");
 
-            if (!result)
+            if (result != 1)
             {
                 _logger?.LogWarning("Failed to set MUX state");
             }
 
-            return result;
+            return result == 1;
         }
         catch (Exception ex)
         {

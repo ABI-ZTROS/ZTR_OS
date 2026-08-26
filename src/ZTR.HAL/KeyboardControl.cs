@@ -81,12 +81,12 @@ public class KeyboardControl : IDisposable
         try
         {
             _logger?.LogInformation("Setting keyboard backlight zone to {Zone}", zone);
-            bool result = _acpi.DeviceSet(AsusDevice.KeyboardLight, (int)zone, $"SetBacklightZone({zone})");
+            int result = _acpi.DeviceSet(AsusDevice.KeyboardLight, (int)zone, $"SetBacklightZone({zone})");
 
-            if (!result)
+            if (result != 1)
                 _logger?.LogWarning("Failed to set backlight zone to {Zone}", zone);
 
-            return result;
+            return result == 1;
         }
         catch (Exception ex)
         {

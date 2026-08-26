@@ -181,8 +181,8 @@ public class ModeControl : IDisposable
 
             _logger?.LogInformation("Setting Mid fan curve with {PointCount} points", curve.Length);
 
-            bool result = _acpi.DeviceSet(AsusDevice.DevsMidFanCurve, bytes, "SetMidFanCurve");
-            if (result)
+            byte[] result = _acpi.DeviceSet(AsusDevice.DevsMidFanCurve, bytes, "SetMidFanCurve");
+            if (result.Length > 0)
             {
                 _midFanCurve = curve;
             }
@@ -191,7 +191,7 @@ public class ModeControl : IDisposable
                 _logger?.LogWarning("Failed to set Mid fan curve");
             }
 
-            return result;
+            return result.Length > 0;
         }
         catch (Exception ex)
         {
@@ -290,8 +290,8 @@ public class ModeControl : IDisposable
             temp = Math.Clamp(temp, 60, 110);
             _logger?.LogInformation("Setting CPU temperature limit to {Temp}C", temp);
 
-            bool result = _acpi.DeviceSet(AsusDevice.PPT_APUA0, temp, $"SetCpuTempLimit({temp}C)");
-            if (result)
+            int result = _acpi.DeviceSet(AsusDevice.PPT_APUA0, temp, $"SetCpuTempLimit({temp}C)");
+            if (result == 1)
             {
                 _cpuTempLimit = temp;
             }
@@ -300,7 +300,7 @@ public class ModeControl : IDisposable
                 _logger?.LogWarning("Failed to set CPU temperature limit to {Temp}C", temp);
             }
 
-            return result;
+            return result == 1;
         }
         catch (Exception ex)
         {
@@ -323,7 +323,7 @@ public class ModeControl : IDisposable
             bool modeResult = _acpi.SetPerformanceMode(_currentMode);
             bool fanCpuResult = _cpuFanCurve.Length > 0 ? _acpi.SetCpuFanCurve(FanCurveCalculator.CurveToBytes(_cpuFanCurve)) : true;
             bool fanGpuResult = _gpuFanCurve.Length > 0 ? _acpi.SetGpuFanCurve(FanCurveCalculator.CurveToBytes(_gpuFanCurve)) : true;
-            bool fanMidResult = _midFanCurve.Length > 0 ? _acpi.DeviceSet(AsusDevice.DevsMidFanCurve, FanCurveCalculator.CurveToBytes(_midFanCurve), "AutoApplyMidFan") : true;
+            bool fanMidResult = _midFanCurve.Length > 0 ? _acpi.DeviceSet(AsusDevice.DevsMidFanCurve, FanCurveCalculator.CurveToBytes(_midFanCurve), "AutoApplyMidFan").Length > 0 : true;
 
             bool powerResult = true;
             if (_spl > 0 || _sppt > 0 || _fppt > 0)
@@ -334,7 +334,7 @@ public class ModeControl : IDisposable
             bool tempResult = true;
             if (_cpuTempLimit > 0)
             {
-                tempResult = _acpi.DeviceSet(AsusDevice.PPT_APUA0, _cpuTempLimit, "AutoApplyCpuTempLimit");
+                tempResult = _acpi.DeviceSet(AsusDevice.PPT_APUA0, _cpuTempLimit, "AutoApplyCpuTempLimit") == 1;
             }
 
             bool allSuccess = modeResult && fanCpuResult && fanGpuResult && fanMidResult && powerResult && tempResult;

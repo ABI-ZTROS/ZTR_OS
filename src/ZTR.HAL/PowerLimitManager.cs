@@ -52,8 +52,8 @@ public class PowerLimitManager : IDisposable
             watts = Math.Clamp(watts, 0, 250);
             _logger?.LogInformation("Setting SPL to {Watts}W", watts);
 
-            bool result = _acpi.DeviceSet(AsusDevice.PPT_APUA0, watts, $"SetSPL({watts}W)");
-            if (result)
+            int result = _acpi.DeviceSet(AsusDevice.PPT_APUA0, watts, $"SetSPL({watts}W)");
+            if (result == 1)
             {
                 _currentSpl = watts;
             }
@@ -62,7 +62,7 @@ public class PowerLimitManager : IDisposable
                 _logger?.LogWarning("Failed to set SPL to {Watts}W", watts);
             }
 
-            return result;
+            return result == 1;
         }
         catch (Exception ex)
         {
@@ -83,8 +83,8 @@ public class PowerLimitManager : IDisposable
             watts = Math.Clamp(watts, 0, 250);
             _logger?.LogInformation("Setting sPPT to {Watts}W", watts);
 
-            bool result = _acpi.DeviceSet(AsusDevice.PPT_APUA3, watts, $"SetSPPT({watts}W)");
-            if (result)
+            int result = _acpi.DeviceSet(AsusDevice.PPT_APUA3, watts, $"SetSPPT({watts}W)");
+            if (result == 1)
             {
                 _currentSppt = watts;
             }
@@ -93,7 +93,7 @@ public class PowerLimitManager : IDisposable
                 _logger?.LogWarning("Failed to set sPPT to {Watts}W", watts);
             }
 
-            return result;
+            return result == 1;
         }
         catch (Exception ex)
         {
@@ -114,8 +114,8 @@ public class PowerLimitManager : IDisposable
             watts = Math.Clamp(watts, 0, 250);
             _logger?.LogInformation("Setting fPPT to {Watts}W", watts);
 
-            bool result = _acpi.DeviceSet(AsusDevice.PPT_APUC1, watts, $"SetFPPT({watts}W)");
-            if (result)
+            int result = _acpi.DeviceSet(AsusDevice.PPT_APUC1, watts, $"SetFPPT({watts}W)");
+            if (result == 1)
             {
                 _currentFppt = watts;
             }
@@ -124,7 +124,7 @@ public class PowerLimitManager : IDisposable
                 _logger?.LogWarning("Failed to set fPPT to {Watts}W", watts);
             }
 
-            return result;
+            return result == 1;
         }
         catch (Exception ex)
         {
@@ -184,8 +184,8 @@ public class PowerLimitManager : IDisposable
 
             _logger?.LogInformation("Setting Dynamic Boost to {Level}W (value: {Value})", level, normalizedLevel);
 
-            bool result = _acpi.DeviceSet(AsusDevice.PPT_APUA3, normalizedLevel, $"SetDynamicBoost({level}W)");
-            if (result)
+            int result = _acpi.DeviceSet(AsusDevice.PPT_APUA3, normalizedLevel, $"SetDynamicBoost({level}W)");
+            if (result == 1)
             {
                 _dynamicBoostLevel = level;
             }
@@ -194,7 +194,7 @@ public class PowerLimitManager : IDisposable
                 _logger?.LogWarning("Failed to set Dynamic Boost to {Level}W", level);
             }
 
-            return result;
+            return result == 1;
         }
         catch (Exception ex)
         {

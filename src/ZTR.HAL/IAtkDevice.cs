@@ -113,12 +113,14 @@ public class AtkDevice : IAtkDevice
 
     private static (IntPtr handle, string path) TryOpenDevice()
     {
+        const uint shareMode = 1 | 2; // FILE_SHARE_READ | FILE_SHARE_WRITE
+
         foreach (var path in DevicePaths)
         {
             try
             {
-                var handle = CreateFile(path, 0xC0000000, 0, IntPtr.Zero, 3, 0x80, IntPtr.Zero);
-                if (handle != IntPtr.Zero)
+                var handle = CreateFile(path, 0xC0000000, shareMode, IntPtr.Zero, 3, 0x80, IntPtr.Zero);
+                if (handle != IntPtr.Zero && handle != new IntPtr(-1))
                 {
                     return (handle, path);
                 }

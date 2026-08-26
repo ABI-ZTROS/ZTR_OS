@@ -17,6 +17,9 @@ public class SensorPipeline : IDisposable
     private int _intervalMs = 1000;
     private bool _disposed;
 
+    private int _cpuFanMax = 2400;
+    private int _gpuFanMax = 2400;
+
     /// <summary>
     /// Gets or sets the polling interval in milliseconds.
     /// Valid range is 100ms to 5000ms. Default is 1000ms.
@@ -287,7 +290,8 @@ public class SensorPipeline : IDisposable
             }
             else if (_systemFallback?.IsAvailable == true)
             {
-                int fallbackTemp = _systemFallback.GetGpuTemperature();
+                int acpiTemp = SafeDeviceGet(AsusDevice.Temp_GPU);
+                int fallbackTemp = (acpiTemp > 0 && acpiTemp < 125) ? acpiTemp : _systemFallback.GetGpuTemperature();
                 if (fallbackTemp > 0)
                 {
                     readings.Add(new SensorReading
@@ -577,41 +581,64 @@ public class SensorPipeline : IDisposable
     {
         var readings = new List<SensorReading>();
 
-        int cpuFanRpm = SafeDeviceGet(AsusDevice.CPU_Fan);
-        if (cpuFanRpm >= 0)
+        int cpuFanRaw = SafeDeviceGet(AsusDevice.CPU_Fan);
+        int cpuFan = FormatFanValue(cpuFanRaw);
+        if (cpuFan >= 0)
         {
             readings.Add(new SensorReading
             {
                 Name = "CPU Fan RPM",
-                Value = cpuFanRpm,
+                Value = cpuFan,
                 Unit = "RPM",
                 Type = SensorType.Fan,
                 Timestamp = timestamp
             });
-            _degradationHandler.ReportSuccess("CPU Fan RPM", cpuFanRpm, timestamp);
+            _degradationHandler.ReportSuccess("CPU Fan RPM", cpuFan, timestamp);
+
+            int cpuFanPct = (int)Math.Clamp(cpuFan * 100.0 / Math.Max(_cpuFanMax, 1), 0, 100);
+            readings.Add(new SensorReading
+            {
+                Name = "CPU Fan Speed",
+                Value = cpuFanPct,
+                Unit = "%",
+                Type = SensorType.Fan,
+                Timestamp = timestamp
+            });
         }
 
-        int gpuFanRpm = SafeDeviceGet(AsusDevice.GPU_Fan);
-        if (gpuFanRpm >= 0)
+        int gpuFanRaw = SafeDeviceGet(AsusDevice.GPU_Fan);
+        int gpuFan = FormatFanValue(gpuFanRaw);
+        if (gpuFan >= 0)
         {
             readings.Add(new SensorReading
             {
                 Name = "GPU Fan RPM",
-                Value = gpuFanRpm,
+                Value = gpuFan,
                 Unit = "RPM",
                 Type = SensorType.Fan,
                 Timestamp = timestamp
             });
-            _degradationHandler.ReportSuccess("GPU Fan RPM", gpuFanRpm, timestamp);
+            _degradationHandler.ReportSuccess("GPU Fan RPM", gpuFan, timestamp);
+
+            int gpuFanPct = (int)Math.Clamp(gpuFan * 100.0 / Math.Max(_gpuFanMax, 1), 0, 100);
+            readings.Add(new SensorReading
+            {
+                Name = "GPU Fan Speed",
+                Value = gpuFanPct,
+                Unit = "%",
+                Type = SensorType.Fan,
+                Timestamp = timestamp
+            });
         }
 
-        int midFanRpm = SafeDeviceGet(AsusDevice.Mid_Fan);
-        if (midFanRpm >= 0)
+        int midFanRaw = SafeDeviceGet(AsusDevice.Mid_Fan);
+        int midFan = FormatFanValue(midFanRaw);
+        if (midFan >= 0)
         {
             readings.Add(new SensorReading
             {
                 Name = "Mid Fan Speed",
-                Value = midFanRpm,
+                Value = midFan,
                 Unit = "RPM",
                 Type = SensorType.Fan,
                 Timestamp = timestamp
@@ -648,6 +675,20 @@ public class SensorPipeline : IDisposable
         {
             return -1;
         }
+    }
+
+    /// <summary>
+    /// Formats raw ACPI fan value. G-Helper protocol:
+    /// raw value & 0xFFFF gives fan percentage.
+    /// Values > 120 or negative indicate invalid/unavailable.
+    /// Returns RPM-equivalent: raw * 100.
+    /// </summary>
+    private static int FormatFanValue(int raw)
+    {
+        int fan = raw & 0xFFFF;
+        if (fan > 120 || (fan == 0 && raw < 0))
+            return -1;
+        return fan * 100;
     }
 
     private void RestartTimer()

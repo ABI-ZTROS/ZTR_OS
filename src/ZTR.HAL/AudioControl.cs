@@ -35,12 +35,12 @@ public class AudioControl : IDisposable
         try
         {
             _logger?.LogInformation("Setting master mute to {State}", mute ? "muted" : "unmuted");
-            bool result = _acpi.DeviceSet(AsusDevice.AudioMute, mute ? 1 : 0, $"SetMasterMute({mute})");
+            int result = _acpi.DeviceSet(AsusDevice.AudioMute, mute ? 1 : 0, $"SetMasterMute({mute})");
 
-            if (!result)
+            if (result != 1)
                 _logger?.LogWarning("Failed to set master mute to {State}", mute ? "muted" : "unmuted");
 
-            return result;
+            return result == 1;
         }
         catch (Exception ex)
         {
@@ -75,12 +75,12 @@ public class AudioControl : IDisposable
         try
         {
             _logger?.LogInformation("Setting mic mute to {State}", mute ? "muted" : "unmuted");
-            bool result = _acpi.DeviceSet(AsusDevice.MicMute, mute ? 1 : 0, $"SetMicMute({mute})");
+            int result = _acpi.DeviceSet(AsusDevice.MicMute, mute ? 1 : 0, $"SetMicMute({mute})");
 
-            if (!result)
+            if (result != 1)
                 _logger?.LogWarning("Failed to set mic mute to {State}", mute ? "muted" : "unmuted");
 
-            return result;
+            return result == 1;
         }
         catch (Exception ex)
         {
@@ -138,12 +138,12 @@ public class AudioControl : IDisposable
         try
         {
             _logger?.LogInformation("Setting master volume to {Volume}%", volume);
-            bool result = _acpi.DeviceSet(AsusDevice.AudioMute, volume, $"SetMasterVolume({volume})");
+            int result = _acpi.DeviceSet(AsusDevice.AudioMute, volume, $"SetMasterVolume({volume})");
 
-            if (!result)
+            if (result != 1)
                 _logger?.LogWarning("Failed to set master volume to {Volume}%", volume);
 
-            return result;
+            return result == 1;
         }
         catch (Exception ex)
         {
