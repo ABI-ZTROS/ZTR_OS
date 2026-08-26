@@ -29,7 +29,7 @@ public class HardwareControllerTests : IClassFixture<TestWebApplicationFactory>
         var result = JsonSerializer.Deserialize<ApiResponse<HardwareResponse>>(json, _jsonOpts);
 
         Assert.NotNull(result);
-        Assert.True(result.Success);
+        Assert.True(result!.Success);
         Assert.NotNull(result.Data);
         Assert.NotNull(result.Data!.Cpu);
         Assert.NotNull(result.Data.Gpu);
@@ -48,11 +48,11 @@ public class HardwareControllerTests : IClassFixture<TestWebApplicationFactory>
 
         var cpu = result!.Data!.Cpu;
         Assert.NotNull(cpu);
-        Assert.NotNull(cpu.Temperature);
-        Assert.NotNull(cpu.PowerDraw);
-        Assert.NotNull(cpu.Usage);
-        Assert.NotNull(cpu.CoreCount);
-        Assert.NotNull(cpu.ThreadCount);
+        Assert.IsType<int>(cpu.Temperature);
+        Assert.IsType<int>(cpu.PowerDraw);
+        Assert.IsType<int>(cpu.Usage);
+        Assert.IsType<int>(cpu.CoreCount);
+        Assert.IsType<int>(cpu.ThreadCount);
         Assert.NotNull(cpu.Cores);
     }
 
@@ -66,11 +66,11 @@ public class HardwareControllerTests : IClassFixture<TestWebApplicationFactory>
 
         var gpu = result!.Data!.Gpu;
         Assert.NotNull(gpu);
-        Assert.NotNull(gpu.Temperature);
-        Assert.NotNull(gpu.PowerDraw);
-        Assert.NotNull(gpu.ClockSpeed);
-        Assert.NotNull(gpu.MemoryUsed);
-        Assert.NotNull(gpu.MemoryTotal);
+        Assert.IsType<int>(gpu.Temperature);
+        Assert.IsType<int>(gpu.PowerDraw);
+        Assert.IsType<int>(gpu.ClockSpeed);
+        Assert.IsType<long>(gpu.MemoryUsed);
+        Assert.IsType<long>(gpu.MemoryTotal);
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public class HardwareControllerTests : IClassFixture<TestWebApplicationFactory>
 
         var battery = result!.Data!.Battery;
         Assert.NotNull(battery);
-        Assert.NotNull(battery.Percentage);
+        Assert.IsType<int>(battery.Percentage);
         Assert.NotNull(battery.Status);
     }
 
@@ -111,9 +111,9 @@ public class HardwareControllerTests : IClassFixture<TestWebApplicationFactory>
         var result = JsonSerializer.Deserialize<ApiResponse<CpuResponse>>(json, _jsonOpts);
 
         Assert.NotNull(result);
-        Assert.True(result.Success);
+        Assert.True(result!.Success);
         Assert.NotNull(result.Data);
-        Assert.NotNull(result.Data!.PowerDraw);
+        Assert.IsType<int>(result.Data!.PowerDraw);
     }
 
     [Fact]
@@ -125,7 +125,7 @@ public class HardwareControllerTests : IClassFixture<TestWebApplicationFactory>
         var result = JsonSerializer.Deserialize<ApiResponse<GpuResponse>>(json, _jsonOpts);
 
         Assert.NotNull(result);
-        Assert.True(result.Success);
+        Assert.True(result!.Success);
         Assert.NotNull(result.Data);
     }
 
@@ -138,7 +138,7 @@ public class HardwareControllerTests : IClassFixture<TestWebApplicationFactory>
         var result = JsonSerializer.Deserialize<ApiResponse<BatteryResponse>>(json, _jsonOpts);
 
         Assert.NotNull(result);
-        Assert.True(result.Success);
+        Assert.True(result!.Success);
         Assert.NotNull(result.Data);
     }
 
@@ -151,7 +151,7 @@ public class HardwareControllerTests : IClassFixture<TestWebApplicationFactory>
         var result = JsonSerializer.Deserialize<ApiResponse<List<FanResponse>>>(json, _jsonOpts);
 
         Assert.NotNull(result);
-        Assert.True(result.Success);
+        Assert.True(result!.Success);
         Assert.NotNull(result.Data);
         Assert.True(result.Data!.Count >= 2);
     }
