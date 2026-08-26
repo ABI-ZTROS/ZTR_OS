@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { useRipple } from '@/hooks/useRipple'
 
 interface UserAgreementProps {
   open: boolean
@@ -21,6 +22,7 @@ export function UserAgreement({
   const [hasScrolledToBottom, setHasScrolledToBottom] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const ripple = useRipple()
 
   useEffect(() => {
     if (!open) return
@@ -304,12 +306,12 @@ export function UserAgreement({
             点击「同意」即表示您已阅读并接受以上全部条款
           </span>
           <div className="agreement-buttons">
-            <button className="btn-disagree" onClick={onDisagree}>
+            <button className="btn-disagree ripple-container" onClick={(e) => { ripple(e); onDisagree() }}>
               不同意
             </button>
             <button
-              className="btn-agree"
-              onClick={onAgree}
+              className="btn-agree ripple-container"
+              onClick={(e) => { ripple(e); onAgree() }}
               disabled={!canAgree}
             >
               {canAgree ? '同意并继续' : `请等待 ${formatTime(countdown)}`}

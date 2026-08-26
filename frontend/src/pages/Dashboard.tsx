@@ -1,6 +1,7 @@
 import { PageWrapper } from '@/components/layout/PageWrapper'
 import { Gauge } from '@/components/gauge/Gauge'
 import { NeonGrid } from '@/components/common/NeonGrid'
+import { Reveal } from '@/components/common/Reveal'
 import { useHardwareStore } from '@/store/useHardwareStore'
 import './Dashboard.css'
 
@@ -28,32 +29,35 @@ export function Dashboard() {
         )}
 
         <div className="dashboard-gauges">
-          <div className="gauge-row gauge-row--large">
-            <Gauge
-              min={0}
-              max={100}
-              value={cpu?.temperature ?? 0}
-              unit="°C"
-              label="CPU温度"
-              warningThreshold={70}
-              dangerThreshold={85}
-              size="large"
-              decimals={0}
-            />
-            <Gauge
-              min={0}
-              max={100}
-              value={gpu?.temperature ?? 0}
-              unit="°C"
-              label="GPU温度"
-              warningThreshold={70}
-              dangerThreshold={85}
-              size="large"
-              decimals={0}
-            />
-          </div>
+          <Reveal direction="fade" duration={450}>
+            <div className="gauge-row gauge-row--large">
+              <Gauge
+                min={0}
+                max={100}
+                value={cpu?.temperature ?? 0}
+                unit="°C"
+                label="CPU温度"
+                warningThreshold={70}
+                dangerThreshold={85}
+                size="large"
+                decimals={0}
+              />
+              <Gauge
+                min={0}
+                max={100}
+                value={gpu?.temperature ?? 0}
+                unit="°C"
+                label="GPU温度"
+                warningThreshold={70}
+                dangerThreshold={85}
+                size="large"
+                decimals={0}
+              />
+            </div>
+          </Reveal>
 
-          <div className="gauge-row gauge-row--medium">
+          <Reveal direction="up" delay={100} duration={400}>
+            <div className="gauge-row gauge-row--medium">
             <Gauge
               min={0}
               max={300}
@@ -99,8 +103,10 @@ export function Dashboard() {
               decimals={1}
             />
           </div>
+          </Reveal>
 
-          <div className="gauge-row gauge-row--small">
+          <Reveal direction="up" delay={180} duration={400}>
+            <div className="gauge-row gauge-row--small">
             <Gauge
               min={0}
               max={100}
@@ -146,9 +152,11 @@ export function Dashboard() {
               decimals={0}
             />
           </div>
+          </Reveal>
         </div>
 
-        <div className="dashboard-status">
+        <Reveal direction="fade" delay={250}>
+          <div className="dashboard-status">
           <div className="status-item">
             <span
               className="status-dot-indicator"
@@ -168,7 +176,8 @@ export function Dashboard() {
             <span className="status-dot-indicator" style={{ background: 'var(--secondary)' }} />
             <span>电池: {battery?.status ?? '未知'}</span>
           </div>
-        </div>
+          </div>
+        </Reveal>
       </PageWrapper>
     </>
   )

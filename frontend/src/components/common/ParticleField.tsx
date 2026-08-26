@@ -159,6 +159,10 @@ export function ParticleField({
 
     const ro = new ResizeObserver(() => resize())
     ro.observe(canvas)
+    const mo = new MutationObserver(() => {
+      resolvedColor = resolveColor(color)
+    })
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['style'] })
     if (pauseOnHidden) {
       document.addEventListener('visibilitychange', onVisibility)
     }
@@ -166,6 +170,7 @@ export function ParticleField({
     return () => {
       cancelAnimationFrame(raf)
       ro.disconnect()
+      mo.disconnect()
       if (pauseOnHidden) {
         document.removeEventListener('visibilitychange', onVisibility)
       }

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { useRipple } from '@/hooks/useRipple'
 import './ModeCard.css'
 
 interface ModeCardProps {
@@ -20,11 +21,16 @@ export function ModeCard({
   glowColor = 'primary',
   badge,
 }: ModeCardProps) {
+  const ripple = useRipple()
+
   return (
     <button
       type="button"
-      className={`mode-card mode-card--${glowColor} ${selected ? 'mode-card--selected' : ''}`}
-      onClick={onClick}
+      className={`mode-card mode-card--${glowColor} ripple-container ${selected ? 'mode-card--selected' : ''}`}
+      onClick={(e) => {
+        ripple(e)
+        onClick()
+      }}
     >
       {badge && <span className="mode-card-badge">{badge}</span>}
       {icon && <div className="mode-card-icon">{icon}</div>}

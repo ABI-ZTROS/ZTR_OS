@@ -5,6 +5,7 @@ import { ModeCard } from '@/components/common/ModeCard'
 import { SliderControl } from '@/components/common/SliderControl'
 import { Gauge } from '@/components/common/Gauge'
 import { FanCurveEditor } from '@/components/common/FanCurveEditor'
+import { Reveal } from '@/components/common/Reveal'
 import { useHardwareStore } from '@/store/useHardwareStore'
 import { performanceApi } from '@/services/performanceApi'
 import type { PerformanceMode, FanCurvePoint } from '@/types'
@@ -184,89 +185,96 @@ export function Performance() {
         </div>
       )}
 
-      <GlowCard title="性能模式" glowColor="primary">
-        <div className="mode-selector">
-          {MODES.map((m) => (
-            <ModeCard
-              key={m.id}
-              title={m.label}
-              description={m.desc}
-              icon={<span>{m.icon}</span>}
-              selected={mode === m.id}
-              onClick={() => handleModeChange(m.id)}
-              glowColor={m.color}
-            />
-          ))}
-        </div>
-      </GlowCard>
+      <Reveal direction="fade" duration={400}>
+        <GlowCard title="性能模式" glowColor="primary">
+          <div className="mode-selector">
+            {MODES.map((m) => (
+              <ModeCard
+                key={m.id}
+                title={m.label}
+                description={m.desc}
+                icon={<span>{m.icon}</span>}
+                selected={mode === m.id}
+                onClick={() => handleModeChange(m.id)}
+                glowColor={m.color}
+              />
+            ))}
+          </div>
+        </GlowCard>
+      </Reveal>
 
       <div className="grid-2">
-        <GlowCard title="CPU遥测" glowColor="accent">
-          <div className="gauge-row">
-            <Gauge
-              config={{
-                label: 'CPU温度',
-                value: getNum(cpu?.temperature),
-                max: 100,
-                unit: '°C',
-                color: '#00aaff',
-              }}
-            />
-            <Gauge
-              config={{
-                label: 'CPU功耗',
-                value: getNum(cpu?.powerDraw),
-                max: 250,
-                unit: 'W',
-                color: '#00ffaa',
-              }}
-            />
-            <Gauge
-              config={{
-                label: 'CPU使用率',
-                value: getNum(cpu?.usage),
-                max: 100,
-                unit: '%',
-                color: '#ffaa00',
-              }}
-            />
-          </div>
-        </GlowCard>
+        <Reveal direction="left" delay={80}>
+          <GlowCard title="CPU遥测" glowColor="accent">
+            <div className="gauge-row">
+              <Gauge
+                config={{
+                  label: 'CPU温度',
+                  value: getNum(cpu?.temperature),
+                  max: 100,
+                  unit: '°C',
+                  color: '#00aaff',
+                }}
+              />
+              <Gauge
+                config={{
+                  label: 'CPU功耗',
+                  value: getNum(cpu?.powerDraw),
+                  max: 250,
+                  unit: 'W',
+                  color: '#00ffaa',
+                }}
+              />
+              <Gauge
+                config={{
+                  label: 'CPU使用率',
+                  value: getNum(cpu?.usage),
+                  max: 100,
+                  unit: '%',
+                  color: '#ffaa00',
+                }}
+              />
+            </div>
+          </GlowCard>
+        </Reveal>
 
-        <GlowCard title="GPU遥测" glowColor="secondary">
-          <div className="gauge-row">
-            <Gauge
-              config={{
-                label: 'GPU温度',
-                value: getNum(gpu?.temperature),
-                max: 100,
-                unit: '°C',
-                color: '#ff00aa',
-              }}
-            />
-            <Gauge
-              config={{
-                label: 'GPU功耗',
-                value: getNum(gpu?.powerDraw),
-                max: 450,
-                unit: 'W',
-                color: '#00ffaa',
-              }}
-            />
-            <Gauge
-              config={{
-                label: 'GPU使用率',
-                value: getNum(gpu?.usage),
-                max: 100,
-                unit: '%',
-                color: '#00aaff',
-              }}
-            />
-          </div>
-        </GlowCard>
+        <Reveal direction="right" delay={120}>
+          <GlowCard title="GPU遥测" glowColor="secondary">
+            <div className="gauge-row">
+              <Gauge
+                config={{
+                  label: 'GPU温度',
+                  value: getNum(gpu?.temperature),
+                  max: 100,
+                  unit: '°C',
+                  color: '#ff00aa',
+                }}
+              />
+              <Gauge
+                config={{
+                  label: 'GPU功耗',
+                  value: getNum(gpu?.powerDraw),
+                  max: 450,
+                  unit: 'W',
+                  color: '#00ffaa',
+                }}
+              />
+              <Gauge
+                config={{
+                  label: 'GPU使用率',
+                  value: getNum(gpu?.usage),
+                  max: 100,
+                  unit: '%',
+                  color: '#00aaff',
+                }}
+              />
+            </div>
+          </GlowCard>
+        </Reveal>
       </div>
 
-      <GlowCard title="功耗限制" glowColor="accent">
+      <Reveal direction="up" delay={100}>
+        <GlowCard title="功耗限制" glowColor="accent">
         <div className="power-limits-grid">
           <SliderControl
             label="CPU功耗限制"
@@ -323,36 +331,42 @@ export function Performance() {
           />
         </div>
       </GlowCard>
+      </Reveal>
 
       {mode === 'manual' && (
         <div className="grid-2">
-          <GlowCard title="CPU风扇曲线" glowColor="accent">
-            {cpuCurve.length >= 2 ? (
-              <FanCurveEditor
-                points={cpuCurve}
-                onChange={handleCpuCurveChange}
-                label="CPU风扇响应"
-              />
-            ) : (
-              <p className="placeholder-text">暂无CPU风扇曲线数据，请连接后端加载。</p>
-            )}
-          </GlowCard>
+          <Reveal direction="up" delay={80}>
+            <GlowCard title="CPU风扇曲线" glowColor="accent">
+              {cpuCurve.length >= 2 ? (
+                <FanCurveEditor
+                  points={cpuCurve}
+                  onChange={handleCpuCurveChange}
+                  label="CPU风扇响应"
+                />
+              ) : (
+                <p className="placeholder-text">暂无CPU风扇曲线数据，请连接后端加载。</p>
+              )}
+            </GlowCard>
+          </Reveal>
 
-          <GlowCard title="GPU风扇曲线" glowColor="primary">
-            {gpuCurve.length >= 2 ? (
-              <FanCurveEditor
-                points={gpuCurve}
-                onChange={handleGpuCurveChange}
-                label="GPU风扇响应"
-              />
-            ) : (
-              <p className="placeholder-text">暂无GPU风扇曲线数据，请连接后端加载。</p>
-            )}
-          </GlowCard>
+          <Reveal direction="up" delay={120}>
+            <GlowCard title="GPU风扇曲线" glowColor="primary">
+              {gpuCurve.length >= 2 ? (
+                <FanCurveEditor
+                  points={gpuCurve}
+                  onChange={handleGpuCurveChange}
+                  label="GPU风扇响应"
+                />
+              ) : (
+                <p className="placeholder-text">暂无GPU风扇曲线数据，请连接后端加载。</p>
+              )}
+            </GlowCard>
+          </Reveal>
         </div>
       )}
 
-      <GlowCard title="已连接风扇" glowColor="primary">
+      <Reveal direction="fade" delay={150}>
+        <GlowCard title="已连接风扇" glowColor="primary">
         {fans.length > 0 ? (
           <div className="fans-list">
             {fans.map((fan, index) => (
@@ -372,6 +386,7 @@ export function Performance() {
           <p className="placeholder-text">未检测到风扇</p>
         )}
       </GlowCard>
+      </Reveal>
     </PageWrapper>
   )
 }
