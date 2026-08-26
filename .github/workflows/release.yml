@@ -37,6 +37,11 @@ jobs:
           npm test
           npm run build
 
+      - name: Copy frontend to API wwwroot
+        run: |
+          mkdir -p src/ZTR.Api/wwwroot
+          cp -r frontend/dist/* src/ZTR.Api/wwwroot/
+
       - name: Build and test backend
         run: |
           dotnet restore
@@ -71,6 +76,11 @@ jobs:
         run: |
           npm ci
           npm run build
+
+      - name: Copy frontend to API wwwroot
+        run: |
+          mkdir -p src/ZTR.Api/wwwroot
+          cp -r frontend/dist/* src/ZTR.Api/wwwroot/
 
       - name: Publish API
         run: |
@@ -117,6 +127,11 @@ jobs:
           npm ci
           npm run build
 
+      - name: Copy frontend to API wwwroot
+        run: |
+          mkdir -p src/ZTR.Api/wwwroot
+          cp -r frontend/dist/* src/ZTR.Api/wwwroot/
+
       - name: Publish API
         run: |
           dotnet publish src/ZTR.Api/ZTR.Api.csproj -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -p:DebugSymbols=false -o ./artifacts/linux-x64/api
@@ -157,6 +172,12 @@ jobs:
         run: |
           npm ci
           npm run build
+
+      - name: Copy frontend to API wwwroot
+        run: |
+          New-Item -ItemType Directory -Force -Path src/ZTR.Api/wwwroot | Out-Null
+          Copy-Item -Path frontend/dist/* -Destination src/ZTR.Api/wwwroot/ -Recurse -Force
+        shell: pwsh
 
       - name: Publish Desktop
         run: |
