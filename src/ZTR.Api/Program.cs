@@ -44,11 +44,6 @@ public class Program
 
         var app = builder.Build();
 
-        using (var scope = app.Services.CreateScope())
-        {
-            var bridge = scope.ServiceProvider.GetService<SensorSignalRBridge>();
-        }
-
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
@@ -64,7 +59,26 @@ public class Program
 
         app.UseCors("AllowAll");
 
+        var defaultFileOptions = new DefaultFilesOptions();
+        defaultFileOptions.DefaultFileNames.Clear();
+        defaultFileOptions.DefaultFileNames.Add("index.html");
+        app.UseDefaultFiles(defaultFileOptions);
+
+        var staticFileOptions = new StaticFileOptions
+        {
+            OnPrepareResponse = ctx =>
+            {
+                if (ctx.Context.Request.Path.StartsWithSegments("/assets"))
+                {
+                    ctx.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+                }
+            }
+        };
+        app.UseStaticFiles(staticFileOptions);
+
         app.MapZTREndpoints();
+
+        app.MapFallbackToFile("index.html");
 
         app.Run();
     }

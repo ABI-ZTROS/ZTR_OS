@@ -7,17 +7,17 @@ namespace ZTR.Api.Hubs;
 public class SensorSignalRBridge : IDisposable
 {
     private readonly SensorQueue _queue;
-    private readonly IHubCallerClients _hubClients;
+    private readonly IHubContext<SensorHub> _hubContext;
     private readonly ILogger<SensorSignalRBridge> _logger;
     private bool _disposed;
 
     public SensorSignalRBridge(
         SensorQueue queue,
-        IHubCallerClients hubClients,
+        IHubContext<SensorHub> hubContext,
         ILogger<SensorSignalRBridge> logger)
     {
         _queue = queue;
-        _hubClients = hubClients;
+        _hubContext = hubContext;
         _logger = logger;
 
         _queue.StateEnqueued += OnStateEnqueued;
@@ -31,7 +31,7 @@ public class SensorSignalRBridge : IDisposable
         try
         {
             var dto = MapToFrontendDto(state);
-            await _hubClients.All.SendCoreAsync(
+            await _hubContext.Clients.All.SendCoreAsync(
                 "HardwareUpdate",
                 new object[] { dto });
         }
@@ -48,7 +48,7 @@ public class SensorSignalRBridge : IDisposable
         try
         {
             var dto = MapToFrontendDto(state);
-            _hubClients.All.SendCoreAsync(
+            _hubContext.Clients.All.SendCoreAsync(
                 "HardwareUpdate",
                 new object[] { dto }).Wait();
         }

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using ZTR.Api.Extensions;
 
 namespace ZTR.Service;
@@ -18,7 +19,12 @@ public class Worker : BackgroundService
 
         var builder = WebApplication.CreateBuilder();
 
-        builder.Services.AddControllers();
+        builder.Services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+                options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+            });
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(c =>
         {
@@ -59,7 +65,26 @@ public class Worker : BackgroundService
 
         _app.UseZTRMiddleware();
         _app.UseCors("AllowAll");
+
+        var defaultFileOptions = new DefaultFilesOptions();
+        defaultFileOptions.DefaultFileNames.Clear();
+        defaultFileOptions.DefaultFileNames.Add("index.html");
+        _app.UseDefaultFiles(defaultFileOptions);
+
+        var staticFileOptions = new StaticFileOptions
+        {
+            OnPrepareResponse = ctx =>
+            {
+                if (ctx.Context.Request.Path.StartsWithSegments("/assets"))
+                {
+                    ctx.Context.Response.Headers.CacheControl = "public, max-age=31536000, immutable";
+                }
+            }
+        };
+        _app.UseStaticFiles(staticFileOptions);
+
         _app.MapZTREndpoints();
+        _app.MapFallbackToFile("index.html");
 
         _logger.LogInformation("ZTR_OS Service listening on http://localhost:5000");
 

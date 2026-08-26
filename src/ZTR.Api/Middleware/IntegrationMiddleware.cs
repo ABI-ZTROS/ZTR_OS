@@ -83,7 +83,7 @@ public class IntegrationMiddleware
     private static async Task<string> ReadBodyAsync(HttpRequest request)
     {
         request.EnableBuffering();
-        using var reader = new StreamReader(request.Body);
+        using var reader = new StreamReader(request.Body, leaveOpen: true);
         var body = await reader.ReadToEndAsync();
         request.Body.Position = 0;
         return body;

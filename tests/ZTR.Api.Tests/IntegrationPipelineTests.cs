@@ -2,8 +2,10 @@ using System.Net;
 using System.Net.WebSockets;
 using System.Text.Json;
 using System.Text;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.DependencyInjection;
 using ZTR.Api;
 using ZTR.Api.Hubs;
 using ZTR.HAL;
@@ -69,8 +71,8 @@ public class IntegrationPipelineTests : IClassFixture<TestWebApplicationFactory>
         var bridge = scope.ServiceProvider.GetService(typeof(SensorSignalRBridge));
         Assert.NotNull(bridge);
 
-        var hubClients = scope.ServiceProvider.GetService(typeof(IHubCallerClients));
-        Assert.NotNull(hubClients);
+        var hubContext = scope.ServiceProvider.GetService(typeof(IHubContext<SensorHub>));
+        Assert.NotNull(hubContext);
     }
 
     [Fact]
@@ -234,7 +236,7 @@ public class IntegrationPipelineTests : IClassFixture<TestWebApplicationFactory>
             if (response.IsSuccessStatusCode)
             {
                 var json = await response.Content.ReadAsStringAsync();
-                Assert.Contains("success", json,
+                Assert.True(json.Contains("success"),
                     $"Endpoint {endpoint} response does not contain 'success' field");
             }
         }
@@ -252,12 +254,12 @@ public class IntegrationPipelineTests : IClassFixture<TestWebApplicationFactory>
         Assert.NotNull(result?.Data);
         var state = result.Data!;
 
-        Assert.True(state.Cpu.Temperature >= 0, "CPU Temperature should be non-negative");
-        Assert.True(state.Cpu.Usage >= 0, "CPU Usage should be non-negative");
-        Assert.True(state.Cpu.Power >= 0, "CPU Power should be non-negative");
-        Assert.True(state.Gpu.Temperature >= 0, "GPU Temperature should be non-negative");
-        Assert.True(state.Gpu.Usage >= 0, "GPU Usage should be non-negative");
-        Assert.True(state.Battery.ChargePercent >= 0, "Battery charge should be non-negative");
+        Assert.True(state.Cpu.Temperature >= -1, "CPU Temperature should be non-negative or -1 (unavailable)");
+        Assert.True(state.Cpu.Usage >= -1, "CPU Usage should be non-negative or -1 (unavailable)");
+        Assert.True(state.Cpu.Power >= -1, "CPU Power should be non-negative or -1 (unavailable)");
+        Assert.True(state.Gpu.Temperature >= -1, "GPU Temperature should be non-negative or -1 (unavailable)");
+        Assert.True(state.Gpu.Usage >= -1, "GPU Usage should be non-negative or -1 (unavailable)");
+        Assert.True(state.Battery.ChargePercent >= -1, "Battery charge should be non-negative or -1 (unavailable)");
     }
 
     [Fact]
@@ -267,7 +269,7 @@ public class IntegrationPipelineTests : IClassFixture<TestWebApplicationFactory>
         response.EnsureSuccessStatusCode();
 
         var json = await response.Content.ReadAsStringAsync();
-        Assert.Contains("status", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Healthy", json, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

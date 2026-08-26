@@ -3,11 +3,16 @@ name: CD
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag version'
+        required: true
+        default: 'latest'
 
 jobs:
-  publish:
+  build-and-test:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -17,10 +22,74 @@ jobs:
         with:
           dotnet-version: '9.0'
 
-      - name: Restore dependencies
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint frontend
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Test frontend
+        working-directory: frontend
+        run: npm test
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+      - name: Restore .NET dependencies
         run: dotnet restore
 
-      - name: Publish ZTR.Api (self-contained)
+      - name: Build solution
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Test backend
+        run: dotnet test --no-build --configuration Release --results-directory ./TestResults
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ github.event.release.tag_name || github.event.inputs.tag }}
+          path: |
+            ./TestResults/**/*.xml
+            frontend/test-results/**/*
+          retention-days: 30
+
+  publish-win-x64:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Publish ZTR.Api (self-contained single-file)
         run: >
           dotnet publish src/ZTR.Api/ZTR.Api.csproj
           -c Release
@@ -29,9 +98,11 @@ jobs:
           -p:PublishSingleFile=true
           -p:EnableCompressionInSingleFile=true
           -p:IncludeNativeLibrariesForSelfExtract=true
-          -o ./artifacts/api-win-x64
+          -p:DebugType=none
+          -p:DebugSymbols=false
+          -o ./artifacts/win-x64/api
 
-      - name: Publish ZTR.Service (self-contained)
+      - name: Publish ZTR.Service (self-contained single-file)
         run: >
           dotnet publish src/ZTR.Service/ZTR.Service.csproj
           -c Release
@@ -40,9 +111,80 @@ jobs:
           -p:PublishSingleFile=true
           -p:EnableCompressionInSingleFile=true
           -p:IncludeNativeLibrariesForSelfExtract=true
-          -o ./artifacts/service-win-x64
+          -p:DebugType=none
+          -p:DebugSymbols=false
+          -o ./artifacts/win-x64/service
 
-      - name: Publish ZTR.Api (Linux)
+      - name: Collect frontend into artifact
+        run: |
+          mkdir -p ./artifacts/win-x64/frontend
+          cp -r frontend/dist/* ./artifacts/win-x64/frontend/
+
+      - name: Create README for release
+        run: |
+          cat > ./artifacts/win-x64/README.txt << 'READMEEOF'
+          ZTR_OS - ASUS Performance Tuning Platform
+          ========================================
+          
+          Release: ${GITHUB_REF_NAME}
+          
+          Files:
+          - ZTR.Api.exe        Main executable (API + Web UI)
+          - ZTR.Service.exe    Windows Service host
+          - frontend/          Static web UI files
+          
+          Quick Start:
+          1. Double-click ZTR.Api.exe to start the application
+          2. Open http://localhost:5000 in your browser
+          3. For Windows Service mode, run PowerShell as Administrator:
+             ./ZTR.Service.exe install
+          
+          Requirements:
+          - Windows 10 21H2+ or Windows 11
+          - ASUS ROG/TUF/VivoBook device with ATK driver
+          - Administrator privileges for hardware control
+          
+          No .NET runtime required! This is a self-contained single-file release.
+          READMEEOF
+
+      - name: Package release artifact
+        run: |
+          TAG="${{ github.event.release.tag_name || github.event.inputs.tag }}"
+          zip -r "ZTR_OS-${TAG}-win-x64.zip" ./artifacts/win-x64/
+          ls -lh "ZTR_OS-${TAG}-win-x64.zip"
+
+      - name: Upload release to GitHub
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ZTR_OS-${{ github.event.release.tag_name || github.event.inputs.tag }}-win-x64.zip
+
+  publish-linux-x64:
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Publish ZTR.Api (self-contained single-file)
         run: >
           dotnet publish src/ZTR.Api/ZTR.Api.csproj
           -c Release
@@ -50,14 +192,44 @@ jobs:
           --self-contained true
           -p:PublishSingleFile=true
           -p:EnableCompressionInSingleFile=true
-          -o ./artifacts/api-linux-x64
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -p:DebugType=none
+          -p:DebugSymbols=false
+          -o ./artifacts/linux-x64/api
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
+      - name: Collect frontend into artifact
+        run: |
+          mkdir -p ./artifacts/linux-x64/frontend
+          cp -r frontend/dist/* ./artifacts/linux-x64/frontend/
+
+      - name: Create README for release
+        run: |
+          cat > ./artifacts/linux-x64/README.txt << 'READMEEOF'
+          ZTR_OS - ASUS Performance Tuning Platform
+          ========================================
+          
+          Release: ${GITHUB_REF_NAME}
+          
+          Files:
+          - ZTR.Api          Main executable (API + Web UI)
+          - frontend/        Static web UI files
+          
+          Quick Start:
+          1. chmod +x ZTR.Api
+          2. ./ZTR.Api
+          3. Open http://localhost:5000 in your browser
+          
+          No .NET runtime required! This is a self-contained single-file release.
+          READMEEOF
+
+      - name: Package release artifact
+        run: |
+          TAG="${{ github.event.release.tag_name || github.event.inputs.tag }}"
+          tar -czf "ZTR_OS-${TAG}-linux-x64.tar.gz" -C ./artifacts/linux-x64 .
+          ls -lh "ZTR_OS-${TAG}-linux-x64.tar.gz"
+
+      - name: Upload release to GitHub
+        uses: softprops/action-gh-release@v2
         with:
-          name: ztr-os-${{ github.event.release.tag_name }}
-          path: |
-            ./artifacts/api-win-x64/**
-            ./artifacts/service-win-x64/**
-            ./artifacts/api-linux-x64/**
-          retention-days: 90
+          files: |
+            ZTR_OS-${{ github.event.release.tag_name || github.event.inputs.tag }}-linux-x64.tar.gz

@@ -44,7 +44,7 @@ export function Performance() {
 
       if (configRes.status === 'fulfilled' && configRes.value.success) {
         const config = configRes.value.data
-        if (config.mode) setMode(config.mode as PerformanceMode)
+        if (config.mode) setMode(config.mode as unknown as PerformanceMode)
       }
 
       if (powerRes.status === 'fulfilled' && powerRes.value.success) {

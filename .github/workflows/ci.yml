@@ -7,20 +7,16 @@ on:
     branches: [main]
 
 jobs:
-  build-and-test:
+  backend:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        dotnet-version: ['9.0']
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup .NET ${{ matrix.dotnet-version }}
+      - name: Setup .NET 9.0
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: ${{ matrix.dotnet-version }}
+          dotnet-version: '9.0'
 
       - name: Restore dependencies
         run: dotnet restore
@@ -28,12 +24,49 @@ jobs:
       - name: Build solution
         run: dotnet build --no-restore --configuration Release
 
-      - name: Run tests with coverage
-        run: dotnet test --no-build --configuration Release --collect:"XPlat Code Coverage" --results-directory ./TestResults
+      - name: Run tests
+        run: dotnet test --no-build --configuration Release --results-directory ./TestResults
 
-      - name: Upload coverage artifact
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-results
+          path: ./TestResults/**/*.xml
+          retention-days: 30
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Lint
+        working-directory: frontend
+        run: npm run lint
+
+      - name: Run tests
+        working-directory: frontend
+        run: npm test
+
+      - name: Build
+        working-directory: frontend
+        run: npm run build
+
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-reports
-          path: ./TestResults/**/*.xml
+          name: frontend-dist
+          path: frontend/dist/**
           retention-days: 30
