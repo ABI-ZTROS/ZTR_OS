@@ -1,0 +1,661 @@
+{
+  "info": {
+    "name": "ZTR_OS API",
+    "_postman_id": "ztr-os-api-collection",
+    "description": "Complete Postman collection for the ZTR_OS API. Covers all REST endpoints for hardware monitoring, performance control, Aura RGB, MLP engine, process binding, and settings management.\n\nBase URL: http://localhost:5000\n\nAll responses follow the format: { success: bool, data: T, error: string|null }",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000"
+    }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "item": [
+        {
+          "name": "GET /health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Basic health check endpoint. Returns 200 OK if the API is running."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Hardware State",
+      "item": [
+        {
+          "name": "GET /api/hardware/state",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/hardware/state",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "hardware", "state"]
+            },
+            "description": "Get complete hardware snapshot including CPU, GPU, battery, and fan states."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/hardware/cpu",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/hardware/cpu",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "hardware", "cpu"]
+            },
+            "description": "Get CPU state only (temperature, usage, power, clock)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/hardware/gpu",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/hardware/gpu",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "hardware", "gpu"]
+            },
+            "description": "Get GPU state only (temperature, usage, power, clocks, VRAM)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/hardware/battery",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/hardware/battery",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "hardware", "battery"]
+            },
+            "description": "Get battery state only (charge %, charging status, charge limit)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/hardware/fan",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/hardware/fan",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "hardware", "fan"]
+            },
+            "description": "Get fan state only (CPU, GPU, Mid fan speeds and RPMs)."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Performance",
+      "item": [
+        {
+          "name": "GET /api/performance/mode",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/performance/mode",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "performance", "mode"]
+            },
+            "description": "Get current ASUS performance mode.\n\n0 = Silent\n1 = Balanced\n2 = Turbo\n3 = Full Speed\n4 = Manual"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/performance/mode (Set Turbo)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mode\": 2\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/performance/mode",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "performance", "mode"]
+            },
+            "description": "Switch to Turbo mode (mode=2). Applies associated fan curves and power settings."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/performance/mode (Set Balanced)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mode\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/performance/mode",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "performance", "mode"]
+            },
+            "description": "Switch to Balanced mode (mode=1)."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/performance/fan-curves",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/performance/fan-curves",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "performance", "fan-curves"]
+            },
+            "description": "Get current fan curves for CPU, GPU, and Mid fans."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/performance/fan-curves (Set CPU Fan)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device\": 0,\n  \"curve\": [40, 0, 50, 25, 60, 50, 70, 75, 80, 100]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/performance/fan-curves",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "performance", "fan-curves"]
+            },
+            "description": "Set CPU fan curve. Device: 0=CPU, 1=GPU, 2=Mid.\nCurve format: [temp1, speed1, temp2, speed2, ...] as byte pairs."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/performance/fan-curves (Set GPU Fan)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"device\": 1,\n  \"curve\": [40, 0, 55, 30, 65, 55, 75, 80, 85, 100]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/performance/fan-curves",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "performance", "fan-curves"]
+            },
+            "description": "Set GPU fan curve. Device: 1=GPU."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/performance/power-limits",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"spl\": 65,\n  \"sppt\": 75,\n  \"fppt\": 85\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/performance/power-limits",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "performance", "power-limits"]
+            },
+            "description": "Set CPU power limits in watts.\nSPL = Short Power Limit\nSPPT = Short Power Peak Throttling\nFPPT = Fast Power Peak Throttling"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Aura RGB",
+      "item": [
+        {
+          "name": "GET /api/aura/modes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/aura/modes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "aura", "modes"]
+            },
+            "description": "List all available Aura lighting modes."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/aura/apply (Static Red on Keyboard)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mode\": 0,\n  \"zone\": 0,\n  \"r\": 255,\n  \"g\": 0,\n  \"b\": 0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/aura/apply",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "aura", "apply"]
+            },
+            "description": "Apply static red to keyboard (zone=0).\n\nZones: 0=Keyboard, 1=Touchpad, 2=Body, 3=Rear, 4=Mouse, 5=Monitor"
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/aura/apply (Breathe Cyan on Touchpad)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mode\": 1,\n  \"zone\": 1,\n  \"r\": 0,\n  \"g\": 255,\n  \"b\": 255\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/aura/apply",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "aura", "apply"]
+            },
+            "description": "Apply breathing cyan effect to touchpad (zone=1)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/aura/apply (Rainbow on Body)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mode\": 3,\n  \"zone\": 2,\n  \"r\": 0,\n  \"g\": 0,\n  \"b\": 0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/aura/apply",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "aura", "apply"]
+            },
+            "description": "Apply rainbow effect to body (zone=2). Color values are ignored for rainbow mode."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/aura/apply (GPU Mode on Rear)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mode\": 21,\n  \"zone\": 3,\n  \"r\": 0,\n  \"g\": 0,\n  \"b\": 0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/aura/apply",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "aura", "apply"]
+            },
+            "description": "GPU usage-reactive lighting on rear zone."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "MLP Engine",
+      "item": [
+        {
+          "name": "GET /api/mlp/config",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/mlp/config",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "mlp", "config"]
+            },
+            "description": "Get current MLP engine configuration."
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /api/mlp/config (Update Config)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"config\": {\n    \"enabled\": true,\n    \"inputSize\": 16,\n    \"hiddenLayerSize\": 64,\n    \"outputSize\": 8,\n    \"learningRate\": 0.001,\n    \"learningIntervalSeconds\": 30,\n    \"predictionWindowMs\": 500,\n    \"autoModeSwitch\": true,\n    \"autoAffinity\": true\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/mlp/config",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "mlp", "config"]
+            },
+            "description": "Update MLP engine configuration. Changes take effect immediately."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/mlp/decisions",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/mlp/decisions?count=50",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "mlp", "decisions"],
+              "query": [
+                {
+                  "key": "count",
+                  "value": "50",
+                  "disabled": false
+                }
+              ]
+            },
+            "description": "Get recent AI decisions from the MLP engine. Adjust count parameter to retrieve more or fewer decisions."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/mlp/status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/mlp/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "mlp", "status"]
+            },
+            "description": "Check if the MLP engine is currently enabled."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Process Binding",
+      "item": [
+        {
+          "name": "GET /api/binding/processes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/binding/processes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "binding", "processes"]
+            },
+            "description": "List all tracked processes and their binding status."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/binding/cpu",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"processId\": 1234,\n  \"affinityMask\": 255\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/binding/cpu",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "binding", "cpu"]
+            },
+            "description": "Set CPU affinity for a process. affinityMask is a bitmask (255 = cores 0-7)."
+          },
+          "response": []
+        },
+        {
+          "name": "POST /api/binding/gpu",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"processId\": 1234,\n  \"gpuIndex\": 0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/binding/gpu",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "binding", "gpu"]
+            },
+            "description": "Set GPU affinity for a process. gpuIndex is 0-based GPU index."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/binding/topology",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/binding/topology",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "binding", "topology"]
+            },
+            "description": "Get CPU and GPU hardware topology including NUMA nodes and cache hierarchy."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Process Management",
+      "item": [
+        {
+          "name": "GET /api/process",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/process",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "process"]
+            },
+            "description": "List all tracked processes."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/process/foreground",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/process/foreground",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "process", "foreground"]
+            },
+            "description": "Get the currently focused/foreground process. Returns 404 if no foreground process."
+          },
+          "response": []
+        },
+        {
+          "name": "GET /api/process/gpu-intensive",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/process/gpu-intensive",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "process", "gpu-intensive"]
+            },
+            "description": "Get processes currently using significant GPU resources."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Settings",
+      "item": [
+        {
+          "name": "GET /api/settings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/settings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "settings"]
+            },
+            "description": "Get comprehensive device settings including device info, performance mode, and fan curves."
+          },
+          "response": []
+        },
+        {
+          "name": "PUT /api/settings",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"mode\": 2,\n  \"cpuPowerLimit\": 65,\n  \"gpuPowerLimit\": 120,\n  \"cpuFanCurve\": [40, 0, 50, 25, 60, 50, 70, 75, 80, 100],\n  \"gpuFanCurve\": [40, 0, 55, 30, 65, 55, 75, 80, 85, 100],\n  \"autoApplyFans\": true,\n  \"autoApplyPower\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/settings",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "settings"]
+            },
+            "description": "Update comprehensive device settings. Only include fields you want to change."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "SignalR Hubs (Info)",
+      "item": [
+        {
+          "name": "SignalR Connection: /hubs/sensor",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/hubs/sensor",
+              "host": ["{{baseUrl}}"],
+              "path": ["hubs", "sensor"]
+            },
+            "description": "SignalR hub for real-time hardware sensor updates. Connect using a SignalR client (not directly via HTTP).\n\nEvent: 'SensorUpdate' - receives HardwareState on each sensor cycle (~1s)"
+          },
+          "response": []
+        },
+        {
+          "name": "SignalR Connection: /hubs/state",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/hubs/state",
+              "host": ["{{baseUrl}}"],
+              "path": ["hubs", "state"]
+            },
+            "description": "SignalR hub for generic state change notifications.\n\nEvent: 'StateChange' - receives (type, data) for state changes"
+          },
+          "response": []
+        },
+        {
+          "name": "SignalR Connection: /hubs/hardware",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/hubs/hardware",
+              "host": ["{{baseUrl}}"],
+              "path": ["hubs", "hardware"]
+            },
+            "description": "SignalR hub for group-based hardware data messaging.\n\nMethods: 'JoinGroup(groupName)', 'LeaveGroup(groupName)'\nEvent: 'HardwareUpdate' - receives hardware data pushed by the bridge"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

@@ -68,6 +68,9 @@ public class IntegrationPipelineTests : IClassFixture<TestWebApplicationFactory>
         var scope = _factory.Services.CreateScope();
         var bridge = scope.ServiceProvider.GetService(typeof(SensorSignalRBridge));
         Assert.NotNull(bridge);
+
+        var hubClients = scope.ServiceProvider.GetService(typeof(IHubCallerClients));
+        Assert.NotNull(hubClients);
     }
 
     [Fact]

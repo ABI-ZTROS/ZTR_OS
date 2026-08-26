@@ -1,5 +1,6 @@
 using System.Text.Json;
 using ZTR.Api.Extensions;
+using ZTR.Api.Hubs;
 
 namespace ZTR.Api;
 
@@ -42,6 +43,11 @@ public class Program
         builder.Services.AddZTRServices();
 
         var app = builder.Build();
+
+        using (var scope = app.Services.CreateScope())
+        {
+            var bridge = scope.ServiceProvider.GetService<SensorSignalRBridge>();
+        }
 
         if (app.Environment.IsDevelopment())
         {

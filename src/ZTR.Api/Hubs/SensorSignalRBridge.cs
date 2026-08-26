@@ -7,20 +7,21 @@ namespace ZTR.Api.Hubs;
 public class SensorSignalRBridge : IDisposable
 {
     private readonly SensorQueue _queue;
-    private readonly IHubContext<HardwareDataHub> _hubContext;
+    private readonly IHubCallerClients _hubClients;
     private readonly ILogger<SensorSignalRBridge> _logger;
     private bool _disposed;
 
     public SensorSignalRBridge(
         SensorQueue queue,
-        IHubContext<HardwareDataHub> hubContext,
+        IHubCallerClients hubClients,
         ILogger<SensorSignalRBridge> logger)
     {
         _queue = queue;
-        _hubContext = hubContext;
+        _hubClients = hubClients;
         _logger = logger;
 
         _queue.StateEnqueued += OnStateEnqueued;
+        _logger.LogInformation("SensorSignalRBridge initialized and subscribed to SensorQueue events");
     }
 
     private async void OnStateEnqueued(object? sender, HardwareState state)
@@ -30,7 +31,9 @@ public class SensorSignalRBridge : IDisposable
         try
         {
             var dto = MapToFrontendDto(state);
-            await _hubContext.Clients.All.SendAsync("HardwareUpdate", dto);
+            await _hubClients.All.SendCoreAsync(
+                "HardwareUpdate",
+                new object[] { dto });
         }
         catch (Exception ex)
         {
@@ -45,7 +48,9 @@ public class SensorSignalRBridge : IDisposable
         try
         {
             var dto = MapToFrontendDto(state);
-            _hubContext.Clients.All.SendAsync("HardwareUpdate", dto).Wait();
+            _hubClients.All.SendCoreAsync(
+                "HardwareUpdate",
+                new object[] { dto }).Wait();
         }
         catch (Exception ex)
         {
@@ -114,5 +119,6 @@ public class SensorSignalRBridge : IDisposable
         if (_disposed) return;
         _disposed = true;
         _queue.StateEnqueued -= OnStateEnqueued;
+        _logger.LogInformation("SensorSignalRBridge disposed");
     }
 }
