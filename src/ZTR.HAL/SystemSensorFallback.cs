@@ -49,20 +49,16 @@ public class SystemSensorFallback : ISystemSensorFallback
 
             _logger?.LogInformation("SystemSensorFallback: Initializing performance counters");
 
-            var cpuCategory = PerformanceCounterCategory.Exists("Processor")
-                ? "Processor" : null;
-
-            if (cpuCategory != null)
+            if (PerformanceCounterCategory.Exists("Processor"))
             {
                 string cpuName = GetCpuInstanceName();
                 if (!string.IsNullOrEmpty(cpuName))
                 {
-                    _cpuCounters.Add(new PerformanceCounter(cpuCategory, "% Processor Time", cpuName));
-                    _cpuCounters.Add(new PerformanceCounter(cpuCategory, "Processor Frequency", cpuName));
+                    _cpuCounters.Add(new PerformanceCounter("Processor", "% Processor Time", cpuName));
                 }
                 else
                 {
-                    _cpuCounters.Add(new PerformanceCounter(cpuCategory, "% Processor Time", "_Total"));
+                    _cpuCounters.Add(new PerformanceCounter("Processor", "% Processor Time", "_Total"));
                 }
             }
 
@@ -79,14 +75,46 @@ public class SystemSensorFallback : ISystemSensorFallback
                 }
             }
 
+            PrimeCounters();
+
             _initialized = true;
-            IsAvailable = true;
-            _logger?.LogInformation("SystemSensorFallback: Initialized successfully");
+            IsAvailable = _cpuCounters.Count > 0 || _gpuCounters.Count > 0;
+            _logger?.LogInformation("SystemSensorFallback: Initialized successfully (CPU counters: {CpuCount}, GPU counters: {GpuCount})",
+                _cpuCounters.Count, _gpuCounters.Count);
         }
         catch (Exception ex)
         {
             _logger?.LogWarning(ex, "SystemSensorFallback: Failed to initialize performance counters");
             IsAvailable = false;
+        }
+    }
+
+    private void PrimeCounters()
+    {
+        try
+        {
+            foreach (var counter in _cpuCounters)
+            {
+                counter.NextValue();
+            }
+            foreach (var counter in _gpuCounters)
+            {
+                counter.NextValue();
+            }
+            Task.Delay(100).Wait();
+            foreach (var counter in _cpuCounters)
+            {
+                counter.NextValue();
+            }
+            foreach (var counter in _gpuCounters)
+            {
+                counter.NextValue();
+            }
+            _logger?.LogInformation("SystemSensorFallback: Counters primed");
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "SystemSensorFallback: Failed to prime counters");
         }
     }
 

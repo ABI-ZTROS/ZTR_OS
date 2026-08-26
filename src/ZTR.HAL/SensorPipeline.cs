@@ -454,11 +454,22 @@ public class SensorPipeline : IDisposable
     private IEnumerable<SensorReading> CollectBatteryReadings(DateTime timestamp)
     {
         var readings = new List<SensorReading>();
+        BatteryInfo? info = null;
 
-        if (_batteryControl != null)
+        try
         {
-            var info = _batteryControl.GetBatteryInfo();
+            if (_batteryControl != null)
+            {
+                info = _batteryControl.GetBatteryInfo();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogDebug(ex, "BatteryControl failed, falling back to system sensor");
+        }
 
+        if (info != null)
+        {
             readings.Add(new SensorReading
             {
                 Name = "BatteryCharge",

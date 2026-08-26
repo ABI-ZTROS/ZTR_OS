@@ -19,21 +19,27 @@ export async function apiRequest<T>(
       headers,
     })
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-    }
-
     const text = await response.text()
-    const data = text ? JSON.parse(text) : null
+    const parsed = text ? JSON.parse(text) : null
 
-    return {
-      success: response.ok,
-      data: data as T,
+    if (!response.ok) {
+      const message = parsed?.message || `HTTP ${response.status}`
+      return { success: false, data: defaultData<T>(), message }
     }
+
+    if (parsed && typeof parsed === 'object' && 'success' in parsed) {
+      return parsed as ApiResponse<T>
+    }
+
+    return { success: true, data: parsed as T }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
-    throw new Error(message)
+    return { success: false, data: defaultData<T>(), message }
   }
+}
+
+function defaultData<T>(): T {
+  return null as unknown as T
 }
 
 export const api = {

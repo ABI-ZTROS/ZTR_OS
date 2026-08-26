@@ -26,7 +26,15 @@ public static class ServiceCollectionExtensions
             var logger = sp.GetService<ILogger<SystemSensorFallback>>();
             return new SystemSensorFallback(logger);
         });
-        services.AddSingleton<SensorPipeline>();
+        services.AddSingleton<SensorPipeline>(sp =>
+        {
+            var acpi = sp.GetService<AsusAcpi>();
+            var gpuControl = sp.GetService<IGpuControl>();
+            var batteryControl = sp.GetService<BatteryControl>();
+            var systemFallback = sp.GetService<ISystemSensorFallback>();
+            var logger = sp.GetService<ILogger<SensorPipeline>>();
+            return new SensorPipeline(acpi, gpuControl, batteryControl, null, null, null, systemFallback, logger);
+        });
         services.AddSingleton<DeviceProbe>();
         services.AddSingleton<BindingPolicy>();
 
