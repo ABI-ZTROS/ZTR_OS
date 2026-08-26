@@ -105,7 +105,7 @@
 
   <Target Name="BuildFrontend" BeforeTargets="PrepareForBuild"
           DependsOnTargets="EnsureFrontendNodeModules"
-          Condition="'$(BuildFrontend)' == 'true' And Exists('$(FrontendDir)\package.json')">
+          Condition="'$(BuildFrontend)' == 'true' And '$(BuildFrontend)' != '' And Exists('$(FrontendDir)\package.json')">
     <Message Text="🌐 [BuildFrontend] 执行 npm run build..." Importance="high" />
     <Exec Command="npm.cmd run build"
           WorkingDirectory="$(FrontendDir)"
