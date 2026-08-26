@@ -1,5 +1,5 @@
 using System.Management;
-using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 namespace ZTR.HAL;
 
