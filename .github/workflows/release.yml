@@ -48,9 +48,11 @@ jobs:
 
       - name: Build and test backend
         run: |
-          dotnet restore
-          dotnet build --no-restore -c Release
-          dotnet test --no-build -c Release --results-directory ./TestResults
+          dotnet restore src/ZTR.Api/ZTR.Api.csproj
+          dotnet build src/ZTR.Api/ZTR.Api.csproj --no-restore -c Release
+          dotnet test tests/ZTR.HAL.Tests/ZTR.HAL.Tests.csproj --no-build -c Release --results-directory ./TestResults
+          dotnet test tests/ZTR.Intelligence.Tests/ZTR.Intelligence.Tests.csproj --no-build -c Release --results-directory ./TestResults
+          dotnet test tests/ZTR.Api.Tests/ZTR.Api.Tests.csproj --no-build -c Release --results-directory ./TestResults
 
       - uses: actions/upload-artifact@v4
         if: always()
