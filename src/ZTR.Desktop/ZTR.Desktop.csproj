@@ -62,7 +62,8 @@
     <PackageReference Include="MaterialDesignThemes" Version="5.*" />
     <PackageReference Include="MahApps.Metro.IconPacks.FontAwesome6" Version="6.*" />
     <PackageReference Include="MahApps.Metro.IconPacks.Material" Version="6.*" />
-    <PackageReference Include="LiveChartsCore.SkiaSharpView.WPF" Version="2.*" />
+    <!-- LiveChartsCore 已移除: SkiaSharp.Views.WPF 仅支持 .NET Framework，不兼容 .NET 9 -->
+    <!-- 如需 WPF 图表，改用 ScottPlot.WPF 或 OxyPlot.WPF (.NET 9 兼容版) -->
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.*" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.*" />
     <PackageReference Include="Serilog.Extensions.Logging" Version="8.*" />
