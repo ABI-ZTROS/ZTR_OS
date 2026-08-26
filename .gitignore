@@ -106,9 +106,15 @@ _ReSharper*/
 ## Frontend
 frontend/node_modules/
 frontend/dist/
-frontend/.env
-frontend/.env.development
-frontend/.env.production
+frontend/.env*
+
+## Generated wwwroot content (populated during build from frontend/dist)
+src/ZTR.Api/wwwroot/assets/
+src/ZTR.Api/wwwroot/*.html
+src/ZTR.Api/wwwroot/*.svg
+src/ZTR.Api/wwwroot/*.js
+src/ZTR.Api/wwwroot/*.css
+!src/ZTR.Api/wwwroot/.gitkeep
 
 ## GitHub
 .github/workflows/*.yml.bak

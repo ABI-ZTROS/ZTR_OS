@@ -65,7 +65,7 @@ public partial class MainWindow : Window
 
         string apiUrl = $"http://localhost:{_apiServer.Port}";
         string injectScript = $"window.__API_BASE_URL__='{apiUrl}';window.__IS_DESKTOP__=true;";
-        WebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(injectScript);
+        await WebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(injectScript);
 
         WebView.Source = new Uri("http://app.local/index.html");
 

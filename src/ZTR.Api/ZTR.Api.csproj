@@ -16,6 +16,10 @@
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>1591</NoWarn>
+    <BuildFrontend>true</BuildFrontend>
+    <CopyFrontend>true</CopyFrontend>
   </PropertyGroup>
 
   <ItemGroup>
@@ -34,10 +38,15 @@
     <Exec Command="npm run build" WorkingDirectory="$(FrontendDir)" StandardOutputImportance="normal" />
   </Target>
 
-  <Target Name="CopyFrontendToWwwroot" AfterTargets="Build" Condition="'$(CopyFrontend)' == 'true'">
+  <Target Name="CopyFrontendToWwwroot" AfterTargets="Build" Condition="'$(CopyFrontend)' == 'true' And Exists('$(FrontendBuildDir)')">
     <Message Text="Copying frontend to wwwroot..." Importance="high" />
+    <ItemGroup>
+      <FrontendFiles Include="$(FrontendBuildDir)\**\*" />
+    </ItemGroup>
     <RemoveDir Directories="$(WwwRootDir)" />
-    <Copy SourceDirectory="$(FrontendBuildDir)" DestinationDirectory="$(WwwRootDir)" />
+    <Copy SourceFiles="@(FrontendFiles)"
+          DestinationFiles="@(FrontendFiles->'$(WwwRootDir)\%(RecursiveDir)%(Filename)%(Extension)')"
+          SkipUnchangedFiles="true" />
   </Target>
 
 </Project>

@@ -1,10 +1,13 @@
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Text.Json;
 using System.Threading;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using ZTR.Api.Controllers;
 using ZTR.Api.Extensions;
 using ZTR.Api.Hubs;
 using ZTR.Api.Middleware;
@@ -52,7 +55,10 @@ public class ApiServerHost : IDisposable
             options.Listen(IPAddress.Loopback, port);
         });
 
+        var apiAssembly = typeof(HardwareController).Assembly;
+
         builder.Services.AddControllers()
+            .AddApplicationPart(apiAssembly)
             .AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
@@ -68,13 +74,21 @@ public class ApiServerHost : IDisposable
                 Version = "v1",
                 Description = "ZTR_OS Embedded Backend API"
             });
+
+            var xmlFile = $"{apiAssembly.GetName().Name}.xml";
+            var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+            if (File.Exists(xmlPath))
+            {
+                c.IncludeXmlComments(xmlPath);
+            }
         });
 
         builder.Services.AddCors(options =>
         {
             options.AddPolicy("Desktop", policy =>
             {
-                policy.WithOrigins("http://app.local", "http://localhost:5000")
+                policy.WithOrigins("http://app.local")
+                      .WithOrigins(Enumerable.Range(5000, 11).Select(p => $"http://localhost:{p}").ToArray())
                       .AllowAnyMethod()
                       .AllowAnyHeader()
                       .AllowCredentials();
