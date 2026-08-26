@@ -88,6 +88,7 @@ public class ApiServerHost : IDisposable
             options.AddPolicy("Desktop", policy =>
             {
                 policy.WithOrigins("http://app.local")
+                      .WithOrigins("file://")
                       .WithOrigins(Enumerable.Range(5000, 11).Select(p => $"http://localhost:{p}").ToArray())
                       .AllowAnyMethod()
                       .AllowAnyHeader()

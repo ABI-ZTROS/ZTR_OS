@@ -166,7 +166,9 @@ public class SystemSensorFallback : ISystemSensorFallback
         try
         {
             using var searcher = new System.Management.ManagementObjectSearcher(
-                "SELECT CurrentTemperature FROM MSAcpi_ThermalZoneTemperature");
+                "SELECT CurrentTemperature FROM MSAcpi_ThermalZoneTemperature",
+                null,
+                new System.Management.ManagementScopeOptions { Path = @"\\.\WMI" });
             using var results = searcher.Get();
 
             foreach (System.Management.ManagementObject obj in results)
@@ -180,7 +182,29 @@ public class SystemSensorFallback : ISystemSensorFallback
         }
         catch (Exception ex)
         {
-            _logger?.LogDebug(ex, "Failed to get CPU temperature via WMI");
+            _logger?.LogDebug(ex, "Failed to get CPU temperature via WMI Root\\WMI");
+        }
+
+        try
+        {
+            using var searcher = new System.Management.ManagementObjectSearcher(
+                "SELECT CurrentTemperature FROM MSAcpi_ThermalZoneTemperature",
+                null,
+                new System.Management.ManagementScopeOptions { Path = @"\\.\Root\WMI" });
+            using var results = searcher.Get();
+
+            foreach (System.Management.ManagementObject obj in results)
+            {
+                if (obj["CurrentTemperature"] != null)
+                {
+                    int temp = Convert.ToInt32(obj["CurrentTemperature"]);
+                    return temp > 1000 ? (temp - 2732) / 10 : temp;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogDebug(ex, "Failed to get CPU temperature via WMI Root\\WMI");
         }
 
         return 0;
