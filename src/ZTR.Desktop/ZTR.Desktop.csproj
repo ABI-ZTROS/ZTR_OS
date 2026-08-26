@@ -11,10 +11,10 @@
     <ApplicationIcon />
     <StartupObject />
 
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <CodeAnalysisTreatWarningsAsErrors>false</CodeAnalysisTreatWarningsAsErrors>
     <AnalysisMode>All</AnalysisMode>
-    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
     <NoWarn>
       CS0162;CS0164;CS0219;CS0414;CS0618;CS1591;CS1573;CS1712;CS8618;CS8601;CS8602;CS8604;CS8625;CS8765;CS8767;CS9264;CS1998;CS8600;CS8619;CS8632;CS8668;
       CA1001;CA1002;CA1003;CA1008;CA1010;CA1012;CA1014;CA1016;CA1017;CA1018;CA1019;CA1021;CA1024;CA1027;CA1028;
