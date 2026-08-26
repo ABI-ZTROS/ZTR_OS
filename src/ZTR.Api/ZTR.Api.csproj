@@ -19,8 +19,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>1591</NoWarn>
-    <BuildFrontend>true</BuildFrontend>
-    <CopyFrontend>true</CopyFrontend>
+    <BuildFrontend>false</BuildFrontend>
+    <CopyFrontend>false</CopyFrontend>
   </PropertyGroup>
 
   <ItemGroup>

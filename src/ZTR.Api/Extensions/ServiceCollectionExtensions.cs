@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using ZTR.Api.Hubs;
 using ZTR.HAL;
 using ZTR.Intelligence;
