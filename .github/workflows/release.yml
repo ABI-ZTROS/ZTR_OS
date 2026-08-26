@@ -104,6 +104,7 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.TAG }}
           files: ZTR_OS-${{ env.TAG }}-win-x64.zip
 
   publish-linux-x64:
@@ -150,6 +151,7 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.TAG }}
           files: ZTR_OS-${{ env.TAG }}-linux-x64.tar.gz
 
   publish-desktop-win-x64:
@@ -194,4 +196,5 @@ jobs:
 
       - uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ env.TAG }}
           files: ZTR_OS-${{ env.TAG }}-desktop-win-x64.zip
