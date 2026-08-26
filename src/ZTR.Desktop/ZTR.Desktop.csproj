@@ -7,6 +7,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <TypeScriptCompileBlocked>true</TypeScriptCompileBlocked>
     <RootNamespace>ZTR.Desktop</RootNamespace>
     <ApplicationIcon />
     <StartupObject />
