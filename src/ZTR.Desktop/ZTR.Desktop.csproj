@@ -10,6 +10,10 @@
     <RootNamespace>ZTR.Desktop</RootNamespace>
     <ApplicationIcon />
     <StartupObject />
+
+    <FrontendDir>..\..\frontend</FrontendDir>
+    <FrontendBuildDir>$(FrontendDir)\dist</FrontendBuildDir>
+    <BuildFrontend>true</BuildFrontend>
   </PropertyGroup>
 
   <ItemGroup>
@@ -28,19 +32,17 @@
     <ProjectReference Include="..\ZTR.Common\ZTR.Common.csproj" />
   </ItemGroup>
 
-  <PropertyGroup>
-    <FrontendDir>..\..\frontend</FrontendDir>
-    <FrontendBuildDir>$(FrontendDir)\dist</FrontendBuildDir>
-  </PropertyGroup>
-
-  <Target Name="BuildFrontend" BeforeTargets="Build" Condition="'$(BuildFrontend)' == 'true'">
-    <Message Text="Building frontend for desktop..." Importance="high" />
-    <Exec Command="npm ci" WorkingDirectory="$(FrontendDir)" StandardOutputImportance="normal" />
-    <Exec Command="npm run build" WorkingDirectory="$(FrontendDir)" StandardOutputImportance="normal" />
+  <Target Name="EnsureFrontendBuilt" BeforeTargets="Build"
+          Condition="'$(BuildFrontend)' == 'true'">
+    <Message Text="Checking frontend build..." Importance="high" />
+    <Exec Command="npm ci" WorkingDirectory="$(FrontendDir)" StandardOutputImportance="normal"
+          Condition="!Exists('$(FrontendBuildDir)\index.html')" />
+    <Exec Command="npm run build" WorkingDirectory="$(FrontendDir)" StandardOutputImportance="normal"
+          Condition="!Exists('$(FrontendBuildDir)\index.html')" />
   </Target>
 
-  <ItemGroup>
-    <Content Include="$(FrontendBuildDir)\**\*" Condition="Exists('$(FrontendBuildDir)')">
+  <ItemGroup Condition="Exists('$(FrontendBuildDir)')">
+    <Content Include="$(FrontendBuildDir)\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
       <TargetPath>wwwroot\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
