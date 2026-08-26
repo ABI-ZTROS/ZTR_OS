@@ -36,10 +36,7 @@
     <!-- ═══════════════════════════════════════════════════════════════ -->
     <!-- 📦 单文件发布设置 -->
     <!-- ═══════════════════════════════════════════════════════════════ -->
-    <PublishSingleFile>true</PublishSingleFile>
-    <SelfContained>true</SelfContained>
-    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
-    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <!-- PublishSingleFile/SelfContained 通过 dotnet publish 命令行传递，不在项目文件中设置 -->
     <SatelliteResourceLanguages>zh;zh-Hans;en</SatelliteResourceLanguages>
     <InvariantGlobalization>false</InvariantGlobalization>
     <DebuggerSupport>false</DebuggerSupport>
