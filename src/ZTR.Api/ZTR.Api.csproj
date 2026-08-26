@@ -25,6 +25,7 @@
   <PropertyGroup>
     <FrontendDir>..\..\frontend</FrontendDir>
     <FrontendBuildDir>$(FrontendDir)\dist</FrontendBuildDir>
+    <WwwRootDir>wwwroot</WwwRootDir>
   </PropertyGroup>
 
   <Target Name="BuildFrontend" BeforeTargets="Build" Condition="'$(BuildFrontend)' == 'true'">
@@ -33,13 +34,10 @@
     <Exec Command="npm run build" WorkingDirectory="$(FrontendDir)" StandardOutputImportance="normal" />
   </Target>
 
-  <ItemGroup>
-    <Content Include="$(FrontendBuildDir)\**">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      <TargetPath>wwwroot\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
-      <ExcludeFromSingleFile>false</ExcludeFromSingleFile>
-    </Content>
-  </ItemGroup>
+  <Target Name="CopyFrontendToWwwroot" AfterTargets="Build" Condition="'$(CopyFrontend)' == 'true'">
+    <Message Text="Copying frontend to wwwroot..." Importance="high" />
+    <RemoveDir Directories="$(WwwRootDir)" />
+    <Copy SourceDirectory="$(FrontendBuildDir)" DestinationDirectory="$(WwwRootDir)" />
+  </Target>
 
 </Project>
