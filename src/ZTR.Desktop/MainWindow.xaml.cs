@@ -44,7 +44,6 @@ public partial class MainWindow : Window
 
         await WebView.EnsureCoreWebView2Async();
         WebView.CoreWebView2.Settings.AreDevToolsEnabled = false;
-        WebView.CoreWebView2.Settings.ZoomFactor = 1.0;
 
         string html = LoadAndInjectApiUrl();
         WebView.NavigateToString(html);
