@@ -33,9 +33,24 @@
     <WwwRootDir>wwwroot</WwwRootDir>
   </PropertyGroup>
 
-  <Target Name="BuildFrontend" BeforeTargets="Build" Condition="'$(BuildFrontend)' == 'true'">
-    <Message Text="[ZTR.Api] 检查并构建前端..." Importance="high" />
-    <Exec Command="cmd /c cd /d &quot;$(FrontendDir)&quot; &amp;&amp; if not exist node_modules (echo Installing... &amp;&amp; call npm install) else (echo Dependencies OK) &amp;&amp; echo Building... &amp;&amp; call npm run build" WorkingDirectory="$(FrontendDir)" StandardOutputImportance="normal" />
+  <Target Name="EnsureFrontendNodeModules" BeforeTargets="BuildFrontend"
+          Condition="Exists('$(FrontendDir)\package.json') And !Exists('$(FrontendDir)\node_modules\typescript\package.json')">
+    <Message Text="📦 [EnsureFrontendNodeModules] 检测到 node_modules 缺失，正在执行 npm install..." Importance="high" />
+    <Exec Command="npm.cmd install"
+          WorkingDirectory="$(FrontendDir)"
+          ContinueOnError="false"
+          StandardOutputImportance="high"
+          StandardErrorImportance="high" />
+  </Target>
+
+  <Target Name="BuildFrontend" BeforeTargets="Build" DependsOnTargets="EnsureFrontendNodeModules"
+          Condition="'$(BuildFrontend)' == 'true' And Exists('$(FrontendDir)\package.json')">
+    <Message Text="🌐 [ZTR.Api] 开始前端构建..." Importance="high" />
+    <Exec Command="npm.cmd run build"
+          WorkingDirectory="$(FrontendDir)"
+          ContinueOnError="false"
+          StandardOutputImportance="high"
+          StandardErrorImportance="high" />
   </Target>
 
   <Target Name="CopyFrontendToWwwroot" AfterTargets="Build" Condition="'$(CopyFrontend)' == 'true' And Exists('$(FrontendBuildDir)')">

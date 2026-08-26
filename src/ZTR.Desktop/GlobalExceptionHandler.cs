@@ -8,7 +8,7 @@ namespace ZTR.Desktop;
 /// 三层异常处理：
 /// 1. AppDomain.CurrentDomain.UnhandledException（非UI线程）
 /// 2. TaskScheduler.UnobservedTaskException（Task 未观察）
-/// 3. Dispatcher.DispatcherUnhandledException（UI 线程）
+/// 3. Application.Current.DispatcherUnhandledException（UI 线程）
 /// </summary>
 public static class GlobalExceptionHandler
 {

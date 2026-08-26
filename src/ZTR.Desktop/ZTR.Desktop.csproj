@@ -103,27 +103,37 @@
     <Message Text="────────────────────────────────────────────────" Importance="high" />
   </Target>
 
-  <Target Name="BuildFrontend" BeforeTargets="PrepareForBuild">
-    <Message Condition="!Exists('$(FrontendDir)\package.json')"
-             Text="ℹ️  [BuildFrontend] 未找到 package.json ($(FrontendDir))，跳过前端构建" Importance="high" />
+  <Target Name="EnsureFrontendNodeModules" BeforeTargets="BuildFrontend"
+          Condition="Exists('$(FrontendDir)\package.json') And !Exists('$(FrontendDir)\node_modules\typescript\package.json')">
+    <Message Text="📦 [EnsureFrontendNodeModules] 检测到 node_modules 缺失或不完整，正在执行 npm install..." Importance="high" />
+    <Exec Command="npm.cmd install"
+          WorkingDirectory="$(FrontendDir)"
+          ContinueOnError="false"
+          StandardOutputImportance="high"
+          StandardErrorImportance="high" />
+    <Error Condition="!Exists('$(FrontendDir)\node_modules\typescript\package.json')"
+           Text="❌ [EnsureFrontendNodeModules] npm install 完成但 node_modules 仍不完整。请在 $(FrontendDir) 目录手动运行 npm install。" />
+  </Target>
 
-    <Message Condition="Exists('$(FrontendDir)\package.json') And '$(PublishDir)' != ''"
+  <Target Name="BuildFrontend" BeforeTargets="PrepareForBuild"
+          DependsOnTargets="EnsureFrontendNodeModules"
+          Condition="Exists('$(FrontendDir)\package.json')">
+    <Message Condition="'$(PublishDir)' != ''"
              Text="📦 [BuildFrontend] 发布构建 (PublishDir=$(PublishDir))：强制重新构建前端" Importance="high" />
+    <Message Condition="'$(PublishDir)' == '' And Exists('$(FrontendBuildDir)\index.html')"
+             Text="✅ [BuildFrontend] 前端已构建 (dist\index.html 存在)，普通构建跳过" Importance="high" />
+    <Message Condition="'$(PublishDir)' == '' And !Exists('$(FrontendBuildDir)\index.html')"
+             Text="🌐 [BuildFrontend] 检测到前端尚未构建，开始 npm run build..." Importance="high" />
 
-    <Message Condition="Exists('$(FrontendDir)\package.json') And '$(PublishDir)' == '' And Exists('$(FrontendBuildDir)\index.html')"
-             Text="✅ [BuildFrontend] 前端已构建 (dist\index.html 存在)，普通构建跳过（发布时自动重建）" Importance="high" />
-
-    <Message Condition="Exists('$(FrontendDir)\package.json') And '$(PublishDir)' == '' And !Exists('$(FrontendBuildDir)\index.html')"
-             Text="🌐 [BuildFrontend] 检测到前端尚未构建，开始 npm install + npm run build..." Importance="high" />
-
-    <Exec Condition="Exists('$(FrontendDir)\package.json') And ('$(PublishDir)' != '' Or !Exists('$(FrontendBuildDir)\index.html'))"
-          Command="cmd /c cd /d &quot;$(FrontendDir)&quot; &amp;&amp; if not exist node_modules (echo Installing dependencies... &amp;&amp; call npm install) else (echo Dependencies already installed) &amp;&amp; echo Building frontend... &amp;&amp; call npm run build"
+    <Exec Condition="'$(PublishDir)' != '' Or !Exists('$(FrontendBuildDir)\index.html')"
+          Command="npm.cmd run build"
           WorkingDirectory="$(FrontendDir)"
           ContinueOnError="false"
           StandardOutputImportance="high"
           StandardErrorImportance="high" />
 
-    <Error Condition="Exists('$(FrontendDir)\package.json') And ('$(PublishDir)' != '' Or !Exists('$(FrontendBuildDir)\index.html')) And !Exists('$(FrontendBuildDir)\index.html')"
+    <Error Condition="'$(PublishDir)' != '' Or !Exists('$(FrontendBuildDir)\index.html')"
+           Condition2="!Exists('$(FrontendBuildDir)\index.html')"
            Text="❌ [BuildFrontend] 前端构建后仍未找到 dist\index.html。请在 $(FrontendDir) 目录手动运行 npm install &amp;&amp; npm run build。" />
   </Target>
 
