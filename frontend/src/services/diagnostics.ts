@@ -1,4 +1,5 @@
 import { api } from './api'
+import type { UserSettings } from '@/types'
 
 export interface DiagnosticsReport {
   timestamp: string
@@ -42,4 +43,26 @@ export const diagnosticsService = {
       return { healthy: false, message: `Cannot reach backend: ${message}` }
     }
   },
+}
+
+export const settingsApi = {
+  getUserSettings: () =>
+    api.get<UserSettings>('/api/settings/user'),
+  updateUserSettings: (settings: Partial<UserSettings>) =>
+    api.put<void>('/api/settings/user', { settings }),
+  resetUserSettings: () =>
+    api.put<void>('/api/settings/user', {
+      settings: {
+        autoPerformance: true,
+        autoMlp: true,
+        autoAura: true,
+        pollingInterval: 2000,
+        theme: 'cyber',
+        notificationsEnabled: true,
+        autoStart: false,
+        minimizeToTray: true,
+        predictionWindow: 50,
+        autoModeSwitch: true,
+      }
+    }),
 }

@@ -98,6 +98,19 @@ export function Binding() {
     }
   }, [])
 
+  const handleGpuBind = useCallback(async (processId: number, gpuIndex: number) => {
+    try {
+      await bindingApi.setGpuAffinity(processId, gpuIndex)
+      setProcesses((prev) =>
+        prev.map((p) =>
+          p.id === processId ? { ...p, gpuAffinity: [gpuIndex] } : p
+        )
+      )
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to set GPU affinity')
+    }
+  }, [])
+
   const handleSelectProcess = useCallback((process: ProcessInfo) => {
     setSelectedProcess(process)
   }, [])
@@ -213,6 +226,13 @@ export function Binding() {
                 disabled={selectedProcess.affinity.length === 0}
               >
                 Unbind
+              </button>
+              <button
+                className="btn-secondary"
+                onClick={() => handleGpuBind(selectedProcess.id, 0)}
+                disabled={!selectedProcess}
+              >
+                GPU Bind
               </button>
               <button className="btn-ghost" onClick={() => setSelectedProcess(null)}>
                 Cancel

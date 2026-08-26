@@ -10,6 +10,12 @@ public class AuraController : ControllerBase
 {
     private readonly AuraLighting _auraLighting;
     private readonly ILogger<AuraController> _logger;
+    private static readonly List<AuraPresetInfo> _presets = new()
+    {
+        new() { Id = "default-breathe", Name = "Default Breathe", Effect = "breathe", Zone = "keyboard" },
+        new() { Id = "default-rainbow", Name = "Default Rainbow", Effect = "rainbow", Zone = "body" }
+    };
+    private static readonly object _presetsLock = new();
 
     public AuraController(AuraLighting auraLighting, ILogger<AuraController> logger)
     {
@@ -216,20 +222,29 @@ public class AuraController : ControllerBase
     [ProducesResponseType<ApiResponse<List<AuraPresetInfo>>>(StatusCodes.Status200OK)]
     public ActionResult<ApiResponse<List<AuraPresetInfo>>> GetPresets()
     {
-        var presets = new List<AuraPresetInfo>
+        lock (_presetsLock)
         {
-            new() { Id = "default-breathe", Name = "Default Breathe", Effect = "breathe", Zone = "keyboard" },
-            new() { Id = "default-rainbow", Name = "Default Rainbow", Effect = "rainbow", Zone = "body" }
-        };
-
-        return Ok(new ApiResponse<List<AuraPresetInfo>>(true, presets));
+            return Ok(new ApiResponse<List<AuraPresetInfo>>(true, new List<AuraPresetInfo>(_presets)));
+        }
     }
 
     [HttpPost("presets")]
     [ProducesResponseType<ApiResponse>(StatusCodes.Status200OK)]
     public ActionResult<ApiResponse> SavePreset([FromBody] SavePresetRequest request)
     {
-        _logger.LogInformation("Saving Aura preset: {Name}", request.Name);
+        lock (_presetsLock)
+        {
+            var preset = new AuraPresetInfo
+            {
+                Id = $"preset-{DateTime.UtcNow:yyyyMMddHHmmss}",
+                Name = request.Name,
+                Effect = _auraLighting.CurrentMode.ToString(),
+                Zone = _auraLighting.CurrentZone.ToString().ToLowerInvariant()
+            };
+            _presets.Add(preset);
+            _logger.LogInformation("Aura preset saved: {Name} (Effect: {Effect}, Zone: {Zone})", preset.Name, preset.Effect, preset.Zone);
+        }
+
         return Ok(new ApiResponse(true));
     }
 

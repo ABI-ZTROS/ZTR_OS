@@ -10,6 +10,8 @@ export const bindingApi = {
   getTopology: () => api.get<Array<Record<string, unknown>>>('/api/binding/topology'),
   setAutoBindGames: (enabled: boolean) =>
     api.post<void>('/api/binding/auto-bind', { enabled }),
+  setGpuAffinity: (processId: number, gpuIndex: number) =>
+    api.post<void>('/api/binding/gpu', { processId, gpuIndex }),
 }
 
 export const auraApi = {

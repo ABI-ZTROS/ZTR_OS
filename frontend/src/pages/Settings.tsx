@@ -4,6 +4,7 @@ import { GlowCard } from '@/components/common/GlowCard'
 import { ToggleSwitch } from '@/components/common/ToggleSwitch'
 import { SliderControl } from '@/components/common/SliderControl'
 import { useSettingsStore } from '@/store/useSettingsStore'
+import { settingsApi } from '@/services/diagnostics'
 import type { HotkeyBinding } from '@/types'
 import './Settings.css'
 
@@ -23,6 +24,16 @@ export function Settings() {
   const [activeTab, setActiveTab] = useState<'general' | 'mlp' | 'hotkeys' | 'hardware' | 'about'>('general')
   const [hotkeys, setHotkeys] = useState<HotkeyBinding[]>(DEFAULT_HOTKEYS)
   const [exportStatus, setExportStatus] = useState<string | null>(null)
+
+  const syncSetting = useCallback(async (key: keyof typeof settings, value: unknown) => {
+    const patch: Record<string, unknown> = {}
+    patch[key] = value
+    try {
+      await settingsApi.updateUserSettings(patch)
+    } catch {
+      // silently fail - frontend still updates
+    }
+  }, [])
 
   const handleExport = useCallback(() => {
     try {
@@ -102,21 +113,21 @@ export function Settings() {
           <GlowCard title="General" glowColor="primary">
             <ToggleSwitch
               checked={settings.autoPerformance}
-              onChange={(v) => updateSettings({ autoPerformance: v })}
+              onChange={(v) => { updateSettings({ autoPerformance: v }); syncSetting('autoPerformance', v) }}
               label="Auto Performance"
               description="Automatically adjust power limits based on system load"
               color="primary"
             />
             <ToggleSwitch
               checked={settings.autoMlp}
-              onChange={(v) => updateSettings({ autoMlp: v })}
+              onChange={(v) => { updateSettings({ autoMlp: v }); syncSetting('autoMlp', v) }}
               label="Auto MLP"
               description="Enable machine-learning-based performance decisions"
               color="accent"
             />
             <ToggleSwitch
               checked={settings.autoAura}
-              onChange={(v) => updateSettings({ autoAura: v })}
+              onChange={(v) => { updateSettings({ autoAura: v }); syncSetting('autoAura', v) }}
               label="Auto Aura"
               description="Dynamic lighting effects based on system state"
               color="secondary"

@@ -92,6 +92,21 @@ export function MlpPage() {
     }
   }, [mlpState.config])
 
+  const handleLearningRateChange = useCallback(async (v: number) => {
+    const rounded = Number(v.toFixed(4))
+    setLearningRate(rounded)
+    try {
+      const config = {
+        ...mlpState.config,
+        learningRate: rounded,
+      }
+      await mlpApi.setConfig(config as unknown as MlpConfigResponse)
+      updateState({ config })
+    } catch {
+      // silently fail
+    }
+  }, [mlpState.config, updateState])
+
   const handleSaveConfig = useCallback(async () => {
     const hiddenLayers = hiddenLayersStr
       .split(',')
@@ -301,7 +316,7 @@ export function MlpPage() {
             min={0.0001}
             max={0.01}
             step={0.0001}
-            onChange={(v) => setLearningRate(Number(v.toFixed(4)))}
+            onChange={handleLearningRateChange}
             color="accent"
             formatValue={(v) => v.toFixed(4)}
           />
