@@ -193,4 +193,16 @@ public class DeviceProbe
             _logger?.LogWarning(ex, "Failed to detect Aura support");
         }
     }
+
+    public string? DetectModel()
+    {
+        try
+        {
+            return _wmiHelper.GetHardwareModel();
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }

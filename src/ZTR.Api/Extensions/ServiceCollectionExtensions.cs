@@ -67,6 +67,14 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<SensorSignalRBridge>();
         services.AddHostedService<SensorBackgroundService>();
 
+        services.AddSingleton<ScreenControl>();
+        services.AddSingleton<KeyboardControl>();
+        services.AddSingleton<GpuTuningService>();
+        services.AddSingleton<AutomationService>();
+        services.AddSingleton<AnimeMatrixEngine>();
+        services.AddSingleton<XgmMobileControl>();
+        services.AddSingleton<BiosUpdateChecker>();
+
         return services;
     }
 }

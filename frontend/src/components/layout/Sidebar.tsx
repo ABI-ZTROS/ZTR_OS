@@ -4,9 +4,13 @@ import './Sidebar.css'
 const navItems = [
   { to: '/', label: '仪表盘', icon: '◉' },
   { to: '/performance', label: '性能', icon: '⚡' },
+  { to: '/gpu-tuning', label: 'GPU 调校', icon: '▣' },
+  { to: '/screen', label: '屏幕', icon: '▦' },
   { to: '/mlp', label: '机器学习', icon: '◎' },
   { to: '/binding', label: '进程绑定', icon: '⬡' },
   { to: '/aura', label: '灯效', icon: '✦' },
+  { to: '/automation', label: '自动化', icon: '⟲' },
+  { to: '/updates', label: '更新', icon: '↻' },
   { to: '/settings', label: '设置', icon: '⚙' },
 ]
 

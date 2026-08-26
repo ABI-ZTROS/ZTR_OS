@@ -1,0 +1,202 @@
+.automation-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.automation-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(255, 68, 68, 0.08);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.automation-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: center;
+}
+
+.automation-status-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.automation-status-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.automation-status-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.automation-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.automation-status-dot--running {
+  background: var(--success);
+  box-shadow: 0 0 8px var(--success);
+  animation: pulse 1.5s infinite;
+}
+
+.automation-status-dot--stopped {
+  background: var(--text-muted);
+}
+
+.automation-status-running {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--success);
+}
+
+.automation-status-stopped {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.automation-status-actions {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.automation-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.automation-form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.automation-form-col {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.automation-form-checkbox {
+  justify-content: center;
+  padding: 16px 12px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.automation-add-btn {
+  align-self: flex-end;
+}
+
+.automation-rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.automation-rule-item {
+  padding: 14px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  transition: border-color var(--transition-fast);
+}
+
+.automation-rule-item:hover {
+  border-color: var(--border-glow);
+}
+
+.automation-rule-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.automation-rule-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.automation-rule-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.automation-rule-trigger {
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: var(--radius-full);
+  background: rgba(0, 255, 170, 0.1);
+  border: 1px solid var(--primary);
+  color: var(--primary);
+}
+
+.automation-rule-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.automation-apply-btn {
+  font-size: 12px;
+  padding: 6px 12px;
+}
+
+.automation-remove-btn {
+  font-size: 12px;
+  padding: 6px 12px;
+  color: var(--danger);
+  border-color: rgba(255, 68, 68, 0.3);
+}
+
+.automation-remove-btn:hover {
+  background: rgba(255, 68, 68, 0.08);
+}
+
+.automation-rule-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.automation-rule-tag {
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+.automation-rule-tag--accent {
+  background: rgba(0, 170, 255, 0.1);
+  border-color: var(--accent);
+  color: var(--accent);
+}
