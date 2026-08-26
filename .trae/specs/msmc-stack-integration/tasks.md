@@ -1,0 +1,233 @@
+# ZTR_OS - MSMC 技术栈全面集成 - 实施计划
+
+## [x] Task 1: NuGet 包集成与项目配置
+- **Priority**: high
+- **Depends On**: None
+- **Description**:
+  - 更新 ZTR.Desktop.csproj，引入 MSMC 全套 NuGet 包：
+    - Serilog、Serilog.Sinks.File、Serilog.Extensions.Logging
+    - Microsoft.Extensions.DependencyInjection、Microsoft.Extensions.Logging
+    - CommunityToolkit.Mvvm
+    - MaterialDesignThemes、MahApps.Metro.IconPacks.FontAwesome6、MahApps.Metro.IconPacks.Material
+    - LiveChartsCore.SkiaSharpView.WPF
+    - Nerdbank.GitVersioning
+    - Microsoft.CodeAnalysis.NetAnalyzers
+    - YamlDotNet
+    - System.Management、System.ServiceProcess.ServiceController
+    - Microsoft.Web.WebView2 (最新版)
+    - Microsoft.Toolkit.Uwp.Notifications
+  - 配置 TreatWarningsAsErrors=true、启用代码分析器
+  - 配置单文件发布设置
+  - 配置 SatelliteResourceLanguages（zh;en）
+  - 配置 InvariantGlobalization=false（解决 WPF 文化崩溃）
+  - 配置 DebuggerSupport=false、DebugType=none（Release 体积优化）
+- **Acceptance Criteria Addressed**: AC-1, AC-10
+- **Test Requirements**:
+  - `programmatic` TR-1.1: dotnet restore 成功，所有 NuGet 包版本正确解析
+  - `programmatic` TR-1.2: dotnet build (Release) 成功，0 错误
+  - `programmatic` TR-1.3: 检查 .csproj 包含所有必需 PackageReference
+  - `human-judgement` TR-1.4: NuGet 版本与 MSMC 保持主版本一致
+
+## [x] Task 2: 日志基础设施（Serilog + ForceLog）
+- **Priority**: high
+- **Depends On**: Task 1
+- **Description**:
+  - 实现 ForceLog 死日志机制（完全不依赖第三方库）
+  - 实现 Serilog 精简配置（主日志 Warning+，5MB×5 滚动；调试日志 Debug+，2MB×3 滚动）
+  - 实现三层全局异常处理（AppDomain.UnhandledException、TaskScheduler.UnobservedTaskException、DispatcherUnhandledException）
+  - 实现强制崩溃转储（WriteForceCrashDump）
+  - 实现旧日志清理（7 天过期自动删除）
+  - 日志路径：{BaseDirectory}/logs/
+- **Acceptance Criteria Addressed**: AC-8, AC-9
+- **Test Requirements**:
+  - `programmatic` TR-2.1: ForceLog 可独立写入日志文件（即使 Serilog 未初始化）
+  - `programmatic` TR-2.2: Serilog 日志按等级分别写入主日志和调试日志
+  - `programmatic` TR-2.3: 异常注入测试：在 UI 线程抛异常 → 日志记录 → 应用不崩溃
+  - `programmatic` TR-2.4: 异常注入测试：在线程池抛异常 → TaskScheduler 捕获 → 日志记录
+  - `programmatic` TR-2.5: 日志文件滚动在超过 5MB 后自动创建新文件
+  - `human-judgement` TR-2.6: 日志内容标签清晰可读（[FATAL]、[WARN]、[OK]、[ERR]）
+
+## [x] Task 3: 安全文化与启动防护
+- **Priority**: high
+- **Depends On**: Task 2
+- **Description**:
+  - 实现 LCID=1033 钉死线程文化（解决 MaterialDesign en-us 崩溃）
+  - 实现 FrameworkElement.LanguageProperty.OverrideMetadata(Empty)
+  - 实现 DispatcherHooks.OperationStarted 兜底
+  - 实现 ShutdownMode.OnExplicitShutdown 防静默退出
+  - 实现 App.xaml.cs 的 static cctor（最早入口）
+  - 实现 ApplyLanguageToExistingWindows 兜底方法
+- **Acceptance Criteria Addressed**: AC-10
+- **Test Requirements**:
+  - `programmatic` TR-3.1: 在中文 Windows 系统上启动无 System.Globalization 异常
+  - `programmatic` TR-3.2: DispatcherHooks 正确重设 CurrentCulture
+  - `programmatic` TR-3.3: MaterialDesign 控件（ComboBox、DataGrid）正常显示
+
+## [x] Task 4: DI 容器与服务注册
+- **Priority**: high
+- **Depends On**: Task 3
+- **Description**:
+  - 实现 App.Services 全局访问点（IServiceProvider）
+  - 实现 BootStats 统计类（Ok/Fail 计数）
+  - 实现 Register<TService,TImpl>、RegisterInstance<TService>、RegisterType<TImpl> 辅助方法
+  - 注册 Serilog.ILogger 单例
+  - 注册 IUserAgreementService（→ 待 Task 6 实现）
+  - 注册 IThemeService（→ 待 Task 8 实现）
+  - 注册 IWindowEffectsService（→ 待 Task 9 实现）
+  - 注册 IWebView2BridgeService（→ 待 Task 7 实现）
+  - 注册 IProcessManagerService（进程亲和性）
+  - 注册 IConfigurationService（配置持久化）
+  - 实现服务注册进度追踪（百分比 + 状态文字）
+- **Acceptance Criteria Addressed**: AC-5
+- **Test Requirements**:
+  - `programmatic` TR-4.1: ServiceProvider 构建成功，所有服务可解析
+  - `programmatic` TR-4.2: 服务注册失败不影响后续注册（单个失败可被捕获和记录）
+  - `programmatic` TR-4.3: BootStats 统计准确（成功数 + 失败数 = 总注册数）
+  - `human-judgement` TR-4.4: 启动日志中每个服务注册有清晰的 [OK]/[ERR] 标记
+
+## [x] Task 5: Boot 启动页与启动流程
+- **Priority**: high
+- **Depends On**: Task 4
+- **Description**:
+  - 实现 StartupWindow（WPF 窗口）：
+    - 品牌 Logo 区域
+    - 进度条（0-100%）
+    - 状态文字
+    - 实时日志流显示区
+  - 实现 60+ 步启动序列：
+    - 阶段 -1：用户协议前置校验
+    - 阶段 0：主题服务预加载
+    - 阶段 1：显示启动页
+    - 阶段 2：后台线程执行服务注册（60+ 步）
+    - 阶段 3：构建 ServiceProvider
+    - 阶段 4：切换到主窗口
+  - 实现 Step 辅助方法（百分比推进 + 状态更新 + 日志输出 + 100ms 延迟）
+  - 实现 AppendLog、SetProgress 方法
+- **Acceptance Criteria Addressed**: AC-2
+- **Test Requirements**:
+  - `programmatic` TR-5.1: 启动流程从进度 0% 推进到 100%，每步递增
+  - `programmatic` TR-5.2: 日志流至少包含 60 条 [LOAD]/[OK]/[ERR] 记录
+  - `programmatic` TR-5.3: 启动完成后主窗口显示
+  - `human-judgement` TR-5.4: 启动页视觉效果与 MSMC 风格一致
+
+## [x] Task 6: 用户协议完整复刻
+- **Priority**: high
+- **Depends On**: Task 4
+- **Description**:
+  - 实现 IUserAgreementService 接口
+  - 实现 UserAgreementService：
+    - 版本号：3.0.0
+    - 存储路径：{AppData}/io.NET.ZTR_OS/user_agreement.json
+    - 属性：IsAgreed、AgreedAt、AgreedVersion、RequiresReagreement
+    - 方法：SetAgreed(version)、Load()、Save()
+  - 实现 UserAgreementWindow（WPF 窗口）：
+    - 120 秒倒计时（失焦暂停）
+    - 滚动限速（MaxScrollDelta=28px）
+    - 滚动到底部检测
+    - 同意按钮状态机（倒计时结束 + 滚动到底部 → 启用）
+    - 恶意点击防护（不同意后禁用所有按钮）
+  - 实现恶作剧效果：
+    - CollectShakeElements：收集所有可抖动 UI 元素
+    - 三层抖动动画（±50px 窗口 + ±10px 内容 + ±4px 元素）
+    - CreateTrollWindow：创建 40 个随机分布的警告弹窗
+    - 5 秒动画后 Application.Current.Shutdown()
+  - 实现自定义标题栏拖动
+- **Acceptance Criteria Addressed**: AC-3, AC-4
+- **Test Requirements**:
+  - `programmatic` TR-6.1: 首次启动弹出协议窗口（localStorage/appData 均无记录）
+  - `programmatic` TR-6.2: 倒计时从 120 秒递减到 0，失焦暂停
+  - `programmatic` TR-6.3: 快速拖动滚动条被限速（单次增量不超过 28px）
+  - `programmatic` TR-6.4: 未滚动到底部时同意按钮禁用
+  - `programmatic` TR-6.5: 同意后 user_agreement.json 文件创建，含正确版本号和时间戳
+  - `programmatic` TR-6.6: 40 个 Troll 窗口创建并显示（窗口数量验证）
+  - `programmatic` TR-6.7: 抖动动画持续 5 秒后应用退出
+  - `human-judgement` TR-6.8: 恶作剧弹窗内容与 MSMC 一致（"没同意用户协议用你妈呢傻逼玩意???"）
+  - `human-judgement` TR-6.9: 三层抖动效果视觉冲击力足够
+
+## [x] Task 7: WebView2 双向桥接
+- **Priority**: high
+- **Depends On**: Task 4
+- **Description**:
+  - 实现 IWebView2BridgeService 接口
+  - 实现 WebView2BridgeService：
+    - C# → JS：ExecuteScriptAsync 封装，支持事件推送
+    - JS → C#：通过 WebMessageReceived 接收前端消息
+    - 实现命令路由系统（字符串命令 → C# 方法映射）
+  - 替代当前静态文件映射方案（SetVirtualHostNameToFolderMapping）
+  - 实现文档创建时注入脚本（AddScriptToExecuteOnDocumentCreatedAsync）
+  - 实现前端 bridge 对象注入：window.__bridge__
+  - 支持 SignalR Hub 通过桥接转发消息
+- **Acceptance Criteria Addressed**: AC-6
+- **Test Requirements**:
+  - `programmatic` TR-7.1: 前端调用 window.__bridge__.invoke('getHardwareInfo') 返回 C# 数据
+  - `programmatic` TR-7.2: C# 推送事件到前端，前端 window.__onbridgeevent 回调被触发
+  - `programmatic` TR-7.3: 命令路由正确分发（方法名 → 参数 → 返回值）
+  - `programmatic` TR-7.4: 前端资源仍可正常加载（index.html、CSS、JS）
+
+## [x] Task 8: 主题与配置服务
+- **Priority**: medium
+- **Depends On**: Task 4
+- **Description**:
+  - 实现 IThemeService 接口
+  - 实现 ThemeService：亮色/暗色切换、MaterialDesign 主题应用
+  - 实现 IConfigurationService 接口
+  - 实现配置持久化（JSON 文件读写，AppData 路径）
+  - 实现序列化选项（CamelCase、WriteIndented）
+- **Acceptance Criteria Addressed**: AC-5
+- **Test Requirements**:
+  - `programmatic` TR-8.1: 主题切换后所有 MaterialDesign 控件更新
+  - `programmatic` TR-8.2: 配置文件正确读写 JSON
+  - `human-judgement` TR-8.3: 主题切换视觉流畅
+
+## [x] Task 9: 窗口特效服务
+- **Priority**: medium
+- **Depends On**: Task 1
+- **Description**:
+  - 实现 IWindowEffectsService 接口
+  - 实现 WindowEffectsService：
+    - Mica/Acrylic 背景效果（通过 DwmSetWindowAttribute）
+    - 圆角窗口（DWM_WINDOW_CORNER_PREFERENCE）
+    - 深色标题栏（DWMWA_USE_IMMERSIVE_DARK_MODE）
+    - 自定义无边框窗口 + 自绘标题栏
+  - 实现窗口动画（淡入、缩放）
+- **Acceptance Criteria Addressed**: AC-10
+- **Test Requirements**:
+  - `programmatic` TR-9.1: Windows 11 上 Mica 背景生效
+  - `programmatic` TR-9.2: 窗口圆角显示
+  - `programmatic` TR-9.3: 标题栏颜色与主题一致
+  - `human-judgement` TR-9.4: 窗口视觉效果与 MSMC 相当
+
+## [x] Task 10: 前端资源管理与打包
+- **Priority**: high
+- **Depends On**: Task 1
+- **Description**:
+  - 实现 BuildFrontend MSBuild Target（自动 npm install + npm run build）
+  - 实现 PackFrontendToZip Target（前端 dist → wwwroot.zip 嵌入资源）
+  - 实现 CopyFrontendToOutput Target（调试模式复制）
+  - 实现 DiagnoseFrontendPaths Target（路径诊断输出）
+  - 实现 WarnFrontendMissing Target（前端缺失警告）
+  - 更新 EnsureFrontendBuilt Target
+  - 配置 ErrorOnDuplicatePublishOutputFiles=false
+- **Acceptance Criteria Addressed**: AC-7, AC-10
+- **Test Requirements**:
+  - `programmatic` TR-10.1: dotnet build 自动构建前端（如 dist 不存在）
+  - `programmatic` TR-10.2: wwwroot.zip 正确生成并嵌入
+  - `programmatic` TR-10.3: 运行时可从嵌入资源加载前端
+  - `programmatic` TR-10.4: 发布单文件包含前端资源
+
+## [x] Task 11: 假实现检测与验证
+- **Priority**: high
+- **Depends On**: Task 2-10
+- **Description**:
+  - 扫描所有服务接口，确认每个接口有实现类
+  - 扫描所有实现类，确认方法体非空（无 throw NotImplementedException 或空方法）
+  - 扫描 DI 注册，确认每个服务都被注册
+  - 扫描 API 控制器，确认每个端点有实际业务逻辑
+  - 运行时验证：启动后每个服务可正常解析和调用
+  - 生成假实现检测报告
+- **Acceptance Criteria Addressed**: AC-7
+- **Test Requirements**:
+  - `programmatic` TR-11.1: 所有接口有对应实现类（一对一映射）
+  - `programmatic` TR-11.2: 无空方法体或 NotImplementedException
+  - `programmatic` TR-11.3: 所有服务在 DI 容器中注册
+  - `human-judgement` TR-11.4: 逐文件审查实现逻辑的真实性和完整性
