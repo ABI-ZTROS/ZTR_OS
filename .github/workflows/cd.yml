@@ -1,5 +1,6 @@
 name: CD
 
+# Trigger on new release publish or manual dispatch
 on:
   release:
     types: [published]
