@@ -36,10 +36,6 @@
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
     <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
-
-    <FrontendDir>..\..\frontend</FrontendDir>
-    <FrontendBuildDir>$(FrontendDir)\dist</FrontendBuildDir>
-    <BuildFrontend>false</BuildFrontend>
   </PropertyGroup>
 
   <ItemGroup>
@@ -73,91 +69,6 @@
     <ProjectReference Include="..\ZTR.Intelligence\ZTR.Intelligence.csproj" />
     <ProjectReference Include="..\ZTR.Models\ZTR.Models.csproj" />
     <ProjectReference Include="..\ZTR.Common\ZTR.Common.csproj" />
-  </ItemGroup>
-
-  <!-- 前端构建：默认关闭，手动执行: dotnet build /p:BuildFrontend=true -->
-
-  <Target Name="DiagnoseFrontendPaths" BeforeTargets="PrepareForBuild">
-    <Message Text="────────────────────────────────────────────────" Importance="high" />
-    <Message Text="📍 前端诊断: FrontendDir = $(FrontendDir)" Importance="high" />
-    <Message Condition="Exists('$(FrontendDir)\package.json')"
-             Text="✅ 找到 package.json" Importance="high" />
-    <Message Condition="!Exists('$(FrontendDir)\package.json')"
-             Text="⚠️ 未找到 package.json" Importance="high" />
-    <Message Condition="Exists('$(FrontendBuildDir)\index.html')"
-             Text="✅ 已构建 dist\index.html" Importance="high" />
-    <Message Condition="!Exists('$(FrontendBuildDir)\index.html')"
-             Text="⚠️ 未构建前端 dist\index.html (运行时将使用降级页)" Importance="high" />
-    <Message Text="────────────────────────────────────────────────" Importance="high" />
-  </Target>
-
-  <Target Name="EnsureFrontendNodeModules" BeforeTargets="BuildFrontend"
-          Condition="'$(BuildFrontend)' == 'true' And Exists('$(FrontendDir)\package.json') And !Exists('$(FrontendDir)\node_modules\typescript\package.json')">
-    <Message Text="📦 [EnsureFrontendNodeModules] node_modules 缺失，执行 npm install..." Importance="high" />
-    <Exec Command="npm.cmd install"
-          WorkingDirectory="$(FrontendDir)"
-          ContinueOnError="false"
-          StandardOutputImportance="high"
-          StandardErrorImportance="high" />
-    <Error Condition="!Exists('$(FrontendDir)\node_modules\typescript\package.json')"
-           Text="❌ npm install 失败。请手动运行: cd $(FrontendDir) &amp;&amp; npm install" />
-  </Target>
-
-  <Target Name="BuildFrontend" BeforeTargets="PrepareForBuild"
-          DependsOnTargets="EnsureFrontendNodeModules"
-          Condition="'$(BuildFrontend)' == 'true' And '$(BuildFrontend)' != '' And Exists('$(FrontendDir)\package.json')">
-    <Message Text="🌐 [BuildFrontend] 执行 npm run build..." Importance="high" />
-    <Exec Command="npm.cmd run build"
-          WorkingDirectory="$(FrontendDir)"
-          ContinueOnError="false"
-          StandardOutputImportance="high"
-          StandardErrorImportance="high" />
-    <Error Condition="!Exists('$(FrontendBuildDir)\index.html')"
-           Text="❌ 前端构建失败。请手动运行: cd $(FrontendDir) &amp;&amp; npm install &amp;&amp; npm run build" />
-  </Target>
-
-  <Target Name="PackFrontendToZip" BeforeTargets="BeforeResGen"
-          Condition="Exists('$(FrontendBuildDir)\index.html')">
-    <PropertyGroup>
-      <_FrontendIndex Condition="'$(_FrontendIndex)' == ''">$(FrontendBuildDir)\index.html</_FrontendIndex>
-      <_FrontendZip   Condition="'$(_FrontendZip)'   == ''">$(IntermediateOutputPath)wwwroot.zip</_FrontendZip>
-      <_FrontendDist  Condition="'$(_FrontendDist)'  == ''">$(FrontendBuildDir)</_FrontendDist>
-    </PropertyGroup>
-
-    <Message Text="📦 [PackFrontendToZip] 打包前端: dist=$(_FrontendDist)" Importance="high" />
-    <Delete Condition="Exists('$(_FrontendZip)')" Files="$(_FrontendZip)" />
-    <ZipDirectory SourceDirectory="$(_FrontendDist)"
-      DestinationFile="$(_FrontendZip)"
-      Overwrite="true" />
-    <CreateItem Include="$(_FrontendZip)"
-                AdditionalMetadata="LogicalName=$(AssemblyName).wwwroot.zip">
-      <Output TaskParameter="Include" ItemName="EmbeddedResource" />
-    </CreateItem>
-    <Message Text="✅ 前端已打包为 EmbeddedResource" Importance="high" />
-  </Target>
-
-  <ItemGroup>
-    <EmbeddedResource
-      Condition="Exists('$(IntermediateOutputPath)wwwroot.zip')"
-      Include="$(IntermediateOutputPath)wwwroot.zip"
-      LogicalName="$(AssemblyName).wwwroot.zip" />
-  </ItemGroup>
-
-  <Target Name="CopyFrontendToOutput" BeforeTargets="BeforeBuild"
-          Condition="Exists('$(FrontendBuildDir)\index.html')">
-    <ItemGroup>
-      <None Include="$(FrontendBuildDir)\**"
-            CopyToOutputDirectory="PreserveNewest"
-            Link="wwwroot\%(RecursiveDir)%(Filename)%(Extension)" />
-    </ItemGroup>
-  </Target>
-
-  <ItemGroup Condition="Exists('$(FrontendBuildDir)')">
-    <Content Include="$(FrontendBuildDir)\**\*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
-      <TargetPath>wwwroot\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
-    </Content>
   </ItemGroup>
 
 </Project>
