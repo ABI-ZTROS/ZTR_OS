@@ -3,8 +3,10 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text.Json;
 using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.FileProviders;
@@ -84,12 +86,18 @@ public class ApiServerHost : IDisposable
             string wwwrootPath = Path.Combine(AppContext.BaseDirectory, "wwwroot");
             if (Directory.Exists(wwwrootPath))
             {
-                var defaultFileOptions = new DefaultFilesOptions();
+                var fileProvider = new PhysicalFileProvider(wwwrootPath);
+
+                _app.UseMiddleware<ApiUrlInjectorMiddleware>(port);
+
+                var defaultFileOptions = new DefaultFilesOptions
+                {
+                    FileProvider = fileProvider
+                };
                 defaultFileOptions.DefaultFileNames.Clear();
                 defaultFileOptions.DefaultFileNames.Add("index.html");
                 _app.UseDefaultFiles(defaultFileOptions);
 
-                var fileProvider = new PhysicalFileProvider(wwwrootPath);
                 var staticFileOptions = new StaticFileOptions
                 {
                     FileProvider = fileProvider,
@@ -142,6 +150,60 @@ public class ApiServerHost : IDisposable
         {
             StopAsync().Wait(TimeSpan.FromSeconds(5));
             _disposed = true;
+        }
+    }
+}
+
+public class ApiUrlInjectorMiddleware
+{
+    private readonly RequestDelegate _next;
+    private readonly int _port;
+
+    public ApiUrlInjectorMiddleware(RequestDelegate next, int port)
+    {
+        _next = next;
+        _port = port;
+    }
+
+    public async Task InvokeAsync(HttpContext context)
+    {
+        if (context.Request.Path == "/" || context.Request.Path == "/index.html")
+        {
+            string baseUrl = $"http://localhost:{_port}";
+
+            var originalBody = context.Response.Body;
+            using var memoryStream = new MemoryStream();
+            context.Response.Body = memoryStream;
+
+            await _next(context);
+
+            context.Response.Body = originalBody;
+
+            if (context.Response.ContentType?.Contains("text/html") == true)
+            {
+                memoryStream.Position = 0;
+                using var reader = new StreamReader(memoryStream);
+                string html = await reader.ReadToEndAsync();
+
+                string injection = $"<script>window.__API_BASE_URL__='{baseUrl}';</script>";
+                if (!html.Contains("window.__API_BASE_URL__"))
+                {
+                    html = html.Replace("</head>", $"{injection}</head>");
+                }
+
+                byte[] bytes = System.Text.Encoding.UTF8.GetBytes(html);
+                context.Response.ContentLength = bytes.Length;
+                await context.Response.WriteAsync(bytes);
+            }
+            else
+            {
+                memoryStream.Position = 0;
+                await memoryStream.CopyToAsync(context.Response.Body);
+            }
+        }
+        else
+        {
+            await _next(context);
         }
     }
 }

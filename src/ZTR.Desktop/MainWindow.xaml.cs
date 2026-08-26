@@ -45,99 +45,10 @@ public partial class MainWindow : Window
         await WebView.EnsureCoreWebView2Async();
         WebView.CoreWebView2.Settings.AreDevToolsEnabled = false;
 
-        string html = LoadAndInjectApiUrl();
-        WebView.NavigateToString(html);
+        string url = $"http://localhost:{_port}/";
+        WebView.Source = new Uri(url);
 
         StatusText.Text = "Ready";
-    }
-
-    private string LoadAndInjectApiUrl()
-    {
-        string baseUrl = $"http://localhost:{_port}";
-        string htmlPath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "index.html");
-
-        if (!File.Exists(htmlPath))
-        {
-            return GenerateFallbackHtml(baseUrl);
-        }
-
-        string html = File.ReadAllText(htmlPath);
-
-        string injection = $"<script>window.__API_BASE_URL__='{baseUrl}';</script>";
-
-        if (html.Contains("window.__API_BASE_URL__"))
-        {
-            html = System.Text.RegularExpressions.Regex.Replace(
-                html,
-                @"window\.__API_BASE_URL__='[^']*'",
-                $"window.__API_BASE_URL__='{baseUrl}'");
-        }
-        else
-        {
-            html = html.Replace("</head>", $"{injection}</head>");
-        }
-
-        return html;
-    }
-
-    private static string GenerateFallbackHtml(string baseUrl)
-    {
-        return $$"""
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>ZTR_OS</title>
-    <script>window.__API_BASE_URL__='{{baseUrl}}';</script>
-    <style>
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #0a0e1a;
-            color: #e0e6ed;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-        }
-        .container {
-            text-align: center;
-            padding: 40px;
-        }
-        .spinner {
-            border: 3px solid #1a1f2e;
-            border-top: 3px solid #00ff88;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .status {
-            color: #00d4ff;
-            font-family: Consolas, monospace;
-            font-size: 14px;
-        }
-        .port-info {
-            color: #666;
-            font-size: 12px;
-            margin-top: 10px;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <div class="spinner"></div>
-        <div class="status">Loading ZTR_OS Control Panel...</div>
-        <div class="port-info">API: {{baseUrl}}</div>
-    </div>
-</body>
-</html>
-""";
     }
 
     private static int GetAvailablePort()

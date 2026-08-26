@@ -27,4 +27,23 @@
     <ProjectReference Include="..\ZTR.Common\ZTR.Common.csproj" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <FrontendDir>..\..\frontend</FrontendDir>
+    <FrontendBuildDir>$(FrontendDir)\dist</FrontendBuildDir>
+  </PropertyGroup>
+
+  <Target Name="BuildFrontend" BeforeTargets="Build" Condition="'$(BuildFrontend)' == 'true'">
+    <Message Text="Building frontend for desktop..." Importance="high" />
+    <Exec Command="npm ci" WorkingDirectory="$(FrontendDir)" StandardOutputImportance="normal" />
+    <Exec Command="npm run build" WorkingDirectory="$(FrontendDir)" StandardOutputImportance="normal" />
+  </Target>
+
+  <ItemGroup>
+    <Content Include="$(FrontendBuildDir)\**\*" Condition="Exists('$(FrontendBuildDir)')">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+      <TargetPath>wwwroot\%(RecursiveDir)%(Filename)%(Extension)</TargetPath>
+    </Content>
+  </ItemGroup>
+
 </Project>
