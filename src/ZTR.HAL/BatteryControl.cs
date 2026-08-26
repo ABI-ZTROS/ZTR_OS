@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using ZTR.Models;
 
@@ -115,6 +116,20 @@ public class BatteryControl : IDisposable
         }
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    private struct SystemPowerStatus
+    {
+        public byte ACLineStatus;
+        public byte BatteryFlag;
+        public byte BatteryLifePercent;
+        public byte Reserved1;
+        public int BatteryLifeTime;
+        public int BatteryFullLifeTime;
+    }
+
+    [DllImport("kernel32.dll")]
+    private static extern bool GetSystemPowerStatus(out SystemPowerStatus lpSystemPowerStatus);
+
     /// <summary>
     /// Gets comprehensive battery information including charge percentage,
     /// charging state, charge limit, and health status.
@@ -132,8 +147,6 @@ public class BatteryControl : IDisposable
             int chargerModeValue = _acpi.DeviceGet(AsusDevice.ChargerMode);
             info.IsCharging = chargerModeValue >= 0 && (ChargerMode)chargerModeValue != ChargerMode.BatteryOnly;
 
-            info.ChargePercent = info.IsCharging ? 100 : -1;
-
             int dischargeStatus = _acpi.DeviceGet(AsusDevice.BatteryDischarge);
             info.Status = dischargeStatus switch
             {
@@ -142,14 +155,81 @@ public class BatteryControl : IDisposable
                 2 => "Discharging",
                 _ => "Unknown"
             };
+
+            if (dischargeStatus >= 0)
+            {
+                info.ChargePercent = ReadChargePercentFromWmi();
+            }
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "Error reading battery info");
-            info.Status = "Unavailable";
+            _logger?.LogWarning(ex, "Error reading battery info via ACPI, falling back to WMI");
+            info.ChargePercent = ReadChargePercentFromWmi();
+            info.IsCharging = ReadChargingStatusFromWmi();
         }
 
         return info;
+    }
+
+    private static int ReadChargePercentFromWmi()
+    {
+        try
+        {
+            using var searcher = new System.Management.ManagementObjectSearcher(
+                "SELECT EstimatedChargeRemaining FROM Win32_Battery");
+            using var results = searcher.Get();
+
+            foreach (System.Management.ManagementObject obj in results)
+            {
+                if (obj["EstimatedChargeRemaining"] != null)
+                {
+                    return Convert.ToInt32(obj["EstimatedChargeRemaining"]);
+                }
+            }
+        }
+        catch { }
+
+        try
+        {
+            if (GetSystemPowerStatus(out var status) && status.BatteryLifePercent <= 100)
+            {
+                return status.BatteryLifePercent;
+            }
+        }
+        catch { }
+
+        return -1;
+    }
+
+    private static bool ReadChargingStatusFromWmi()
+    {
+        try
+        {
+            using var searcher = new System.Management.ManagementObjectSearcher(
+                "SELECT BatteryStatus FROM Win32_Battery");
+            using var results = searcher.Get();
+
+            foreach (System.Management.ManagementObject obj in results)
+            {
+                if (obj["BatteryStatus"] != null)
+                {
+                    int status = Convert.ToInt32(obj["BatteryStatus"]);
+                    return status == 2 || status == 6;
+                }
+            }
+        }
+        catch { }
+
+        try
+        {
+            if (GetSystemPowerStatus(out var status))
+            {
+                return status.ACLineStatus == 1 && status.BatteryFlag != 8;
+            }
+        }
+        catch { }
+
+        return false;
     }
 
     /// <summary>

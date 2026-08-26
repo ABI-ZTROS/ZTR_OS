@@ -278,7 +278,7 @@ public class SensorPipeline : IDisposable
         if (_gpuControl != null)
         {
             var gpuTemp = _gpuControl.GetCurrentTemperature();
-            if (gpuTemp.HasValue)
+            if (gpuTemp.HasValue && gpuTemp.Value > 0)
             {
                 readings.Add(new SensorReading
                 {
@@ -306,13 +306,9 @@ public class SensorPipeline : IDisposable
                     _degradationHandler.ReportSuccess("GPU Temperature", fallbackTemp, timestamp);
                 }
             }
-            else
-            {
-                _degradationHandler.ReportFailure("GPU Temperature", "Unavailable");
-            }
 
             var hotspotTemp = _gpuControl.GetHotspotTemperature();
-            if (hotspotTemp.HasValue)
+            if (hotspotTemp.HasValue && hotspotTemp.Value > 0)
             {
                 readings.Add(new SensorReading
                 {
@@ -341,18 +337,15 @@ public class SensorPipeline : IDisposable
             else if (_systemFallback?.IsAvailable == true)
             {
                 int fallbackUsage = _systemFallback.GetGpuUsage();
-                if (fallbackUsage >= 0)
+                readings.Add(new SensorReading
                 {
-                    readings.Add(new SensorReading
-                    {
-                        Name = "GPU Usage",
-                        Value = fallbackUsage,
-                        Unit = "%",
-                        Type = SensorType.Usage,
-                        Timestamp = timestamp
-                    });
-                    _degradationHandler.ReportSuccess("GPU Usage", fallbackUsage, timestamp);
-                }
+                    Name = "GPU Usage",
+                    Value = fallbackUsage,
+                    Unit = "%",
+                    Type = SensorType.Usage,
+                    Timestamp = timestamp
+                });
+                _degradationHandler.ReportSuccess("GPU Usage", fallbackUsage, timestamp);
             }
 
             var gpuPower = _gpuControl.GetGpuPower();
@@ -434,18 +427,15 @@ public class SensorPipeline : IDisposable
             }
 
             int gpuUsage = _systemFallback.GetGpuUsage();
-            if (gpuUsage >= 0)
+            readings.Add(new SensorReading
             {
-                readings.Add(new SensorReading
-                {
-                    Name = "GPU Usage",
-                    Value = gpuUsage,
-                    Unit = "%",
-                    Type = SensorType.Usage,
-                    Timestamp = timestamp
-                });
-                _degradationHandler.ReportSuccess("GPU Usage", gpuUsage, timestamp);
-            }
+                Name = "GPU Usage",
+                Value = gpuUsage,
+                Unit = "%",
+                Type = SensorType.Usage,
+                Timestamp = timestamp
+            });
+            _degradationHandler.ReportSuccess("GPU Usage", gpuUsage, timestamp);
         }
 
         return readings;
@@ -468,7 +458,9 @@ public class SensorPipeline : IDisposable
             _logger?.LogDebug(ex, "BatteryControl failed, falling back to system sensor");
         }
 
-        if (info != null)
+        bool hasValidBatteryData = false;
+
+        if (info != null && info.ChargePercent >= 0)
         {
             readings.Add(new SensorReading
             {
@@ -499,20 +491,26 @@ public class SensorPipeline : IDisposable
                 Timestamp = timestamp
             });
             _degradationHandler.ReportSuccess("ChargeLimit", info.ChargeLimit, timestamp);
+            hasValidBatteryData = true;
         }
-        else if (_systemFallback?.IsAvailable == true)
+
+        if (!hasValidBatteryData && _systemFallback?.IsAvailable == true)
         {
             var batteryState = _systemFallback.GetBatteryState();
 
-            readings.Add(new SensorReading
+            if (batteryState.ChargePercent >= 0)
             {
-                Name = "BatteryCharge",
-                Value = batteryState.ChargePercent,
-                Unit = "%",
-                Type = SensorType.Usage,
-                Timestamp = timestamp
-            });
-            _degradationHandler.ReportSuccess("BatteryCharge", batteryState.ChargePercent, timestamp);
+                readings.Add(new SensorReading
+                {
+                    Name = "BatteryCharge",
+                    Value = batteryState.ChargePercent,
+                    Unit = "%",
+                    Type = SensorType.Usage,
+                    Timestamp = timestamp
+                });
+                _degradationHandler.ReportSuccess("BatteryCharge", batteryState.ChargePercent, timestamp);
+                hasValidBatteryData = true;
+            }
 
             readings.Add(new SensorReading
             {
@@ -523,29 +521,49 @@ public class SensorPipeline : IDisposable
                 Timestamp = timestamp
             });
             _degradationHandler.ReportSuccess("Charging", batteryState.IsCharging ? 1 : 0, timestamp);
+
+            if (batteryState.ChargeLimit > 0)
+            {
+                readings.Add(new SensorReading
+                {
+                    Name = "ChargeLimit",
+                    Value = batteryState.ChargeLimit,
+                    Unit = "%",
+                    Type = SensorType.Usage,
+                    Timestamp = timestamp
+                });
+                _degradationHandler.ReportSuccess("ChargeLimit", batteryState.ChargeLimit, timestamp);
+            }
         }
-        else
+
+        if (!hasValidBatteryData)
         {
             int chargeLimit = SafeDeviceGet(AsusDevice.BatteryLimit);
-            readings.Add(new SensorReading
+            if (chargeLimit >= 0)
             {
-                Name = "ChargeLimit",
-                Value = chargeLimit,
-                Unit = "%",
-                Type = SensorType.Usage,
-                Timestamp = timestamp
-            });
-            _degradationHandler.ReportSuccess("ChargeLimit", chargeLimit, timestamp);
+                readings.Add(new SensorReading
+                {
+                    Name = "ChargeLimit",
+                    Value = chargeLimit,
+                    Unit = "%",
+                    Type = SensorType.Usage,
+                    Timestamp = timestamp
+                });
+                _degradationHandler.ReportSuccess("ChargeLimit", chargeLimit, timestamp);
+            }
 
             int chargerMode = SafeDeviceGet(AsusDevice.ChargerMode);
-            readings.Add(new SensorReading
+            if (chargerMode >= 0)
             {
-                Name = "Charging",
-                Value = chargerMode >= 0 && chargerMode != (int)ChargerMode.BatteryOnly ? 1 : 0,
-                Unit = "bool",
-                Type = SensorType.Usage,
-                Timestamp = timestamp
-            });
+                readings.Add(new SensorReading
+                {
+                    Name = "Charging",
+                    Value = chargerMode != (int)ChargerMode.BatteryOnly ? 1 : 0,
+                    Unit = "bool",
+                    Type = SensorType.Usage,
+                    Timestamp = timestamp
+                });
+            }
         }
 
         return readings;
@@ -556,26 +574,32 @@ public class SensorPipeline : IDisposable
         var readings = new List<SensorReading>();
 
         int cpuFanRpm = SafeDeviceGet(AsusDevice.CPU_Fan);
-        readings.Add(new SensorReading
+        if (cpuFanRpm >= 0)
         {
-            Name = "CPU Fan RPM",
-            Value = cpuFanRpm,
-            Unit = "RPM",
-            Type = SensorType.Fan,
-            Timestamp = timestamp
-        });
-        _degradationHandler.ReportSuccess("CPU Fan RPM", cpuFanRpm, timestamp);
+            readings.Add(new SensorReading
+            {
+                Name = "CPU Fan RPM",
+                Value = cpuFanRpm,
+                Unit = "RPM",
+                Type = SensorType.Fan,
+                Timestamp = timestamp
+            });
+            _degradationHandler.ReportSuccess("CPU Fan RPM", cpuFanRpm, timestamp);
+        }
 
         int gpuFanRpm = SafeDeviceGet(AsusDevice.GPU_Fan);
-        readings.Add(new SensorReading
+        if (gpuFanRpm >= 0)
         {
-            Name = "GPU Fan RPM",
-            Value = gpuFanRpm,
-            Unit = "RPM",
-            Type = SensorType.Fan,
-            Timestamp = timestamp
-        });
-        _degradationHandler.ReportSuccess("GPU Fan RPM", gpuFanRpm, timestamp);
+            readings.Add(new SensorReading
+            {
+                Name = "GPU Fan RPM",
+                Value = gpuFanRpm,
+                Unit = "RPM",
+                Type = SensorType.Fan,
+                Timestamp = timestamp
+            });
+            _degradationHandler.ReportSuccess("GPU Fan RPM", gpuFanRpm, timestamp);
+        }
 
         int midFanRpm = SafeDeviceGet(AsusDevice.Mid_Fan);
         if (midFanRpm >= 0)
@@ -593,7 +617,7 @@ public class SensorPipeline : IDisposable
         if (_gpuControl != null)
         {
             var gpuFanSpeed = _gpuControl.GetFanSpeed();
-            if (gpuFanSpeed.HasValue)
+            if (gpuFanSpeed.HasValue && gpuFanSpeed.Value >= 0)
             {
                 readings.Add(new SensorReading
                 {

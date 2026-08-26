@@ -59,6 +59,30 @@ public class SystemSensorFallback : ISystemSensorFallback
             _logger?.LogInformation("SystemSensorFallback: Initializing performance counters");
             _initProgress = 30;
 
+            InitializeCpuCounters();
+            InitializeGpuCounters();
+
+            _initProgress = 60;
+            await PrimeCountersAsync();
+
+            _initialized = true;
+            IsAvailable = true;
+            _initProgress = 100;
+            _logger?.LogInformation("SystemSensorFallback: Initialized successfully (CPU counters: {CpuCount}, GPU counters: {GpuCount})",
+                _cpuCounters.Count, _gpuCounters.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "SystemSensorFallback: Failed to initialize performance counters");
+            IsAvailable = false;
+            _initProgress = 100;
+        }
+    }
+
+    private void InitializeCpuCounters()
+    {
+        try
+        {
             if (PerformanceCounterCategory.Exists("Processor"))
             {
                 string cpuName = GetCpuInstanceName();
@@ -71,7 +95,17 @@ public class SystemSensorFallback : ISystemSensorFallback
                     _cpuCounters.Add(new PerformanceCounter("Processor", "% Processor Time", "_Total"));
                 }
             }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogDebug(ex, "Failed to initialize CPU counters");
+        }
+    }
 
+    private void InitializeGpuCounters()
+    {
+        try
+        {
             if (PerformanceCounterCategory.Exists("GPU Engine"))
             {
                 string gpuName = GetGpuInstanceName();
@@ -83,22 +117,16 @@ public class SystemSensorFallback : ISystemSensorFallback
                 {
                     _gpuCounters.Add(new PerformanceCounter("GPU Engine", "Utilization Percentage", "_Total"));
                 }
+                _logger?.LogInformation("SystemSensorFallback: GPU Engine performance counter initialized");
             }
-
-            _initProgress = 60;
-            await PrimeCountersAsync();
-
-            _initialized = true;
-            IsAvailable = _cpuCounters.Count > 0 || _gpuCounters.Count > 0;
-            _initProgress = 100;
-            _logger?.LogInformation("SystemSensorFallback: Initialized successfully (CPU counters: {CpuCount}, GPU counters: {GpuCount})",
-                _cpuCounters.Count, _gpuCounters.Count);
+            else
+            {
+                _logger?.LogInformation("SystemSensorFallback: GPU Engine performance counter category not available, GPU usage will use WMI fallback");
+            }
         }
         catch (Exception ex)
         {
-            _logger?.LogWarning(ex, "SystemSensorFallback: Failed to initialize performance counters");
-            IsAvailable = false;
-            _initProgress = 100;
+            _logger?.LogDebug(ex, "Failed to initialize GPU counters");
         }
     }
 
@@ -178,46 +206,14 @@ public class SystemSensorFallback : ISystemSensorFallback
     {
         try
         {
-            var scope = new System.Management.ManagementScope(@"\\.\WMI");
-            using var searcher = new System.Management.ManagementObjectSearcher(
-                scope,
-                new System.Management.ObjectQuery("SELECT CurrentTemperature FROM MSAcpi_ThermalZoneTemperature"));
-            using var results = searcher.Get();
-
-            foreach (System.Management.ManagementObject obj in results)
-            {
-                if (obj["CurrentTemperature"] != null)
-                {
-                    int temp = Convert.ToInt32(obj["CurrentTemperature"]);
-                    return temp > 1000 ? (temp - 2732) / 10 : temp;
-                }
-            }
+            var temps = ReadThermalZoneTemperatures();
+            var cpuTemp = temps.FirstOrDefault(t => t.InstanceName.Contains("CPU", StringComparison.OrdinalIgnoreCase));
+            if (cpuTemp.Temperature > 0)
+                return cpuTemp.Temperature;
         }
         catch (Exception ex)
         {
-            _logger?.LogDebug(ex, "Failed to get CPU temperature via WMI Root\\WMI");
-        }
-
-        try
-        {
-            var scope = new System.Management.ManagementScope(@"\\.\Root\WMI");
-            using var searcher = new System.Management.ManagementObjectSearcher(
-                scope,
-                new System.Management.ObjectQuery("SELECT CurrentTemperature FROM MSAcpi_ThermalZoneTemperature"));
-            using var results = searcher.Get();
-
-            foreach (System.Management.ManagementObject obj in results)
-            {
-                if (obj["CurrentTemperature"] != null)
-                {
-                    int temp = Convert.ToInt32(obj["CurrentTemperature"]);
-                    return temp > 1000 ? (temp - 2732) / 10 : temp;
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogDebug(ex, "Failed to get CPU temperature via WMI Root\\WMI");
+            _logger?.LogDebug(ex, "Failed to get CPU temperature via WMI");
         }
 
         return 0;
@@ -249,35 +245,61 @@ public class SystemSensorFallback : ISystemSensorFallback
 
     public int GetGpuUsage()
     {
-        if (!_initialized || _gpuCounters.Count == 0) return 0;
+        if (_initialized && _gpuCounters.Count > 0)
+        {
+            try
+            {
+                UpdateCounters();
+                if (_lastGpuUsage >= 0)
+                    return _lastGpuUsage;
+            }
+            catch { }
+        }
 
+        return GetGpuUsageFromWmi();
+    }
+
+    private int GetGpuUsageFromWmi()
+    {
         try
         {
-            UpdateCounters();
-            return _lastGpuUsage;
+            using var searcher = new System.Management.ManagementObjectSearcher(
+                "SELECT LoadPercentage FROM Win32_VideoController");
+            using var results = searcher.Get();
+
+            foreach (System.Management.ManagementObject obj in results)
+            {
+                if (obj["LoadPercentage"] != null)
+                {
+                    int usage = Convert.ToInt32(obj["LoadPercentage"]);
+                    if (usage >= 0)
+                        return usage;
+                }
+            }
         }
-        catch
-        {
-            return 0;
-        }
+        catch { }
+
+        return 0;
     }
 
     public int GetGpuTemperature()
     {
         try
         {
-            using var searcher = new System.Management.ManagementObjectSearcher(
-                "SELECT CurrentTemperature FROM MSAcpi_ThermalZoneTemperature WHERE InstanceName LIKE '%GPU%'");
-            using var results = searcher.Get();
+            var temps = ReadThermalZoneTemperatures();
 
-            foreach (System.Management.ManagementObject obj in results)
-            {
-                if (obj["CurrentTemperature"] != null)
-                {
-                    int temp = Convert.ToInt32(obj["CurrentTemperature"]);
-                    return temp > 1000 ? (temp - 2732) / 10 : temp;
-                }
-            }
+            var gpuTemp = temps
+                .Where(t => t.InstanceName.Contains("GPU", StringComparison.OrdinalIgnoreCase) ||
+                            t.InstanceName.Contains("GFX", StringComparison.OrdinalIgnoreCase) ||
+                            t.InstanceName.Contains("Graphics", StringComparison.OrdinalIgnoreCase))
+                .OrderByDescending(t => t.Temperature)
+                .FirstOrDefault();
+
+            if (gpuTemp.Temperature > 0)
+                return gpuTemp.Temperature;
+
+            if (temps.Count > 0 && temps[0].Temperature > 0)
+                return temps[0].Temperature;
         }
         catch (Exception ex)
         {
@@ -287,17 +309,64 @@ public class SystemSensorFallback : ISystemSensorFallback
         return 0;
     }
 
+    private record ThermalZoneReading(string InstanceName, int Temperature);
+
+    private List<ThermalZoneReading> ReadThermalZoneTemperatures()
+    {
+        var readings = new List<ThermalZoneReading>();
+
+        try
+        {
+            using var searcher = new System.Management.ManagementObjectSearcher(
+                @"\\.\Root\WMI",
+                new System.Management.ObjectQuery("SELECT * FROM MSAcpi_ThermalZoneTemperature"));
+            using var results = searcher.Get();
+
+            foreach (System.Management.ManagementObject obj in results)
+            {
+                string instanceName = obj["InstanceName"]?.ToString() ?? string.Empty;
+                if (obj["CurrentTemperature"] != null)
+                {
+                    int temp = Convert.ToInt32(obj["CurrentTemperature"]);
+                    int celsius = temp > 1000 ? (temp - 2732) / 10 : temp;
+                    readings.Add(new ThermalZoneReading(instanceName, celsius));
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogDebug(ex, "Failed to read thermal zone temperatures");
+        }
+
+        return readings;
+    }
+
     public int GetGpuPower()
     {
         return 0;
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    private struct SystemPowerStatus
+    {
+        public byte ACLineStatus;
+        public byte BatteryFlag;
+        public byte BatteryLifePercent;
+        public byte Reserved1;
+        public int BatteryLifeTime;
+        public int BatteryFullLifeTime;
+    }
+
+    [DllImport("kernel32.dll")]
+    private static extern bool GetSystemPowerStatus(out SystemPowerStatus lpSystemPowerStatus);
+
     public BatteryState GetBatteryState()
     {
         var state = new BatteryState
         {
-            ChargePercent = 100,
+            ChargePercent = -1,
             IsCharging = false,
+            ChargeLimit = 100,
             Status = "Unknown"
         };
 
@@ -317,7 +386,7 @@ public class SystemSensorFallback : ISystemSensorFallback
                 if (obj["BatteryStatus"] != null)
                 {
                     int status = Convert.ToInt32(obj["BatteryStatus"]);
-                    state.IsCharging = status == 2;
+                    state.IsCharging = status == 2 || status == 6;
                     state.Status = status switch
                     {
                         1 => "Discharging",
@@ -337,11 +406,67 @@ public class SystemSensorFallback : ISystemSensorFallback
             _logger?.LogDebug(ex, "Failed to get battery state via WMI");
         }
 
+        if (state.ChargePercent < 0)
+        {
+            state.ChargePercent = ReadBatteryViaApi();
+            if (state.ChargePercent >= 0 && !state.IsCharging)
+            {
+                state.IsCharging = ReadChargingViaApi();
+            }
+        }
+
         return state;
+    }
+
+    private static int ReadBatteryViaApi()
+    {
+        try
+        {
+            if (GetSystemPowerStatus(out var status) && status.BatteryLifePercent <= 100)
+            {
+                return status.BatteryLifePercent;
+            }
+        }
+        catch { }
+        return -1;
+    }
+
+    private static bool ReadChargingViaApi()
+    {
+        try
+        {
+            if (GetSystemPowerStatus(out var status))
+            {
+                return status.ACLineStatus == 1 && status.BatteryFlag != 8;
+            }
+        }
+        catch { }
+        return false;
     }
 
     public int GetFanSpeed()
     {
+        try
+        {
+            using var searcher = new System.Management.ManagementObjectSearcher(
+                @"\\.\Root\WMI",
+                new System.Management.ObjectQuery("SELECT * FROM MSAcpi_ThermalZoneTemperature"));
+            using var results = searcher.Get();
+
+            var fanZone = results.Cast<System.Management.ManagementObject>()
+                .FirstOrDefault(obj => obj["InstanceName"]?.ToString().Contains("Fan", StringComparison.OrdinalIgnoreCase) == true);
+
+            if (fanZone?["CurrentTemperature"] != null)
+            {
+                int temp = Convert.ToInt32(fanZone["CurrentTemperature"]);
+                return temp > 1000 ? (temp - 2732) / 10 : temp;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogDebug(ex, "Failed to get fan speed via WMI");
+        }
+
         return 0;
     }
 

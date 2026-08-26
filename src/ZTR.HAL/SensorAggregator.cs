@@ -243,8 +243,9 @@ public class SensorAggregator
     {
         var state = new BatteryState();
         var chargeReadings = readings.Where(r => r.Name.Contains("BatteryCharge", StringComparison.OrdinalIgnoreCase) || r.Name.Contains("ChargePercent", StringComparison.OrdinalIgnoreCase)).ToList();
-        if (chargeReadings.Count > 0)
-            state.ChargePercent = (int)Math.Round(chargeReadings.Average(r => r.Value));
+        var validChargeReadings = chargeReadings.Where(r => r.Value >= 0).ToList();
+        if (validChargeReadings.Count > 0)
+            state.ChargePercent = (int)Math.Round(validChargeReadings.Average(r => r.Value));
 
         var chargingReadings = readings.Where(r => r.Name.Contains("Charging", StringComparison.OrdinalIgnoreCase)).ToList();
         if (chargingReadings.Count > 0)
@@ -264,23 +265,23 @@ public class SensorAggregator
     private static FanState BuildFanState(IEnumerable<SensorReading> readings)
     {
         var state = new FanState();
-        var cpuFanSpeed = readings.Where(r => r.Type == SensorType.Fan && r.Name == "CPU Fan Speed").ToList();
+        var cpuFanSpeed = readings.Where(r => r.Type == SensorType.Fan && r.Name == "CPU Fan Speed" && r.Value >= 0).ToList();
         if (cpuFanSpeed.Count > 0)
             state.CpuFanSpeed = (int)Math.Round(cpuFanSpeed.Average(r => r.Value));
 
-        var cpuFanRpm = readings.Where(r => r.Type == SensorType.Fan && r.Name == "CPU Fan RPM").ToList();
+        var cpuFanRpm = readings.Where(r => r.Type == SensorType.Fan && r.Name == "CPU Fan RPM" && r.Value >= 0).ToList();
         if (cpuFanRpm.Count > 0)
             state.CpuFanRpm = (int)Math.Round(cpuFanRpm.Average(r => r.Value));
 
-        var gpuFanSpeed = readings.Where(r => r.Type == SensorType.Fan && r.Name == "GPU Fan Speed").ToList();
+        var gpuFanSpeed = readings.Where(r => r.Type == SensorType.Fan && r.Name == "GPU Fan Speed" && r.Value >= 0).ToList();
         if (gpuFanSpeed.Count > 0)
             state.GpuFanSpeed = (int)Math.Round(gpuFanSpeed.Average(r => r.Value));
 
-        var gpuFanRpm = readings.Where(r => r.Type == SensorType.Fan && r.Name == "GPU Fan RPM").ToList();
+        var gpuFanRpm = readings.Where(r => r.Type == SensorType.Fan && r.Name == "GPU Fan RPM" && r.Value >= 0).ToList();
         if (gpuFanRpm.Count > 0)
             state.GpuFanRpm = (int)Math.Round(gpuFanRpm.Average(r => r.Value));
 
-        var midFanSpeed = readings.Where(r => r.Type == SensorType.Fan && r.Name == "Mid Fan Speed").ToList();
+        var midFanSpeed = readings.Where(r => r.Type == SensorType.Fan && r.Name == "Mid Fan Speed" && r.Value >= 0).ToList();
         if (midFanSpeed.Count > 0)
             state.MidFanSpeed = (int)Math.Round(midFanSpeed.Average(r => r.Value));
 

@@ -26,6 +26,22 @@ public static class ServiceCollectionExtensions
             var logger = sp.GetService<ILogger<SystemSensorFallback>>();
             return new SystemSensorFallback(logger);
         });
+
+        services.AddSingleton<GpuSensorService>(sp =>
+        {
+            var logger = sp.GetService<ILogger<GpuSensorService>>();
+            var service = new GpuSensorService(logger);
+            service.Initialize();
+            return service;
+        });
+
+        services.AddSingleton<IGpuControl>(sp =>
+        {
+            var gpuService = sp.GetRequiredService<GpuSensorService>();
+            var primary = gpuService.GpuControls.FirstOrDefault();
+            return primary ?? new EmptyGpuControl();
+        });
+
         services.AddSingleton<SensorPipeline>(sp =>
         {
             var acpi = sp.GetService<AsusAcpi>();
@@ -51,4 +67,28 @@ public static class ServiceCollectionExtensions
 
         return services;
     }
+}
+
+internal class EmptyGpuControl : IGpuControl
+{
+    public bool IsNvidia => false;
+    public bool IsAmd => false;
+    public bool IsValid => false;
+    public string FullName => "No GPU detected";
+    public int GpuIndex => 0;
+
+    public int? GetCurrentTemperature() => null;
+    public int? GetHotspotTemperature() => null;
+    public int? GetGpuUse() => null;
+    public (long usedMb, long totalMb)? GetVramInfo() => null;
+    public float? GetGpuPower() => null;
+    public bool SetClocks(int coreOffset, int memoryOffset) => false;
+    public bool ResetClocks() => false;
+    public bool SetPowerLimit(int powerLimit) => false;
+    public bool SetFanSpeed(int speed) => false;
+    public int? GetFanSpeed() => null;
+    public (int coreClockMHz, int memoryClockMHz)? GetClockInfo() => null;
+    public void KillGpuApps() { }
+    public GpuState GetState() => new GpuState();
+    public void Dispose() { }
 }
