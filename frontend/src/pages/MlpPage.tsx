@@ -5,9 +5,22 @@ import { ToggleSwitch } from '@/components/common/ToggleSwitch'
 import { SliderControl } from '@/components/common/SliderControl'
 import { Timeline } from '@/components/common/Timeline'
 import { useMlpStore } from '@/store/useMlpStore'
-import { mlpApi } from '@/services/mlpApi'
+import { mlpApi, type MlpConfigResponse } from '@/services/mlpApi'
 import type { TimelineEvent, MlpConfig } from '@/types'
 import './MlpPage.css'
+
+function mapConfigToState(config: MlpConfigResponse): MlpConfig {
+  return {
+    learningRate: config.learningRate,
+    hiddenLayers: config.hiddenLayers,
+    inputSize: config.inputSize,
+    outputSize: config.outputSize,
+    isTraining: config.isTraining,
+    epochs: config.epochs,
+    currentEpoch: config.currentEpoch,
+    loss: config.loss,
+  }
+}
 
 export function MlpPage() {
   const mlpState = useMlpStore((s) => s.state)
@@ -28,13 +41,14 @@ export function MlpPage() {
     try {
       setIsLoading(true)
       const res = await mlpApi.getConfig()
-      if (res.success) {
+      if (res.success && res.data) {
         const config = res.data
         setLearningRate(config.learningRate)
         setHiddenLayersStr(config.hiddenLayers.join(','))
         setInputSize(config.inputSize)
         setOutputSize(config.outputSize)
-        updateState({ config })
+        setIsEnabled(config.isTraining)
+        updateState({ config: mapConfigToState(config) })
       }
       setError(null)
     } catch (e) {

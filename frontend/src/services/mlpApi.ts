@@ -1,5 +1,4 @@
 import { api } from './api'
-import type { MlpConfig, MlpDecision } from '@/types'
 
 export interface MlpConfigResponse {
   learningRate: number
