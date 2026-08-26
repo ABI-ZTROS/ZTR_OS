@@ -165,10 +165,10 @@ public class SystemSensorFallback : ISystemSensorFallback
     {
         try
         {
+            using var scope = new System.Management.ManagementScope(@"\\.\WMI");
             using var searcher = new System.Management.ManagementObjectSearcher(
-                "SELECT CurrentTemperature FROM MSAcpi_ThermalZoneTemperature",
-                null,
-                new System.Management.ManagementScopeOptions { Path = @"\\.\WMI" });
+                scope,
+                new System.Management.ObjectQuery("SELECT CurrentTemperature FROM MSAcpi_ThermalZoneTemperature"));
             using var results = searcher.Get();
 
             foreach (System.Management.ManagementObject obj in results)
@@ -187,10 +187,10 @@ public class SystemSensorFallback : ISystemSensorFallback
 
         try
         {
+            using var scope = new System.Management.ManagementScope(@"\\.\Root\WMI");
             using var searcher = new System.Management.ManagementObjectSearcher(
-                "SELECT CurrentTemperature FROM MSAcpi_ThermalZoneTemperature",
-                null,
-                new System.Management.ManagementScopeOptions { Path = @"\\.\Root\WMI" });
+                scope,
+                new System.Management.ObjectQuery("SELECT CurrentTemperature FROM MSAcpi_ThermalZoneTemperature"));
             using var results = searcher.Get();
 
             foreach (System.Management.ManagementObject obj in results)
