@@ -1,16 +1,39 @@
 import { api } from './api'
 
 export const performanceApi = {
-  getConfig: () => api.get<Record<string, unknown>>('/api/performance/config'),
+  getConfig: async () => {
+    const modeRes = await api.get<{ mode: string }>('/api/performance/mode')
+    const curvesRes = await api.get<Record<string, number[]>>('/api/performance/fan-curves')
+    return {
+      success: modeRes.success && curvesRes.success,
+      data: {
+        mode: modeRes.data,
+        curves: curvesRes.data,
+      },
+    }
+  },
   setConfig: (config: Record<string, unknown>) =>
-    api.put<void>('/api/performance/config', config),
-  getPowerLimit: () => api.get<{ cpu: number; gpu: number }>('/api/performance/power-limit'),
-  setPowerLimit: (component: 'cpu' | 'gpu', limit: number) =>
-    api.post<void>(`/api/performance/power-limit/${component}`, { limit }),
-  getGpuMode: () => api.get<{ mode: string }>('/api/performance/gpu-mode'),
+    api.put<void>('/api/settings', config),
+  getPowerLimit: () => api.get<{ cpu: number; gpu: number }>('/api/performance/mode'),
+  setPowerLimit: (component: 'cpu' | 'gpu' | 'spl' | 'sppt' | 'fppt', limit: number) =>
+    api.post<void>('/api/performance/power-limits', MapPowerLimit(component, limit)),
+  getGpuMode: () => api.get<{ mode: string }>('/api/performance/mode'),
   setGpuMode: (mode: string) =>
-    api.post<void>('/api/performance/gpu-mode', { mode }),
+    api.post<void>('/api/performance/mode', { mode }),
   getFanCurves: () => api.get<Record<string, number[]>>('/api/performance/fan-curves'),
   setFanCurve: (fanId: number, curve: number[]) =>
-    api.put<void>(`/api/performance/fan-curves/${fanId}`, { curve }),
+    api.post<void>('/api/performance/fan-curves', { device: fanId, curve }),
+}
+
+function MapPowerLimit(component: string, limit: number) {
+  switch (component) {
+    case 'spl':
+      return { spl: limit, sppt: null, fppt: null }
+    case 'sppt':
+      return { spl: null, sppt: limit, fppt: null }
+    case 'fppt':
+      return { spl: null, sppt: null, fppt: limit }
+    default:
+      return { spl: limit, sppt: limit, fppt: limit }
+  }
 }

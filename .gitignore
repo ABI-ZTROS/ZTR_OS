@@ -117,3 +117,8 @@ frontend/.env.production
 *.swp
 *.swo
 *~
+
+## Generated reports
+*_report.json
+*_audit.json
+frontend_*.json
