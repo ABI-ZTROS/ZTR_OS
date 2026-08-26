@@ -17,8 +17,9 @@ public class SensorPipeline : IDisposable
     private int _intervalMs = 1000;
     private bool _disposed;
 
-    private int _cpuFanMax = 2400;
-    private int _gpuFanMax = 2400;
+    private int _cpuFanMax = 25;
+    private int _gpuFanMax = 25;
+    private int _midFanMax = 15;
 
     /// <summary>
     /// Gets or sets the polling interval in milliseconds.
@@ -582,20 +583,10 @@ public class SensorPipeline : IDisposable
         var readings = new List<SensorReading>();
 
         int cpuFanRaw = SafeDeviceGet(AsusDevice.CPU_Fan);
-        int cpuFan = FormatFanValue(cpuFanRaw);
-        if (cpuFan >= 0)
+        int cpuFanPct = FormatFanPercent(cpuFanRaw, _cpuFanMax);
+        int cpuFanRpm = FormatFanRpm(cpuFanRaw);
+        if (cpuFanPct >= 0)
         {
-            readings.Add(new SensorReading
-            {
-                Name = "CPU Fan RPM",
-                Value = cpuFan,
-                Unit = "RPM",
-                Type = SensorType.Fan,
-                Timestamp = timestamp
-            });
-            _degradationHandler.ReportSuccess("CPU Fan RPM", cpuFan, timestamp);
-
-            int cpuFanPct = (int)Math.Clamp(cpuFan * 100.0 / Math.Max(_cpuFanMax, 1), 0, 100);
             readings.Add(new SensorReading
             {
                 Name = "CPU Fan Speed",
@@ -604,23 +595,26 @@ public class SensorPipeline : IDisposable
                 Type = SensorType.Fan,
                 Timestamp = timestamp
             });
+            _degradationHandler.ReportSuccess("CPU Fan Speed", cpuFanPct, timestamp);
+
+            if (cpuFanRpm > 0)
+            {
+                readings.Add(new SensorReading
+                {
+                    Name = "CPU Fan RPM",
+                    Value = cpuFanRpm,
+                    Unit = "RPM",
+                    Type = SensorType.Fan,
+                    Timestamp = timestamp
+                });
+            }
         }
 
         int gpuFanRaw = SafeDeviceGet(AsusDevice.GPU_Fan);
-        int gpuFan = FormatFanValue(gpuFanRaw);
-        if (gpuFan >= 0)
+        int gpuFanPct = FormatFanPercent(gpuFanRaw, _gpuFanMax);
+        int gpuFanRpm = FormatFanRpm(gpuFanRaw);
+        if (gpuFanPct >= 0)
         {
-            readings.Add(new SensorReading
-            {
-                Name = "GPU Fan RPM",
-                Value = gpuFan,
-                Unit = "RPM",
-                Type = SensorType.Fan,
-                Timestamp = timestamp
-            });
-            _degradationHandler.ReportSuccess("GPU Fan RPM", gpuFan, timestamp);
-
-            int gpuFanPct = (int)Math.Clamp(gpuFan * 100.0 / Math.Max(_gpuFanMax, 1), 0, 100);
             readings.Add(new SensorReading
             {
                 Name = "GPU Fan Speed",
@@ -629,20 +623,46 @@ public class SensorPipeline : IDisposable
                 Type = SensorType.Fan,
                 Timestamp = timestamp
             });
+            _degradationHandler.ReportSuccess("GPU Fan Speed", gpuFanPct, timestamp);
+
+            if (gpuFanRpm > 0)
+            {
+                readings.Add(new SensorReading
+                {
+                    Name = "GPU Fan RPM",
+                    Value = gpuFanRpm,
+                    Unit = "RPM",
+                    Type = SensorType.Fan,
+                    Timestamp = timestamp
+                });
+            }
         }
 
         int midFanRaw = SafeDeviceGet(AsusDevice.Mid_Fan);
-        int midFan = FormatFanValue(midFanRaw);
-        if (midFan >= 0)
+        int midFanPct = FormatFanPercent(midFanRaw, _midFanMax);
+        int midFanRpm = FormatFanRpm(midFanRaw);
+        if (midFanPct >= 0)
         {
             readings.Add(new SensorReading
             {
                 Name = "Mid Fan Speed",
-                Value = midFan,
-                Unit = "RPM",
+                Value = midFanPct,
+                Unit = "%",
                 Type = SensorType.Fan,
                 Timestamp = timestamp
             });
+
+            if (midFanRpm > 0)
+            {
+                readings.Add(new SensorReading
+                {
+                    Name = "Mid Fan RPM",
+                    Value = midFanRpm,
+                    Unit = "RPM",
+                    Type = SensorType.Fan,
+                    Timestamp = timestamp
+                });
+            }
         }
 
         if (_gpuControl != null)
@@ -678,17 +698,37 @@ public class SensorPipeline : IDisposable
     }
 
     /// <summary>
-    /// Formats raw ACPI fan value. G-Helper protocol:
-    /// raw value & 0xFFFF gives fan percentage.
+    /// Parses raw ACPI fan value. G-Helper protocol:
+    /// raw & 0xFFFF gives raw fan units (e.g., 43 for 4300 RPM).
     /// Values > 120 or negative indicate invalid/unavailable.
-    /// Returns RPM-equivalent: raw * 100.
     /// </summary>
-    private static int FormatFanValue(int raw)
+    private static int ParseFanRaw(int raw)
     {
         int fan = raw & 0xFFFF;
         if (fan > 120 || (fan == 0 && raw < 0))
             return -1;
-        return fan * 100;
+        return fan;
+    }
+
+    /// <summary>
+    /// Converts raw ACPI fan value to RPM (raw * 100).
+    /// </summary>
+    private static int FormatFanRpm(int raw)
+    {
+        int fan = ParseFanRaw(raw);
+        return fan < 0 ? -1 : fan * 100;
+    }
+
+    /// <summary>
+    /// Converts raw ACPI fan value to percentage (0-100).
+    /// Uses G-Helper default fan max values: CPU=25, GPU=25, Mid=15.
+    /// </summary>
+    private static int FormatFanPercent(int raw, int fanMax)
+    {
+        int fan = ParseFanRaw(raw);
+        if (fan < 0) return -1;
+        int max = Math.Max(fanMax, 1);
+        return (int)Math.Clamp(fan * 100.0 / max, 0, 100);
     }
 
     private void RestartTimer()

@@ -111,98 +111,85 @@ public class SystemSensorFallback : ISystemSensorFallback
     {
         try
         {
-            if (PerformanceCounterCategory.Exists("GPU Engine"))
+            if (!PerformanceCounterCategory.Exists("GPU Engine"))
             {
-                var category = new PerformanceCounterCategory("GPU Engine");
-                var instances = category.GetInstanceNames();
+                _logger?.LogInformation("SystemSensorFallback: GPU Engine performance counter category not available, GPU usage will use WMI fallback");
+                return;
+            }
 
-                string? workingInstance = null;
+            var category = new PerformanceCounterCategory("GPU Engine");
+
+            // Task Manager approach: try _Total first (sums all GPUs/engines)
+            try
+            {
+                var totalCounter = new PerformanceCounter("GPU Engine", "Utilization Percentage", "_Total");
+                totalCounter.NextValue();
+                _gpuCounters.Add(totalCounter);
+                _gpuCounterInstance = "_Total";
+                _logger?.LogInformation("SystemSensorFallback: GPU Engine _Total counter initialized");
+            }
+            catch
+            {
+                // _Total failed, enumerate all instances and sum them
+                var instances = category.GetInstanceNames();
+                int validCount = 0;
+
                 foreach (var instance in instances)
                 {
                     if (instance == "_Total") continue;
                     try
                     {
-                        var testCounter = new PerformanceCounter("GPU Engine", "Utilization Percentage", instance);
-                        testCounter.NextValue();
-                        workingInstance = instance;
-                        break;
+                        var counter = new PerformanceCounter("GPU Engine", "Utilization Percentage", instance);
+                        counter.NextValue();
+                        _gpuCounters.Add(counter);
+                        validCount++;
                     }
                     catch
                     {
                     }
                 }
 
-                if (workingInstance == null)
+                if (validCount > 0)
                 {
-                    try
-                    {
-                        var testCounter = new PerformanceCounter("GPU Engine", "Utilization Percentage", "_Total");
-                        testCounter.NextValue();
-                        workingInstance = "_Total";
-                    }
-                    catch
-                    {
-                        _logger?.LogWarning("SystemSensorFallback: No GPU Engine counter instance works");
-                        return;
-                    }
+                    _gpuCounterInstance = "(* summed)";
+                    _logger?.LogInformation("SystemSensorFallback: GPU Engine counters initialized ({Count} instances)", validCount);
                 }
-
-                _gpuCounterInstance = workingInstance;
-                _gpuCounters.Add(new PerformanceCounter("GPU Engine", "Utilization Percentage", workingInstance));
-                _logger?.LogInformation("SystemSensorFallback: GPU Engine performance counter initialized (instance: {Instance})", workingInstance);
-            }
-            else
-            {
-                _logger?.LogInformation("SystemSensorFallback: GPU Engine performance counter category not available, GPU usage will use WMI fallback");
+                else
+                {
+                    _logger?.LogWarning("SystemSensorFallback: No GPU Engine counter instance works");
+                }
             }
 
+            // GPU Adapter Memory for VRAM tracking
             try
             {
                 if (PerformanceCounterCategory.Exists("GPU Adapter Memory"))
                 {
-                    var memCategory = new PerformanceCounterCategory("GPU Adapter Memory");
-                    var memInstances = memCategory.GetInstanceNames();
-
-                    string? memInstance = null;
-                    foreach (var instance in memInstances)
+                    try
                     {
-                        if (instance == "_Total") continue;
-                        try
-                        {
-                            var testCounter = new PerformanceCounter("GPU Adapter Memory", "Total Committed Memory", instance);
-                            testCounter.NextValue();
-                            memInstance = instance;
-                            break;
-                        }
-                        catch
-                        {
-                        }
+                        _gpuMemoryCounter = new PerformanceCounter("GPU Adapter Memory", "Total Committed Memory", "_Total");
+                        _gpuMemoryCounter.NextValue();
+                        _logger?.LogInformation("SystemSensorFallback: GPU Adapter Memory _Total counter initialized");
                     }
-
-                    if (memInstance == null && memInstances.Contains("_Total"))
+                    catch
                     {
-                        try
+                        var memCategory = new PerformanceCounterCategory("GPU Adapter Memory");
+                        var memInstances = memCategory.GetInstanceNames();
+                        foreach (var instance in memInstances)
                         {
-                            var testCounter = new PerformanceCounter("GPU Adapter Memory", "Total Committed Memory", "_Total");
-                            testCounter.NextValue();
-                            memInstance = "_Total";
+                            if (instance == "_Total") continue;
+                            try
+                            {
+                                _gpuMemoryCounter = new PerformanceCounter("GPU Adapter Memory", "Total Committed Memory", instance);
+                                _gpuMemoryCounter.NextValue();
+                                break;
+                            }
+                            catch { }
                         }
-                        catch
-                        {
-                        }
-                    }
-
-                    if (memInstance != null)
-                    {
-                        _gpuMemoryCounter = new PerformanceCounter("GPU Adapter Memory", "Total Committed Memory", memInstance);
-                        _logger?.LogInformation("SystemSensorFallback: GPU Adapter Memory counter initialized (instance: {Instance})", memInstance);
                     }
                 }
             }
-            catch (Exception ex)
-            {
-                _logger?.LogDebug(ex, "Failed to initialize GPU memory counter");
-            }
+            catch { }
         }
         catch (Exception ex)
         {
@@ -728,7 +715,24 @@ public class SystemSensorFallback : ISystemSensorFallback
 
             if (_gpuCounters.Count > 0)
             {
-                _lastGpuUsage = (int)Math.Round(_gpuCounters[0].NextValue());
+                if (_gpuCounterInstance == "_Total" || _gpuCounters.Count == 1)
+                {
+                    _lastGpuUsage = (int)Math.Round(_gpuCounters[0].NextValue());
+                }
+                else
+                {
+                    float maxUsage = 0;
+                    foreach (var counter in _gpuCounters)
+                    {
+                        try
+                        {
+                            float val = counter.NextValue();
+                            if (val > maxUsage) maxUsage = val;
+                        }
+                        catch { }
+                    }
+                    _lastGpuUsage = (int)Math.Round(maxUsage);
+                }
             }
 
             _lastUpdate = now;
