@@ -1,5 +1,13 @@
 import { api } from './api'
 
+export interface PowerLimitsResponse {
+  cpu: number
+  gpu: number
+  spl: number
+  sppt: number
+  fppt: number
+}
+
 export const performanceApi = {
   getConfig: async () => {
     const modeRes = await api.get<{ mode: string }>('/api/performance/mode')
@@ -14,9 +22,11 @@ export const performanceApi = {
   },
   setConfig: (config: Record<string, unknown>) =>
     api.put<void>('/api/settings', config),
-  getPowerLimit: () => api.get<{ cpu: number; gpu: number }>('/api/performance/mode'),
+  getPowerLimit: () => api.get<PowerLimitsResponse>('/api/performance/mode'),
   setPowerLimit: (component: 'cpu' | 'gpu' | 'spl' | 'sppt' | 'fppt', limit: number) =>
     api.post<void>('/api/performance/power-limits', MapPowerLimit(component, limit)),
+  setAllPowerLimits: (spl: number, sppt: number, fppt: number) =>
+    api.post<void>('/api/performance/power-limits', { spl, sppt, fppt }),
   getGpuMode: () => api.get<{ mode: string }>('/api/performance/mode'),
   setGpuMode: (mode: string) =>
     api.post<void>('/api/performance/mode', { mode }),

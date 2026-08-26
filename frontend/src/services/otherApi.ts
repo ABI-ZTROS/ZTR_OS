@@ -7,6 +7,7 @@ export const bindingApi = {
   removeBinding: (processId: number) =>
     api.delete<void>(`/api/binding/${processId}`),
   getProcesses: () => api.get<Array<Record<string, unknown>>>('/api/binding/processes'),
+  getTopology: () => api.get<Array<Record<string, unknown>>>('/api/binding/topology'),
 }
 
 export const auraApi = {

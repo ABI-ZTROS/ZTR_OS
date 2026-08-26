@@ -6,6 +6,7 @@ import { SliderControl } from '@/components/common/SliderControl'
 import { Timeline } from '@/components/common/Timeline'
 import { useMlpStore } from '@/store/useMlpStore'
 import { mlpApi, type MlpConfigResponse } from '@/services/mlpApi'
+import { performanceApi } from '@/services/performanceApi'
 import type { TimelineEvent, MlpConfig } from '@/types'
 import './MlpPage.css'
 
@@ -122,14 +123,26 @@ export function MlpPage() {
   const handleOverride = useCallback(async () => {
     if (!overrideAction) return
     try {
-      await mlpApi.setConfig({
-        ...mlpState.config,
-        isTraining: false,
-      })
+      const modeMap: Record<string, string> = {
+        eco: 'silent',
+        balanced: 'balanced',
+        performance: 'turbo',
+        boost: 'turbo',
+        silent: 'silent',
+      }
+      const mode = modeMap[overrideAction] ?? 'balanced'
+      await mlpApi.stopTraining()
+      const modeRes = await performanceApi.setGpuMode(mode)
+      if (modeRes.success) {
+        updateState({
+          config: { ...mlpState.config, isTraining: false },
+          status: 'idle',
+        })
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Override failed')
     }
-  }, [overrideAction, mlpState.config])
+  }, [overrideAction, mlpState.config, updateState])
 
   const handleReset = useCallback(async () => {
     try {

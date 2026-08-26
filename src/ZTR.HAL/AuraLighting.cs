@@ -20,6 +20,8 @@ public class AuraLighting
     private byte _random;
     private byte _red2, _green2, _blue2;
     private bool _auraSync;
+    private int _brightness = 80;
+    private readonly Dictionary<AuraZone, AuraMode> _zoneModes = new();
 
     /// <summary>
     /// Number of LEDs in PerKey direct mode layout.
@@ -359,6 +361,7 @@ public class AuraLighting
     {
         _currentMode = mode;
         _currentZone = zone;
+        _zoneModes[zone] = mode;
         (_red, _green, _blue) = (r, g, b);
         _speed = speed;
         _direction = direction;
@@ -467,6 +470,31 @@ public class AuraLighting
         var zone = (AuraZone)regionIndex;
         return SetMode(mode, zone, r, g, b, speed, direction);
     }
+
+    /// <summary>
+    /// Gets the current mode for a specific zone.
+    /// </summary>
+    /// <param name="zone">The Aura zone to query.</param>
+    /// <returns>The current mode for the zone.</returns>
+    public AuraMode GetCurrentMode(AuraZone zone)
+    {
+        return _zoneModes.TryGetValue(zone, out var mode) ? mode : _currentMode;
+    }
+
+    /// <summary>
+    /// Sets the brightness level for all zones.
+    /// </summary>
+    /// <param name="brightness">Brightness level (0-100).</param>
+    public void SetBrightness(int brightness)
+    {
+        _brightness = Math.Clamp(brightness, 0, 100);
+    }
+
+    /// <summary>
+    /// Gets the current brightness level.
+    /// </summary>
+    /// <returns>The brightness level (0-100).</returns>
+    public int GetBrightness() => _brightness;
 
     /// <summary>
     /// Turns off all Aura lighting by setting static black on all zones.

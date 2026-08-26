@@ -16,6 +16,7 @@ public record SetGpuAffinityRequest(int ProcessId, int GpuIndex);
 public record SetAuraModeRequest(AuraMode Mode, AuraZone Zone, byte R, byte G, byte B);
 public record MlpConfigUpdateRequest(MlpConfig Config);
 public record BindingPolicyRequest(int ProcessId, BindingStrategy Strategy);
+public record SetBindingRequest(List<int> Affinity);
 
 public record ApiResponse<T>(bool Success, T? Data, string? Error = null);
 public record ApiResponse(bool Success, string? Error = null);

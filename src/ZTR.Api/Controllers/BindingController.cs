@@ -36,6 +36,50 @@ public class BindingController : ControllerBase
         return Ok(new ApiResponse<IReadOnlyList<ProcessBinding>>(true, processes));
     }
 
+    [HttpGet]
+    [ProducesResponseType<ApiResponse<IReadOnlyList<ProcessBinding>>>(StatusCodes.Status200OK)]
+    public ActionResult<ApiResponse<IReadOnlyList<ProcessBinding>>> ListBindings()
+    {
+        var processes = _processTracker.GetAllProcesses();
+        return Ok(new ApiResponse<IReadOnlyList<ProcessBinding>>(true, processes));
+    }
+
+    [HttpPost("{processId}")]
+    [ProducesResponseType<ApiResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ApiResponse>(StatusCodes.Status400BadRequest)]
+    public ActionResult<ApiResponse> SetBinding(int processId, [FromBody] SetBindingRequest request)
+    {
+        long affinityMask = 0;
+        foreach (var coreId in request.Affinity)
+        {
+            if (coreId >= 0 && coreId < 64)
+            {
+                affinityMask |= 1L << coreId;
+            }
+        }
+
+        if (affinityMask == 0)
+        {
+            return BadRequest(new ApiResponse(false, "Invalid affinity mask"));
+        }
+
+        var cpuResult = _cpuManager.SetAffinity(processId, affinityMask);
+        if (!cpuResult)
+        {
+            return BadRequest(new ApiResponse(false, $"Failed to set affinity for process {processId}"));
+        }
+
+        return Ok(new ApiResponse(true));
+    }
+
+    [HttpDelete("{processId}")]
+    [ProducesResponseType<ApiResponse>(StatusCodes.Status200OK)]
+    public ActionResult<ApiResponse> RemoveBinding(int processId)
+    {
+        var result = _cpuManager.SetAffinity(processId, -1);
+        return Ok(new ApiResponse(true));
+    }
+
     [HttpPost("cpu")]
     [ProducesResponseType<ApiResponse>(StatusCodes.Status200OK)]
     [ProducesResponseType<ApiResponse>(StatusCodes.Status400BadRequest)]

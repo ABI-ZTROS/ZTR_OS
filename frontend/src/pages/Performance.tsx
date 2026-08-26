@@ -100,6 +100,33 @@ export function Performance() {
     }
   }, [])
 
+  const handleSpl = useCallback(async (value: number) => {
+    setSpl(value)
+    try {
+      await performanceApi.setAllPowerLimits(value, sppt, fppt)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to set SPL')
+    }
+  }, [sppt, fppt])
+
+  const handleSppt = useCallback(async (value: number) => {
+    setSppt(value)
+    try {
+      await performanceApi.setAllPowerLimits(spl, value, fppt)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to set sPPT')
+    }
+  }, [spl, fppt])
+
+  const handleFppt = useCallback(async (value: number) => {
+    setFppt(value)
+    try {
+      await performanceApi.setAllPowerLimits(spl, sppt, value)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to set fPPT')
+    }
+  }, [spl, sppt])
+
   const handleCpuCurveChange = useCallback(async (points: FanCurvePoint[]) => {
     setCpuCurve(points)
     try {
@@ -268,7 +295,7 @@ export function Performance() {
             max={100}
             step={1}
             unit="%"
-            onChange={(v) => setSpl(v)}
+            onChange={handleSpl}
             color="primary"
           />
           <SliderControl
@@ -278,7 +305,7 @@ export function Performance() {
             max={100}
             step={1}
             unit="%"
-            onChange={(v) => setSppt(v)}
+            onChange={handleSppt}
             color="accent"
           />
           <SliderControl
@@ -288,7 +315,7 @@ export function Performance() {
             max={100}
             step={1}
             unit="%"
-            onChange={(v) => setFppt(v)}
+            onChange={handleFppt}
             color="secondary"
           />
         </div>
