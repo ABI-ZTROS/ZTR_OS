@@ -10,20 +10,20 @@ import type { AuraDevice, AuraEffectType } from '@/types'
 import './Aura.css'
 
 const EFFECTS: { id: AuraEffectType; label: string; icon: string; desc: string }[] = [
-  { id: 'static', label: 'Static', icon: '◼', desc: 'Solid color' },
-  { id: 'breathe', label: 'Breathe', icon: '◐', desc: 'Pulse in/out' },
-  { id: 'rainbow', label: 'Rainbow', icon: '🌈', desc: 'Color cycle' },
-  { id: 'audio', label: 'Audio', icon: '🎵', desc: 'Sound reactive' },
-  { id: 'heatmap', label: 'Heatmap', icon: '🔥', desc: 'Temp based' },
-  { id: 'wave', label: 'Wave', icon: '🌊', desc: 'Wave pattern' },
-  { id: 'ripple', label: 'Ripple', icon: '💧', desc: 'Click ripple' },
-  { id: 'starry', label: 'Starry', icon: '✨', desc: 'Twinkling' },
+  { id: 'static', label: '静态', icon: '◼', desc: '纯色' },
+  { id: 'breathe', label: '呼吸', icon: '◐', desc: '呼吸闪烁' },
+  { id: 'rainbow', label: '彩虹', icon: '🌈', desc: '色彩循环' },
+  { id: 'audio', label: '音频', icon: '🎵', desc: '声音感应' },
+  { id: 'heatmap', label: '热感应', icon: '🔥', desc: '温度感应' },
+  { id: 'wave', label: '波浪', icon: '🌊', desc: '波浪模式' },
+  { id: 'ripple', label: '涟漪', icon: '💧', desc: '点击涟漪' },
+  { id: 'starry', label: '星光', icon: '✨', desc: '星光闪烁' },
 ]
 
 const ZONES: { id: string; label: string; icon: string }[] = [
-  { id: 'keyboard', label: 'Keyboard', icon: '⌨' },
-  { id: 'body', label: 'Body', icon: '💻' },
-  { id: 'touchpad', label: 'Touchpad', icon: '▭' },
+  { id: 'keyboard', label: '键盘', icon: '⌨' },
+  { id: 'body', label: '机身', icon: '💻' },
+  { id: 'touchpad', label: '触控板', icon: '▭' },
 ]
 
 export function Aura() {
@@ -48,7 +48,7 @@ export function Aura() {
       }
       setError(null)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load Aura devices')
+      setError(e instanceof Error ? e.message : '加载灯效设备失败')
     } finally {
       setIsLoading(false)
     }
@@ -70,7 +70,7 @@ export function Aura() {
         })
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to apply effect')
+      setError(e instanceof Error ? e.message : '应用效果失败')
     }
   }, [selectedColor, brightness, speed, intensity, selectedZone, isEnabled])
 
@@ -81,7 +81,7 @@ export function Aura() {
         await auraApi.setSpeed(selectedZone, value)
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to set speed')
+      setError(e instanceof Error ? e.message : '设置速度失败')
     }
   }, [selectedZone, isEnabled])
 
@@ -92,7 +92,7 @@ export function Aura() {
         await auraApi.setIntensity(selectedZone, value)
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to set intensity')
+      setError(e instanceof Error ? e.message : '设置强度失败')
     }
   }, [selectedZone, isEnabled])
 
@@ -101,7 +101,7 @@ export function Aura() {
     try {
       await auraApi.setEnable(selectedZone, enabled)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to toggle Aura')
+      setError(e instanceof Error ? e.message : '切换灯效失败')
     }
   }, [selectedZone])
 
@@ -112,7 +112,7 @@ export function Aura() {
         await auraApi.setColor(selectedZone, color)
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to set color')
+      setError(e instanceof Error ? e.message : '设置颜色失败')
     }
   }, [selectedZone, isEnabled])
 
@@ -123,7 +123,7 @@ export function Aura() {
         await auraApi.setBrightness(selectedZone, value)
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to set brightness')
+      setError(e instanceof Error ? e.message : '设置亮度失败')
     }
   }, [selectedZone, isEnabled])
 
@@ -134,7 +134,7 @@ export function Aura() {
         setError(null)
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to save preset')
+      setError(e instanceof Error ? e.message : '保存预设失败')
     }
   }, [selectedZone, selectedEffect])
 
@@ -142,15 +142,15 @@ export function Aura() {
 
   return (
     <PageWrapper
-      title="Aura Lighting"
-      subtitle="Control RGB lighting effects across supported devices"
+      title="Aura灯效"
+      subtitle="控制华硕设备的RGB灯效"
       actions={
         <div className="inline-group">
           <button className="btn-ghost" onClick={loadDevices} disabled={isLoading}>
-            {isLoading ? 'Loading...' : 'Refresh'}
+            {isLoading ? '加载中...' : '刷新'}
           </button>
           <button className="btn-primary" onClick={handleSavePreset}>
-            Save Preset
+            保存预设
           </button>
         </div>
       }
@@ -163,12 +163,12 @@ export function Aura() {
       )}
 
       <div className="grid-2">
-        <GlowCard title="Zone Selection" glowColor="primary">
+        <GlowCard title="区域选择" glowColor="primary">
           <ToggleSwitch
             checked={isEnabled}
             onChange={handleEnableToggle}
-            label="Aura Enabled"
-            description="Master switch for all lighting effects"
+            label="灯效开关"
+            description="所有灯效的主开关"
             color="primary"
           />
           <div className="divider" />
@@ -187,7 +187,7 @@ export function Aura() {
           </div>
         </GlowCard>
 
-        <GlowCard title="Devices in Zone" glowColor="accent">
+        <GlowCard title="设备列表" glowColor="accent">
           {zoneDevices.length > 0 ? (
             <div className="device-list">
               {zoneDevices.map((device) => (
@@ -195,7 +195,7 @@ export function Aura() {
                   <div className="device-info">
                     <span className="device-name">{device.name}</span>
                     <span className={`chip ${device.currentEffect ? 'chip--active' : ''}`}>
-                      {device.currentEffect ?? 'Idle'}
+                      {device.currentEffect ?? '空闲'}
                     </span>
                   </div>
                   <div
@@ -210,17 +210,17 @@ export function Aura() {
             </div>
           ) : (
             <p className="placeholder-text">
-              {isLoading ? 'Scanning for devices...' : 'No devices found in this zone.'}
+              {isLoading ? '正在扫描设备...' : '此区域未找到设备。'}
             </p>
           )}
           {devices.length > 0 && (
             <div className="device-summary">
               <div className="metric-row">
-                <span className="metric-label">Total Devices</span>
+                <span className="metric-label">设备总数</span>
                 <span className="metric-value">{devices.length}</span>
               </div>
               <div className="metric-row">
-                <span className="metric-label">Active Effects</span>
+                <span className="metric-label">激活效果</span>
                 <span className="metric-value">
                   {devices.filter((d) => d.currentEffect).length}
                 </span>
@@ -230,7 +230,7 @@ export function Aura() {
         </GlowCard>
       </div>
 
-      <GlowCard title="Lighting Effects" glowColor="secondary">
+      <GlowCard title="效果模式" glowColor="secondary">
         <div className="effects-grid">
           {EFFECTS.map((effect) => (
             <ModeCard
@@ -247,12 +247,12 @@ export function Aura() {
       </GlowCard>
 
       <div className="grid-2">
-        <GlowCard title="Color & Brightness" glowColor="accent">
+        <GlowCard title="颜色与亮度" glowColor="accent">
           <div className="color-controls">
             <ColorPicker
               color={selectedColor}
               onChange={applyColor}
-              label="Color"
+              label="颜色"
             />
             <div className="color-preview-large">
               <div
@@ -267,7 +267,7 @@ export function Aura() {
           </div>
           <div className="divider" />
           <SliderControl
-            label="Brightness"
+            label="亮度"
             value={brightness}
             min={0}
             max={100}
@@ -278,9 +278,9 @@ export function Aura() {
           />
         </GlowCard>
 
-        <GlowCard title="Effect Intensity" glowColor="primary">
+        <GlowCard title="效果强度" glowColor="primary">
           <SliderControl
-            label="Speed"
+            label="速度"
             value={speed}
             min={1}
             max={100}
@@ -291,7 +291,7 @@ export function Aura() {
           />
           <div className="divider" />
           <SliderControl
-            label="Intensity"
+            label="强度"
             value={intensity}
             min={1}
             max={100}
@@ -311,7 +311,7 @@ export function Aura() {
                 animationTimingFunction: 'ease-in-out',
               }}
             />
-            <span className="effect-preview-label">Live Preview</span>
+            <span className="effect-preview-label">实时预览</span>
           </div>
         </GlowCard>
       </div>

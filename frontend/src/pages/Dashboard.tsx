@@ -19,11 +19,11 @@ export function Dashboard() {
   return (
     <>
       <NeonGrid />
-      <PageWrapper title="Dashboard" subtitle="System overview and real-time metrics">
+      <PageWrapper title="仪表盘" subtitle="系统概览与实时指标">
         {!isConnected && (
           <div className="dashboard-banner">
             <span className="banner-icon">⚠</span>
-            <span>Waiting for backend connection. Start the ZTR.Api to see live data.</span>
+            <span>等待后端连接，请启动 ZTR.Api 以查看实时数据</span>
           </div>
         )}
 
@@ -34,7 +34,7 @@ export function Dashboard() {
               max={100}
               value={cpu?.temperature ?? 0}
               unit="°C"
-              label="CPU Temp"
+              label="CPU温度"
               warningThreshold={70}
               dangerThreshold={85}
               size="large"
@@ -45,7 +45,7 @@ export function Dashboard() {
               max={100}
               value={gpu?.temperature ?? 0}
               unit="°C"
-              label="GPU Temp"
+              label="GPU温度"
               warningThreshold={70}
               dangerThreshold={85}
               size="large"
@@ -59,7 +59,7 @@ export function Dashboard() {
               max={300}
               value={cpu?.powerDraw ?? 0}
               unit="W"
-              label="CPU Power"
+              label="CPU功耗"
               warningThreshold={70}
               dangerThreshold={90}
               size="medium"
@@ -70,7 +70,7 @@ export function Dashboard() {
               max={500}
               value={gpu?.powerDraw ?? 0}
               unit="W"
-              label="GPU Power"
+              label="GPU功耗"
               warningThreshold={70}
               dangerThreshold={90}
               size="medium"
@@ -81,7 +81,7 @@ export function Dashboard() {
               max={100}
               value={cpu?.usage ?? 0}
               unit="%"
-              label="CPU Usage"
+              label="CPU使用率"
               warningThreshold={70}
               dangerThreshold={85}
               size="medium"
@@ -92,7 +92,7 @@ export function Dashboard() {
               max={100}
               value={gpu?.usage ?? 0}
               unit="%"
-              label="GPU Usage"
+              label="GPU使用率"
               warningThreshold={70}
               dangerThreshold={85}
               size="medium"
@@ -106,7 +106,7 @@ export function Dashboard() {
               max={100}
               value={cpuFanSpeed}
               unit="%"
-              label="Fan CPU"
+              label="CPU风扇"
               warningThreshold={80}
               dangerThreshold={95}
               size="small"
@@ -117,7 +117,7 @@ export function Dashboard() {
               max={100}
               value={gpuFanSpeed}
               unit="%"
-              label="Fan GPU"
+              label="GPU风扇"
               warningThreshold={80}
               dangerThreshold={95}
               size="small"
@@ -128,7 +128,7 @@ export function Dashboard() {
               max={100}
               value={battery?.percentage ?? 0}
               unit="%"
-              label="Battery"
+              label="电池"
               warningThreshold={30}
               dangerThreshold={15}
               size="small"
@@ -139,7 +139,7 @@ export function Dashboard() {
               max={5000}
               value={gpu?.clockSpeed ?? 0}
               unit="MHz"
-              label="GPU Clock"
+              label="GPU时钟"
               warningThreshold={70}
               dangerThreshold={90}
               size="small"
@@ -154,19 +154,19 @@ export function Dashboard() {
               className="status-dot-indicator"
               style={{ background: isConnected ? 'var(--success)' : 'var(--text-muted)' }}
             />
-            <span>Backend SignalR: {isConnected ? 'Connected' : 'Disconnected'}</span>
+            <span>后端SignalR: {isConnected ? '已连接' : '已断开'}</span>
           </div>
           <div className="status-item">
             <span className="status-dot-indicator" style={{ background: 'var(--primary)' }} />
-            <span>Fans: {fans.length} detected</span>
+            <span>风扇: 检测到{fans.length}个</span>
           </div>
           <div className="status-item">
             <span className="status-dot-indicator" style={{ background: 'var(--accent)' }} />
-            <span>CPU Cores: {cpu?.coreCount ?? 0} / Threads: {cpu?.threadCount ?? 0}</span>
+            <span>CPU核心: {cpu?.coreCount ?? 0} / 线程: {cpu?.threadCount ?? 0}</span>
           </div>
           <div className="status-item">
             <span className="status-dot-indicator" style={{ background: 'var(--secondary)' }} />
-            <span>Battery: {battery?.status ?? 'Unknown'}</span>
+            <span>电池: {battery?.status ?? '未知'}</span>
           </div>
         </div>
       </PageWrapper>

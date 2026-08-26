@@ -51,7 +51,7 @@ export function Binding() {
       }
       setError(null)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load bindings')
+      setError(e instanceof Error ? e.message : '加载绑定失败')
     } finally {
       setIsLoading(false)
     }
@@ -72,7 +72,7 @@ export function Binding() {
       setSelectedProcess(null)
       setSelectedCpuNode(null)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to set binding')
+      setError(e instanceof Error ? e.message : '设置绑定失败')
     }
   }, [])
 
@@ -85,7 +85,7 @@ export function Binding() {
         )
       )
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to remove binding')
+      setError(e instanceof Error ? e.message : '移除绑定失败')
     }
   }, [])
 
@@ -94,7 +94,7 @@ export function Binding() {
     try {
       await bindingApi.setAutoBindGames(enabled)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to set auto-bind')
+      setError(e instanceof Error ? e.message : '设置自动绑定失败')
     }
   }, [])
 
@@ -107,7 +107,7 @@ export function Binding() {
         )
       )
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to set GPU affinity')
+      setError(e instanceof Error ? e.message : '设置GPU亲和性失败')
     }
   }, [])
 
@@ -127,12 +127,12 @@ export function Binding() {
 
   return (
     <PageWrapper
-      title="Process Binding"
-      subtitle="Bind processes to specific CPU cores and manage affinity"
+      title="进程绑定"
+      subtitle="将进程绑定到指定CPU核心和管理亲和性"
       actions={
         <div className="inline-group">
           <button className="btn-ghost" onClick={loadData} disabled={isLoading}>
-            {isLoading ? 'Loading...' : 'Refresh'}
+            {isLoading ? '加载中...' : '刷新'}
           </button>
         </div>
       }
@@ -145,46 +145,46 @@ export function Binding() {
       )}
 
       <div className="grid-2">
-        <GlowCard title="CPU Topology" glowColor="accent">
+        <GlowCard title="CPU拓扑" glowColor="accent">
           {topology.length > 0 ? (
             <TopologyTree
               nodes={topology}
               selectedId={selectedCpuNode?.id}
               onSelect={handleSelectCpuNode}
-              title="Physical CPU Layout"
+              title="物理CPU布局"
             />
           ) : (
-            <p className="placeholder-text">Connect to backend to view CPU topology.</p>
+            <p className="placeholder-text">连接后端以查看CPU拓扑。</p>
           )}
         </GlowCard>
 
-        <GlowCard title="Binding Policy" glowColor="primary">
+        <GlowCard title="绑定策略" glowColor="primary">
           <div className="card-section">
             <ToggleSwitch
               checked={autoBindGames}
               onChange={handleAutoBindToggle}
-              label="Auto-bind game processes"
-              description="Automatically bind detected game processes to dedicated cores"
+              label="自动绑定游戏进程"
+              description="自动将检测到的游戏进程绑定到专用核心"
               color="primary"
             />
             <div className="divider" />
             <div className="binding-summary">
               <div className="metric-row">
-                <span className="metric-label">Total Processes</span>
+                <span className="metric-label">进程总数</span>
                 <span className="metric-value">{processes.length}</span>
               </div>
               <div className="metric-row">
-                <span className="metric-label">Game Processes</span>
+                <span className="metric-label">游戏进程</span>
                 <span className="metric-value">{gameProcesses.length}</span>
               </div>
               <div className="metric-row">
-                <span className="metric-label">Bound Processes</span>
+                <span className="metric-label">已绑定进程</span>
                 <span className="metric-value">
                   {processes.filter((p) => p.affinity.length > 0).length}
                 </span>
               </div>
               <div className="metric-row">
-                <span className="metric-label">CPU Cores</span>
+                <span className="metric-label">CPU核心</span>
                 <span className="metric-value">{hardware?.cpu.coreCount ?? 0}</span>
               </div>
             </div>
@@ -193,7 +193,7 @@ export function Binding() {
       </div>
 
       {selectedProcess && (
-        <GlowCard title="Binding Action" glowColor="secondary">
+        <GlowCard title="绑定操作" glowColor="secondary">
           <div className="binding-action-panel">
             <div className="binding-action-info">
               <span className="binding-action-name">{selectedProcess.name}</span>
@@ -202,10 +202,10 @@ export function Binding() {
               </span>
               {selectedProcess.affinity.length > 0 ? (
                 <span className="chip chip--active">
-                  Bound to cores: {selectedProcess.affinity.join(', ')}
+                  已绑定核心：{selectedProcess.affinity.join(', ')}
                 </span>
               ) : (
-                <span className="chip">Unbound</span>
+                <span className="chip">未绑定</span>
               )}
             </div>
             <div className="inline-group">
@@ -218,31 +218,31 @@ export function Binding() {
                 }}
                 disabled={!selectedCpuNode || selectedCpuNode.type !== 'core'}
               >
-                Bind to Selected Core
+                绑定到所选核心
               </button>
               <button
                 className="btn-ghost"
                 onClick={() => handleUnbindProcess(selectedProcess.id)}
                 disabled={selectedProcess.affinity.length === 0}
               >
-                Unbind
+                解绑
               </button>
               <button
                 className="btn-secondary"
                 onClick={() => handleGpuBind(selectedProcess.id, 0)}
                 disabled={!selectedProcess}
               >
-                GPU Bind
+                GPU绑定
               </button>
               <button className="btn-ghost" onClick={() => setSelectedProcess(null)}>
-                Cancel
+                取消
               </button>
             </div>
           </div>
         </GlowCard>
       )}
 
-      <GlowCard title="Game Processes" glowColor="primary">
+      <GlowCard title="游戏进程" glowColor="primary">
         {gameProcesses.length > 0 ? (
           <div className="process-list">
             {gameProcesses.map((process) => (
@@ -279,9 +279,9 @@ export function Binding() {
                 </div>
                 <div className="process-affinity">
                   {process.affinity.length > 0 ? (
-                    <span className="chip chip--active">Core(s): {process.affinity.join(', ')}</span>
+                    <span className="chip chip--active">核心：{process.affinity.join(', ')}</span>
                   ) : (
-                    <span className="chip">Unbound</span>
+                    <span className="chip">未绑定</span>
                   )}
                 </div>
               </div>
@@ -289,12 +289,12 @@ export function Binding() {
           </div>
         ) : (
           <p className="placeholder-text">
-            {isConnected ? 'No game processes detected. Start a game to see it here.' : 'Waiting for backend connection...'}
+            {isConnected ? '未检测到游戏进程。启动游戏以在此处查看。' : '等待后端连接...'}
           </p>
         )}
       </GlowCard>
 
-      <GlowCard title="Other Processes" glowColor="accent">
+      <GlowCard title="其他进程" glowColor="accent">
         {nonGameProcesses.length > 0 ? (
           <div className="process-list">
             {nonGameProcesses.slice(0, 20).map((process) => (
@@ -331,9 +331,9 @@ export function Binding() {
                 </div>
                 <div className="process-affinity">
                   {process.affinity.length > 0 ? (
-                    <span className="chip chip--active">Core(s): {process.affinity.join(', ')}</span>
+                    <span className="chip chip--active">核心：{process.affinity.join(', ')}</span>
                   ) : (
-                    <span className="chip">Unbound</span>
+                    <span className="chip">未绑定</span>
                   )}
                 </div>
               </div>
@@ -341,7 +341,7 @@ export function Binding() {
           </div>
         ) : (
           <p className="placeholder-text">
-            {isConnected ? 'No process data.' : 'Waiting for backend connection...'}
+            {isConnected ? '暂无进程数据。' : '等待后端连接...'}
           </p>
         )}
       </GlowCard>

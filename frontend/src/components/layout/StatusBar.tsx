@@ -5,11 +5,11 @@ export function StatusBar() {
   const connectionStatus = useHardwareStore((s) => s.connectionStatus)
 
   const statusMap: Record<string, { label: string; color: string }> = {
-    connecting: { label: 'Connecting', color: 'var(--warning)' },
-    connected: { label: 'Online', color: 'var(--success)' },
-    disconnected: { label: 'Disconnected', color: 'var(--text-muted)' },
-    reconnecting: { label: 'Reconnecting', color: 'var(--warning)' },
-    error: { label: 'Error', color: 'var(--danger)' },
+    connecting: { label: '连接中', color: 'var(--warning)' },
+    connected: { label: '在线', color: 'var(--success)' },
+    disconnected: { label: '已断开', color: 'var(--text-muted)' },
+    reconnecting: { label: '重连中', color: 'var(--warning)' },
+    error: { label: '错误', color: 'var(--danger)' },
   }
 
   const status = statusMap[connectionStatus] || statusMap.disconnected
@@ -17,7 +17,7 @@ export function StatusBar() {
   return (
     <header className="status-bar">
       <div className="status-left">
-        <span className="status-title">ZTR_OS Control Panel</span>
+        <span className="status-title">ZTR_OS 控制台</span>
       </div>
       <div className="status-right">
         <div className="status-indicator">

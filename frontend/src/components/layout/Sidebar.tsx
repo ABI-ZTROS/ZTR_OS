@@ -2,12 +2,12 @@ import { NavLink } from 'react-router-dom'
 import './Sidebar.css'
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: '◉' },
-  { to: '/performance', label: 'Performance', icon: '⚡' },
-  { to: '/mlp', label: 'MLP', icon: '◎' },
-  { to: '/binding', label: 'Binding', icon: '⬡' },
-  { to: '/aura', label: 'Aura', icon: '✦' },
-  { to: '/settings', label: 'Settings', icon: '⚙' },
+  { to: '/', label: '仪表盘', icon: '◉' },
+  { to: '/performance', label: '性能', icon: '⚡' },
+  { to: '/mlp', label: '机器学习', icon: '◎' },
+  { to: '/binding', label: '进程绑定', icon: '⬡' },
+  { to: '/aura', label: '灯效', icon: '✦' },
+  { to: '/settings', label: '设置', icon: '⚙' },
 ]
 
 export function Sidebar() {

@@ -11,16 +11,15 @@ import type { PerformanceMode, FanCurvePoint } from '@/types'
 import './Performance.css'
 
 const MODES: { id: PerformanceMode; label: string; desc: string; icon: string; color: 'primary' | 'secondary' | 'accent' }[] = [
-  { id: 'silent', label: 'Silent', desc: 'Minimal fan noise', icon: '🤫', color: 'accent' },
-  { id: 'balanced', label: 'Balanced', desc: 'Default tuning', icon: '⚖', color: 'primary' },
-  { id: 'turbo', label: 'Turbo', desc: 'Max performance', icon: '🚀', color: 'secondary' },
-  { id: 'fullspeed', label: 'Full Speed', desc: 'Fans at max', icon: '💨', color: 'secondary' },
-  { id: 'manual', label: 'Manual', desc: 'Custom curves', icon: '🎛', color: 'accent' },
+  { id: 'silent', label: '静音模式', desc: '最低风扇噪音', icon: '🤫', color: 'accent' },
+  { id: 'balanced', label: '平衡模式', desc: '默认调校', icon: '⚖', color: 'primary' },
+  { id: 'turbo', label: '涡轮增压', desc: '最高性能', icon: '🚀', color: 'secondary' },
+  { id: 'fullspeed', label: '全速模式', desc: '风扇全开', icon: '💨', color: 'secondary' },
+  { id: 'manual', label: '手动模式', desc: '自定义曲线', icon: '🎛', color: 'accent' },
 ]
 
 export function Performance() {
   const hardware = useHardwareStore((s) => s.hardware)
-  const isConnected = useHardwareStore((s) => s.isConnected)
 
   const [mode, setMode] = useState<PerformanceMode>('balanced')
   const [cpuPower, setCpuPower] = useState(0)
@@ -58,12 +57,16 @@ export function Performance() {
 
       if (curvesRes.status === 'fulfilled' && curvesRes.value.success) {
         const curves = curvesRes.value.data
-        if (curves.cpu) setCpuCurve((curves.cpu as number[]).map((speed, i) => ({ temperature: i * 20, speed })))
-        if (curves.gpu) setGpuCurve((curves.gpu as number[]).map((speed, i) => ({ temperature: i * 20, speed })))
+        if (curves?.cpu && Array.isArray(curves.cpu) && curves.cpu.length > 0) {
+          setCpuCurve(curves.cpu.map((speed, i) => ({ temperature: i * 20, speed })))
+        }
+        if (curves?.gpu && Array.isArray(curves.gpu) && curves.gpu.length > 0) {
+          setGpuCurve(curves.gpu.map((speed, i) => ({ temperature: i * 20, speed })))
+        }
       }
       setError(null)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load config')
+      setError(e instanceof Error ? e.message : '加载配置失败')
     } finally {
       setIsLoading(false)
     }
@@ -78,7 +81,7 @@ export function Performance() {
     try {
       await performanceApi.setGpuMode(newMode)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to set mode')
+      setError(e instanceof Error ? e.message : '设置性能模式失败')
     }
   }, [])
 
@@ -87,7 +90,7 @@ export function Performance() {
     try {
       await performanceApi.setPowerLimit('cpu', value)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to set CPU power limit')
+      setError(e instanceof Error ? e.message : '设置CPU功耗限制失败')
     }
   }, [])
 
@@ -96,7 +99,7 @@ export function Performance() {
     try {
       await performanceApi.setPowerLimit('gpu', value)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to set GPU power limit')
+      setError(e instanceof Error ? e.message : '设置GPU功耗限制失败')
     }
   }, [])
 
@@ -105,7 +108,7 @@ export function Performance() {
     try {
       await performanceApi.setAllPowerLimits(value, sppt, fppt)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to set SPL')
+      setError(e instanceof Error ? e.message : '设置SPL失败')
     }
   }, [sppt, fppt])
 
@@ -114,7 +117,7 @@ export function Performance() {
     try {
       await performanceApi.setAllPowerLimits(spl, value, fppt)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to set sPPT')
+      setError(e instanceof Error ? e.message : '设置sPPT失败')
     }
   }, [spl, fppt])
 
@@ -123,7 +126,7 @@ export function Performance() {
     try {
       await performanceApi.setAllPowerLimits(spl, sppt, value)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to set fPPT')
+      setError(e instanceof Error ? e.message : '设置fPPT失败')
     }
   }, [spl, sppt])
 
@@ -132,7 +135,7 @@ export function Performance() {
     try {
       await performanceApi.setFanCurve(0, points.map((p) => p.speed))
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to save CPU fan curve')
+      setError(e instanceof Error ? e.message : '保存CPU风扇曲线失败')
     }
   }, [])
 
@@ -141,7 +144,7 @@ export function Performance() {
     try {
       await performanceApi.setFanCurve(1, points.map((p) => p.speed))
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to save GPU fan curve')
+      setError(e instanceof Error ? e.message : '保存GPU风扇曲线失败')
     }
   }, [])
 
@@ -166,11 +169,11 @@ export function Performance() {
 
   return (
     <PageWrapper
-      title="Performance Control"
-      subtitle="CPU/GPU power limits, fan curves, and GPU performance modes"
+      title="性能控制"
+      subtitle="CPU/GPU功耗限制、风扇曲线和GPU性能模式"
       actions={
         <button className="btn-ghost" onClick={loadConfig} disabled={isLoading}>
-          {isLoading ? 'Loading...' : 'Refresh'}
+          {isLoading ? '加载中...' : '刷新'}
         </button>
       }
     >
@@ -181,7 +184,7 @@ export function Performance() {
         </div>
       )}
 
-      <GlowCard title="Performance Mode" glowColor="primary">
+      <GlowCard title="性能模式" glowColor="primary">
         <div className="mode-selector">
           {MODES.map((m) => (
             <ModeCard
@@ -198,11 +201,11 @@ export function Performance() {
       </GlowCard>
 
       <div className="grid-2">
-        <GlowCard title="CPU Telemetry" glowColor="accent">
+        <GlowCard title="CPU遥测" glowColor="accent">
           <div className="gauge-row">
             <Gauge
               config={{
-                label: 'CPU Temp',
+                label: 'CPU温度',
                 value: getNum(cpu?.temperature),
                 max: 100,
                 unit: '°C',
@@ -211,7 +214,7 @@ export function Performance() {
             />
             <Gauge
               config={{
-                label: 'CPU Power',
+                label: 'CPU功耗',
                 value: getNum(cpu?.powerDraw),
                 max: 250,
                 unit: 'W',
@@ -220,7 +223,7 @@ export function Performance() {
             />
             <Gauge
               config={{
-                label: 'CPU Usage',
+                label: 'CPU使用率',
                 value: getNum(cpu?.usage),
                 max: 100,
                 unit: '%',
@@ -230,11 +233,11 @@ export function Performance() {
           </div>
         </GlowCard>
 
-        <GlowCard title="GPU Telemetry" glowColor="secondary">
+        <GlowCard title="GPU遥测" glowColor="secondary">
           <div className="gauge-row">
             <Gauge
               config={{
-                label: 'GPU Temp',
+                label: 'GPU温度',
                 value: getNum(gpu?.temperature),
                 max: 100,
                 unit: '°C',
@@ -243,7 +246,7 @@ export function Performance() {
             />
             <Gauge
               config={{
-                label: 'GPU Power',
+                label: 'GPU功耗',
                 value: getNum(gpu?.powerDraw),
                 max: 450,
                 unit: 'W',
@@ -252,7 +255,7 @@ export function Performance() {
             />
             <Gauge
               config={{
-                label: 'GPU Usage',
+                label: 'GPU使用率',
                 value: getNum(gpu?.usage),
                 max: 100,
                 unit: '%',
@@ -263,10 +266,10 @@ export function Performance() {
         </GlowCard>
       </div>
 
-      <GlowCard title="Power Limits" glowColor="accent">
+      <GlowCard title="功耗限制" glowColor="accent">
         <div className="power-limits-grid">
           <SliderControl
-            label="CPU Power Limit"
+            label="CPU功耗限制"
             value={cpuPower}
             min={10}
             max={300}
@@ -276,7 +279,7 @@ export function Performance() {
             color="accent"
           />
           <SliderControl
-            label="GPU Power Limit"
+            label="GPU功耗限制"
             value={gpuPower}
             min={50}
             max={500}
@@ -289,7 +292,7 @@ export function Performance() {
         <div className="divider" />
         <div className="power-limits-grid">
           <SliderControl
-            label="SPL (Smart Power Limit)"
+            label="SPL (智能功耗限制)"
             value={spl}
             min={0}
             max={100}
@@ -299,7 +302,7 @@ export function Performance() {
             color="primary"
           />
           <SliderControl
-            label="sPPT (Smart Power Push)"
+            label="sPPT (智能功耗推送)"
             value={sppt}
             min={0}
             max={100}
@@ -309,7 +312,7 @@ export function Performance() {
             color="accent"
           />
           <SliderControl
-            label="fPPT (Fan Power Push)"
+            label="fPPT (风扇功耗推送)"
             value={fppt}
             min={0}
             max={100}
@@ -323,79 +326,50 @@ export function Performance() {
 
       {mode === 'manual' && (
         <div className="grid-2">
-          <GlowCard title="CPU Fan Curve" glowColor="accent">
+          <GlowCard title="CPU风扇曲线" glowColor="accent">
             {cpuCurve.length >= 2 ? (
               <FanCurveEditor
                 points={cpuCurve}
                 onChange={handleCpuCurveChange}
-                label="CPU Fan Response"
+                label="CPU风扇响应"
               />
             ) : (
-              <p className="placeholder-text">No CPU fan curve data. Connect to backend to load curves.</p>
+              <p className="placeholder-text">暂无CPU风扇曲线数据，请连接后端加载。</p>
             )}
           </GlowCard>
 
-          <GlowCard title="GPU Fan Curve" glowColor="primary">
+          <GlowCard title="GPU风扇曲线" glowColor="primary">
             {gpuCurve.length >= 2 ? (
               <FanCurveEditor
                 points={gpuCurve}
                 onChange={handleGpuCurveChange}
-                label="GPU Fan Response"
+                label="GPU风扇响应"
               />
             ) : (
-              <p className="placeholder-text">No GPU fan curve data. Connect to backend to load curves.</p>
+              <p className="placeholder-text">暂无GPU风扇曲线数据，请连接后端加载。</p>
             )}
           </GlowCard>
         </div>
       )}
 
-      <GlowCard title="Connected Fans" glowColor="primary">
+      <GlowCard title="已连接风扇" glowColor="primary">
         {fans.length > 0 ? (
           <div className="fans-list">
-            {fans.map((fan, idx) => {
-              const speed = getNum(fan?.speed)
-              const targetSpeed = getNum(fan?.targetSpeed, speed)
-              const mode = typeof fan?.mode === 'string' ? fan.mode : 'automatic'
-              const name = typeof fan?.name === 'string' ? fan.name : 'Unknown Fan'
-              const key = typeof fan?.id === 'number' ? fan.id : idx
-              return (
-                <div key={key} className="fan-item">
-                  <div className="fan-info">
-                    <span className="fan-name">{name}</span>
-                    <span className="fan-mode">
-                      <span className={`chip ${mode === 'manual' ? 'chip--active' : 'chip--info'}`}>
-                        {mode}
-                      </span>
-                    </span>
-                  </div>
-                  <div className="fan-speed-row">
-                    <span className="fan-speed-label">Current</span>
-                    <div className="progress-bar">
-                      <div
-                        className={`progress-bar-fill ${speed > 80 ? 'progress-bar-fill--danger' : speed > 50 ? 'progress-bar-fill--warning' : 'progress-bar-fill--primary'}`}
-                        style={{ width: `${Math.max(0, Math.min(100, speed))}%` }}
-                      />
-                    </div>
-                    <span className="fan-speed-value">{speed.toFixed(0)}%</span>
-                  </div>
-                  <div className="fan-target-row">
-                    <span className="fan-speed-label">Target</span>
-                    <div className="progress-bar">
-                      <div
-                        className="progress-bar-fill progress-bar-fill--accent"
-                        style={{ width: `${Math.max(0, Math.min(100, targetSpeed))}%` }}
-                      />
-                    </div>
-                    <span className="fan-speed-value">{targetSpeed.toFixed(0)}%</span>
-                  </div>
+            {fans.map((fan, index) => (
+              <div key={index} className="fan-item">
+                <span className="fan-name">{fan.name ?? `风扇 ${index + 1}`}</span>
+                <div className="fan-bar">
+                  <div
+                    className="fan-bar-fill"
+                    style={{ width: `${fan.speed ?? 0}%` }}
+                  />
                 </div>
-              )
-            })}
+                <span className="fan-speed">{fan.speed ?? 0}%</span>
+              </div>
+            ))}
           </div>
         ) : (
-          <p className="placeholder-text">
-            {isConnected ? 'No fans detected.' : 'Waiting for backend connection...'}
-          </p>
+          <p className="placeholder-text">未检测到风扇</p>
         )}
       </GlowCard>
     </PageWrapper>

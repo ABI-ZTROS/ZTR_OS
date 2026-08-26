@@ -9,11 +9,11 @@ import type { HotkeyBinding } from '@/types'
 import './Settings.css'
 
 const DEFAULT_HOTKEYS: HotkeyBinding[] = [
-  { id: '1', action: 'Toggle Performance', keys: ['Ctrl', 'Shift', 'P'] },
-  { id: '2', action: 'Toggle Silent Mode', keys: ['Ctrl', 'Shift', 'S'] },
-  { id: '3', action: 'Boost CPU', keys: ['Ctrl', 'Alt', 'C'] },
-  { id: '4', action: 'Toggle Aura', keys: ['Ctrl', 'Shift', 'A'] },
-  { id: '5', action: 'Open Dashboard', keys: ['Ctrl', 'Shift', 'D'] },
+  { id: '1', action: '切换性能', keys: ['Ctrl', 'Shift', 'P'] },
+  { id: '2', action: '切换静音模式', keys: ['Ctrl', 'Shift', 'S'] },
+  { id: '3', action: '加速 CPU', keys: ['Ctrl', 'Alt', 'C'] },
+  { id: '4', action: '切换灯效', keys: ['Ctrl', 'Shift', 'A'] },
+  { id: '5', action: '打开仪表板', keys: ['Ctrl', 'Shift', 'D'] },
 ]
 
 const DEFAULT_SETTINGS = {
@@ -63,10 +63,10 @@ export function Settings() {
       a.download = 'ztr-settings.json'
       a.click()
       URL.revokeObjectURL(url)
-      setExportStatus('Settings exported successfully')
+      setExportStatus('设置导出成功')
       setTimeout(() => setExportStatus(null), 3000)
     } catch {
-      setExportStatus('Export failed')
+      setExportStatus('导出失败')
       setTimeout(() => setExportStatus(null), 3000)
     }
   }, [settings])
@@ -80,10 +80,10 @@ export function Settings() {
         const imported = JSON.parse(event.target?.result as string)
         updateSettings(imported)
         await syncSetting(imported)
-        setExportStatus('Settings imported successfully')
+        setExportStatus('设置导入成功')
         setTimeout(() => setExportStatus(null), 3000)
       } catch {
-        setExportStatus('Import failed - invalid file')
+        setExportStatus('导入失败 - 文件无效')
         setTimeout(() => setExportStatus(null), 3000)
       }
     }
@@ -94,7 +94,7 @@ export function Settings() {
   const handleResetToDefaults = useCallback(async () => {
     resetSettings()
     await syncSetting(DEFAULT_SETTINGS)
-    setExportStatus('Settings reset to defaults')
+    setExportStatus('设置已恢复默认')
     setTimeout(() => setExportStatus(null), 3000)
   }, [resetSettings, syncSetting])
 
@@ -112,25 +112,25 @@ export function Settings() {
   const handleLearningRateDefaultChange = useCallback(async (v: number) => {
     // This is just updating the display; actual MLP learning rate is on MLP page
     // We'll store it as a custom property for reference
-    setExportStatus(`Default learning rate: ${v.toFixed(4)}`)
+    setExportStatus(`默认学习率：${v.toFixed(4)}`)
     setTimeout(() => setExportStatus(null), 2000)
   }, [])
 
   const tabs: { id: typeof activeTab; label: string }[] = [
-    { id: 'general', label: 'General' },
-    { id: 'mlp', label: 'MLP' },
-    { id: 'hotkeys', label: 'Hotkeys' },
-    { id: 'hardware', label: 'Hardware' },
-    { id: 'about', label: 'About' },
+    { id: 'general', label: '通用' },
+    { id: 'mlp', label: '机器学习' },
+    { id: 'hotkeys', label: '快捷键' },
+    { id: 'hardware', label: '硬件' },
+    { id: 'about', label: '关于' },
   ]
 
   return (
     <PageWrapper
-      title="Settings"
-      subtitle="Configure ZTR_OS behavior and preferences"
+      title="设置"
+      subtitle="配置 ZTR_OS 行为和偏好"
       actions={
         <button className="btn-ghost" onClick={handleResetToDefaults}>
-          Reset to Defaults
+          恢复默认
         </button>
       }
     >
@@ -154,50 +154,50 @@ export function Settings() {
 
       {activeTab === 'general' && (
         <>
-          <GlowCard title="General" glowColor="primary">
+          <GlowCard title="通用设置" glowColor="primary">
             <ToggleSwitch
               checked={settings.autoPerformance}
               onChange={(v) => handleBooleanToggle('autoPerformance', v)}
-              label="Auto Performance"
-              description="Automatically adjust power limits based on system load"
+              label="自动性能"
+              description="根据系统负载自动调整功率限制"
               color="primary"
             />
             <ToggleSwitch
               checked={settings.autoMlp}
               onChange={(v) => handleBooleanToggle('autoMlp', v)}
-              label="Auto MLP"
-              description="Enable machine-learning-based performance decisions"
+              label="自动机器学习"
+              description="启用基于机器学习的性能决策"
               color="accent"
             />
             <ToggleSwitch
               checked={settings.autoAura}
               onChange={(v) => handleBooleanToggle('autoAura', v)}
-              label="Auto Aura"
-              description="Dynamic lighting effects based on system state"
+              label="自动灯效"
+              description="根据系统状态实现动态灯效"
               color="secondary"
             />
             <div className="divider" />
             <ToggleSwitch
               checked={settings.autoStart}
               onChange={(v) => handleBooleanToggle('autoStart', v)}
-              label="Auto Start"
-              description="Start ZTR_OS when the system boots"
+              label="开机自启"
+              description="系统启动时自动启动 ZTR_OS"
               color="primary"
             />
             <ToggleSwitch
               checked={settings.minimizeToTray}
               onChange={(v) => handleBooleanToggle('minimizeToTray', v)}
-              label="Minimize to Tray"
-              description="Minimize to system tray instead of taskbar"
+              label="最小化到托盘"
+              description="最小化到系统托盘而非任务栏"
               color="accent"
             />
           </GlowCard>
 
-          <GlowCard title="Interface" glowColor="accent">
+          <GlowCard title="界面设置" glowColor="accent">
             <div className="setting-row">
               <div>
-                <div className="setting-label">Theme</div>
-                <div className="setting-desc">Visual theme for the application</div>
+                <div className="setting-label">主题</div>
+                <div className="setting-desc">应用程序的视觉主题</div>
               </div>
               <select
                 className="form-select"
@@ -208,14 +208,14 @@ export function Settings() {
                   syncSetting({ theme })
                 }}
               >
-                <option value="cyber">Cyber Neon</option>
-                <option value="dark">Dark Classic</option>
+                <option value="cyber">赛博霓虹</option>
+                <option value="dark">暗夜经典</option>
               </select>
             </div>
             <div className="setting-row">
               <div>
-                <div className="setting-label">Notifications</div>
-                <div className="setting-desc">Show desktop notifications for important events</div>
+                <div className="setting-label">通知</div>
+                <div className="setting-desc">为重要事件显示桌面通知</div>
               </div>
               <label className="switch">
                 <input
@@ -228,8 +228,8 @@ export function Settings() {
             </div>
             <div className="setting-row">
               <div>
-                <div className="setting-label">Polling Interval</div>
-                <div className="setting-desc">How often to fetch hardware data (ms)</div>
+                <div className="setting-label">轮询间隔</div>
+                <div className="setting-desc">获取硬件数据的频率（毫秒）</div>
               </div>
               <input
                 type="number"
@@ -250,9 +250,9 @@ export function Settings() {
 
       {activeTab === 'mlp' && (
         <>
-          <GlowCard title="MLP Settings" glowColor="accent">
+          <GlowCard title="机器学习设置" glowColor="accent">
             <SliderControl
-              label="Default Learning Rate"
+              label="默认学习率"
               value={0.001}
               min={0.0001}
               max={0.01}
@@ -265,17 +265,17 @@ export function Settings() {
             <ToggleSwitch
               checked={settings.autoModeSwitch}
               onChange={(v) => handleBooleanToggle('autoModeSwitch', v)}
-              label="Auto Mode Switch"
-              description="Automatically switch performance modes based on MLP predictions"
+              label="自动模式切换"
+              description="根据机器学习预测自动切换性能模式"
               color="primary"
             />
             <SliderControl
-              label="Prediction Window"
+              label="预测窗口"
               value={settings.predictionWindow}
               min={10}
               max={200}
               step={10}
-              unit=" decisions"
+              unit=" 决策"
               onChange={(v) => {
                 updateSettings({ predictionWindow: v })
                 syncSetting({ predictionWindow: v })
@@ -284,23 +284,23 @@ export function Settings() {
             />
           </GlowCard>
 
-          <GlowCard title="MLP Model Defaults" glowColor="primary">
+          <GlowCard title="机器学习模型默认值" glowColor="primary">
             <div className="metric-row">
-              <span className="metric-label">Default Hidden Layers</span>
+              <span className="metric-label">默认隐藏层</span>
               <span className="metric-value">[64, 32, 16]</span>
             </div>
             <div className="metric-row">
-              <span className="metric-label">Default Input Size</span>
+              <span className="metric-label">默认输入大小</span>
               <span className="metric-value">10</span>
             </div>
             <div className="metric-row">
-              <span className="metric-label">Default Output Size</span>
+              <span className="metric-label">默认输出大小</span>
               <span className="metric-value">4</span>
             </div>
             <div className="metric-row">
-              <span className="metric-label">Status</span>
+              <span className="metric-label">状态</span>
               <span className="metric-value">
-                <span className="chip chip--active">Configured</span>
+                <span className="chip chip--active">已配置</span>
               </span>
             </div>
           </GlowCard>
@@ -308,7 +308,7 @@ export function Settings() {
       )}
 
       {activeTab === 'hotkeys' && (
-        <GlowCard title="Hotkey Bindings" glowColor="primary">
+        <GlowCard title="快捷键绑定" glowColor="primary">
           <div className="hotkey-list">
             {hotkeys.map((hotkey, index) => (
               <div key={hotkey.id} className="hotkey-item">
@@ -326,13 +326,13 @@ export function Settings() {
                 <button
                   className="btn-ghost"
                   onClick={() => {
-                    const newKeys = prompt(`Edit hotkey for "${hotkey.action}" (comma separated):`, hotkey.keys.join(','))
+                    const newKeys = prompt(`编辑快捷键（逗号分隔）:`, hotkey.keys.join(','))
                     if (newKeys) {
                       handleHotkeyEdit(index, newKeys)
                     }
                   }}
                 >
-                  Edit
+                  编辑
                 </button>
               </div>
             ))}
@@ -342,44 +342,44 @@ export function Settings() {
 
       {activeTab === 'hardware' && (
         <>
-          <GlowCard title="Connection" glowColor="none">
+          <GlowCard title="连接" glowColor="none">
             <div className="setting-row">
               <div>
                 <div className="setting-label">API URL</div>
-                <div className="setting-desc">Backend API endpoint (configured via VITE_API_URL)</div>
+                <div className="setting-desc">后端 API 端点（通过 VITE_API_URL 配置）</div>
               </div>
-              <code className="api-url">{import.meta.env.VITE_API_URL ?? 'Not set'}</code>
+              <code className="api-url">{import.meta.env.VITE_API_URL ?? '未设置'}</code>
             </div>
           </GlowCard>
 
-          <GlowCard title="Hardware-Specific" glowColor="accent">
+          <GlowCard title="硬件信息" glowColor="accent">
             <div className="metric-row">
-              <span className="metric-label">CPU Architecture</span>
+              <span className="metric-label">CPU 架构</span>
               <span className="metric-value">
                 {navigator.hardwareConcurrency > 0
-                  ? `${navigator.hardwareConcurrency} logical cores`
-                  : 'Unknown'}
+                  ? `${navigator.hardwareConcurrency} 逻辑核心`
+                  : '未知'}
               </span>
             </div>
             <div className="metric-row">
-              <span className="metric-label">Platform</span>
-              <span className="metric-value">{navigator.platform ?? 'Unknown'}</span>
+              <span className="metric-label">平台</span>
+              <span className="metric-value">{navigator.platform ?? '未知'}</span>
             </div>
             <div className="metric-row">
-              <span className="metric-label">GPU Renderer</span>
+              <span className="metric-label">GPU 渲染器</span>
               <span className="metric-value">
                 <canvas id="gpu-canvas" style={{ display: 'none' }} />
               </span>
             </div>
           </GlowCard>
 
-          <GlowCard title="Configuration Management" glowColor="primary">
+          <GlowCard title="配置管理" glowColor="primary">
             <div className="inline-group">
               <button className="btn-primary" onClick={handleExport}>
-                Export Configuration
+                导出配置
               </button>
               <label className="btn-ghost" style={{ cursor: 'pointer' }}>
-                Import Configuration
+                导入配置
                 <input
                   type="file"
                   accept=".json"
@@ -393,43 +393,41 @@ export function Settings() {
       )}
 
       {activeTab === 'about' && (
-        <GlowCard title="About ZTR_OS" glowColor="primary">
+        <GlowCard title="关于 ZTR_OS" glowColor="primary">
           <div className="about-content">
             <div className="about-logo">
               <span className="about-logo-icon">ZTR</span>
               <span className="about-logo-sub">OS</span>
             </div>
             <div className="about-version">
-              <span className="version-label">Version</span>
+              <span className="version-label">版本</span>
               <span className="version-value">1.0.0</span>
             </div>
             <div className="about-desc">
-              ZTR_OS is an advanced system management and optimization platform that provides
-              real-time hardware monitoring, AI-powered performance tuning, and dynamic
-              lighting control for your device.
+              ZTR_OS 是一款先进的系统管理和优化平台，提供实时硬件监控、AI 驱动的性能调优以及设备动态灯效控制。
             </div>
             <div className="about-features">
               <div className="about-feature">
                 <span className="feature-icon">⚡</span>
-                <span>Real-time CPU/GPU power management</span>
+                <span>实时 CPU/GPU 功率管理</span>
               </div>
               <div className="about-feature">
                 <span className="feature-icon">🧠</span>
-                <span>ML-powered adaptive tuning</span>
+                <span>机器学习驱动的自适应调优</span>
               </div>
               <div className="about-feature">
                 <span className="feature-icon">🎨</span>
-                <span>Dynamic RGB lighting control</span>
+                <span>动态 RGB 灯效控制</span>
               </div>
               <div className="about-feature">
                 <span className="feature-icon">🔗</span>
-                <span>Process affinity binding</span>
+                <span>处理器亲和性绑定</span>
               </div>
             </div>
             <div className="about-links">
-              <a href="#" className="about-link">Documentation</a>
+              <a href="#" className="about-link">文档</a>
               <a href="#" className="about-link">GitHub</a>
-              <a href="#" className="about-link">Support</a>
+              <a href="#" className="about-link">支持</a>
             </div>
           </div>
         </GlowCard>

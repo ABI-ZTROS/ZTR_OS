@@ -53,7 +53,7 @@ export function MlpPage() {
       }
       setError(null)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load MLP config')
+      setError(e instanceof Error ? e.message : '加载机器学习配置失败')
     } finally {
       setIsLoading(false)
     }
@@ -69,7 +69,7 @@ export function MlpPage() {
       timestamp: d.timestamp,
       type: 'decision',
       title: d.action,
-      description: `Confidence: ${(d.confidence * 100).toFixed(1)}%`,
+      description: `置信度：${(d.confidence * 100).toFixed(1)}%`,
       metadata: {
         confidence: d.confidence,
         output: d.output.join(', '),
@@ -87,7 +87,7 @@ export function MlpPage() {
         await mlpApi.stopTraining()
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to toggle MLP')
+      setError(e instanceof Error ? e.message : '切换机器学习状态失败')
       setIsEnabled(!enabled)
     }
   }, [mlpState.config])
@@ -131,7 +131,7 @@ export function MlpPage() {
       }
       setError(null)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to save config')
+      setError(e instanceof Error ? e.message : '保存配置失败')
     }
   }, [learningRate, hiddenLayersStr, inputSize, outputSize, mlpState.config, updateState])
 
@@ -155,7 +155,7 @@ export function MlpPage() {
         })
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Override failed')
+      setError(e instanceof Error ? e.message : '覆盖操作失败')
     }
   }, [overrideAction, mlpState.config, updateState])
 
@@ -167,7 +167,7 @@ export function MlpPage() {
         status: 'idle',
       })
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Reset failed')
+      setError(e instanceof Error ? e.message : '重置失败')
     }
   }, [mlpState.config, updateState])
 
@@ -185,15 +185,15 @@ export function MlpPage() {
 
   return (
     <PageWrapper
-      title="MLP Visualization"
-      subtitle="Multi-layer perceptron training and decision tracking"
+      title="机器学习引擎"
+      subtitle="基于神经网络的自适应性能调度"
       actions={
         <div className="inline-group">
           <button className="btn-ghost" onClick={loadConfig} disabled={isLoading}>
-            {isLoading ? 'Loading...' : 'Refresh'}
+            {isLoading ? '加载中...' : '刷新'}
           </button>
           <button className="btn-ghost" onClick={handleReset}>
-            Reset Model
+            重置模型
           </button>
         </div>
       }
@@ -206,41 +206,41 @@ export function MlpPage() {
       )}
 
       <div className="grid-2">
-        <GlowCard title="MLP Control" glowColor="primary">
+        <GlowCard title="机器学习控制" glowColor="primary">
           <div className="mlp-control-row">
             <div className="mlp-status-row">
-              <span className="status-label">Status</span>
+              <span className="status-label">状态</span>
               <span className={`chip ${statusColor}`}>{mlpState.status}</span>
             </div>
             <ToggleSwitch
               checked={isEnabled}
               onChange={handleToggle}
-              label="Enable MLP"
-              description="Start/stop the multi-layer perceptron engine"
+              label="启用机器学习"
+              description="启动/停止多层感知机引擎"
               color="primary"
             />
           </div>
           <div className="divider" />
           <div className="mlp-metrics">
             <div className="metric-row">
-              <span className="metric-label">Epoch</span>
+              <span className="metric-label">轮次</span>
               <span className="metric-value">
                 {mlpState.config.currentEpoch} / {mlpState.config.epochs}
               </span>
             </div>
             <div className="metric-row">
-              <span className="metric-label">Loss</span>
+              <span className="metric-label">损失值</span>
               <span className="metric-value">{mlpState.config.loss.toFixed(4)}</span>
             </div>
             <div className="metric-row">
-              <span className="metric-label">Last Updated</span>
+              <span className="metric-label">最后更新</span>
               <span className="metric-value">
                 {new Date(mlpState.lastUpdated).toLocaleTimeString()}
               </span>
             </div>
             {mlpState.config.epochs > 0 && (
               <div className="epoch-progress">
-                <span className="metric-label">Training Progress</span>
+                <span className="metric-label">训练进度</span>
                 <div className="progress-bar">
                   <div
                     className="progress-bar-fill progress-bar-fill--primary"
@@ -253,7 +253,7 @@ export function MlpPage() {
           </div>
         </GlowCard>
 
-        <GlowCard title="Prediction Accuracy" glowColor="accent">
+        <GlowCard title="预测准确度" glowColor="accent">
           <div className="accuracy-display">
             <div className="accuracy-circle">
               <svg viewBox="0 0 120 120" className="accuracy-svg">
@@ -282,17 +282,17 @@ export function MlpPage() {
                   {(Math.max(0, 100 - mlpState.config.loss * 100)).toFixed(1)}%
                 </text>
                 <text x="60" y="75" className="accuracy-label" textAnchor="middle">
-                  Accuracy
+                  准确度
                 </text>
               </svg>
             </div>
             <div className="accuracy-stats">
               <div className="metric-row">
-                <span className="metric-label">Decisions</span>
+                <span className="metric-label">决策</span>
                 <span className="metric-value">{decisions.length}</span>
               </div>
               <div className="metric-row">
-                <span className="metric-label">Confidence (avg)</span>
+                <span className="metric-label">置信度（平均）</span>
                 <span className="metric-value">
                   {decisions.length > 0
                     ? ((decisions.reduce((a, d) => a + d.confidence, 0) / decisions.length) * 100).toFixed(1)
@@ -300,18 +300,18 @@ export function MlpPage() {
                 </span>
               </div>
               <div className="metric-row">
-                <span className="metric-label">Status</span>
-                <span className="metric-value">{mlpState.config.isTraining ? 'Training' : 'Idle'}</span>
+                <span className="metric-label">状态</span>
+                <span className="metric-value">{mlpState.config.isTraining ? '训练中' : '空闲'}</span>
               </div>
             </div>
           </div>
         </GlowCard>
       </div>
 
-      <GlowCard title="Model Configuration" glowColor="accent">
+      <GlowCard title="模型配置" glowColor="accent">
         <div className="config-grid">
           <SliderControl
-            label="Learning Rate"
+            label="学习率"
             value={learningRate}
             min={0.0001}
             max={0.01}
@@ -321,7 +321,7 @@ export function MlpPage() {
             formatValue={(v) => v.toFixed(4)}
           />
           <div className="form-row">
-            <span className="form-label">Hidden Layers (comma separated)</span>
+            <span className="form-label">隐藏层（逗号分隔）</span>
             <input
               type="text"
               className="form-input"
@@ -331,7 +331,7 @@ export function MlpPage() {
             />
           </div>
           <div className="form-row">
-            <span className="form-label">Input Size</span>
+            <span className="form-label">输入大小</span>
             <input
               type="number"
               className="form-input"
@@ -342,7 +342,7 @@ export function MlpPage() {
             />
           </div>
           <div className="form-row">
-            <span className="form-label">Output Size</span>
+            <span className="form-label">输出大小</span>
             <input
               type="number"
               className="form-input"
@@ -355,26 +355,26 @@ export function MlpPage() {
         </div>
         <div className="inline-group" style={{ marginTop: 12 }}>
           <button className="btn-primary" onClick={handleSaveConfig}>
-            Save Configuration
+            保存配置
           </button>
         </div>
       </GlowCard>
 
       <div className="grid-2">
-        <GlowCard title="Manual Override" glowColor="secondary">
+        <GlowCard title="手动覆盖" glowColor="secondary">
           <div className="form-row">
-            <span className="form-label">Override Action</span>
+            <span className="form-label">覆盖操作</span>
             <select
               className="form-select"
               value={overrideAction}
               onChange={(e) => setOverrideAction(e.target.value)}
             >
-              <option value="">Select an action...</option>
-              <option value="eco">Eco Mode</option>
-              <option value="balanced">Balanced Mode</option>
-              <option value="performance">Performance Mode</option>
-              <option value="boost">Boost Mode</option>
-              <option value="silent">Silent Mode</option>
+              <option value="">选择操作...</option>
+              <option value="eco">节能模式</option>
+              <option value="balanced">平衡模式</option>
+              <option value="performance">性能模式</option>
+              <option value="boost">加速模式</option>
+              <option value="silent">静音模式</option>
             </select>
           </div>
           <div className="inline-group" style={{ marginTop: 12 }}>
@@ -383,49 +383,49 @@ export function MlpPage() {
               onClick={handleOverride}
               disabled={!overrideAction}
             >
-              Apply Override
+              应用覆盖
             </button>
             <button
               className="btn-ghost"
               onClick={() => setOverrideAction('')}
               disabled={!overrideAction}
             >
-              Clear
+              清除
             </button>
           </div>
         </GlowCard>
 
-        <GlowCard title="Learning Progress" glowColor="primary">
+        <GlowCard title="学习进度" glowColor="primary">
           <div className="learning-progress">
             <div className="learning-stats">
               <div className="learning-stat">
                 <span className="learning-stat-value">{mlpState.config.epochs}</span>
-                <span className="learning-stat-label">Total Epochs</span>
+                <span className="learning-stat-label">总轮次</span>
               </div>
               <div className="learning-stat">
                 <span className="learning-stat-value">{decisions.length}</span>
-                <span className="learning-stat-label">Decisions</span>
+                <span className="learning-stat-label">决策</span>
               </div>
               <div className="learning-stat">
                 <span className="learning-stat-value">{mlpState.config.hiddenLayers.length}</span>
-                <span className="learning-stat-label">Hidden Layers</span>
+                <span className="learning-stat-label">隐藏层</span>
               </div>
             </div>
             <div className="loss-chart-placeholder">
               <div className="loss-chart-bar-group">
                 <div className="loss-chart-bar" style={{ height: `${Math.min(100, mlpState.config.loss * 100)}%` }} />
-                <div className="loss-chart-bar-label">Loss</div>
+                <div className="loss-chart-bar-label">损失值</div>
               </div>
             </div>
           </div>
         </GlowCard>
       </div>
 
-      <GlowCard title="Decision Timeline" glowColor="primary">
+      <GlowCard title="决策时间线" glowColor="primary">
         <Timeline
           events={events}
           maxItems={30}
-          emptyMessage="No MLP decisions yet. Enable the MLP engine to start receiving decisions."
+          emptyMessage="暂无机器学习决策。启用机器学习引擎以开始接收决策。"
         />
       </GlowCard>
     </PageWrapper>
