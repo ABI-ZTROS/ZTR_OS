@@ -192,9 +192,9 @@ jobs:
 
       - name: Package desktop release
         run: |
-          "ZTR_OS ${TAG} Desktop Release`nWPF + WebView2 + Embedded Kestrel`nSingle-file self-contained. No .NET runtime required." | Out-File -FilePath ./artifacts/desktop-win-x64/README.txt -Encoding utf8
-          Compress-Archive -Path ./artifacts/desktop-win-x64/* -DestinationPath "ZTR_OS-${TAG}-desktop-win-x64.zip" -Force
-          Get-ChildItem "ZTR_OS-${TAG}-desktop-win-x64.zip" | Select-Object Name, Length
+          "ZTR_OS $env:TAG Desktop Release`nWPF + WebView2 + Embedded Kestrel`nSingle-file self-contained. No .NET runtime required." | Out-File -FilePath ./artifacts/desktop-win-x64/README.txt -Encoding utf8
+          Compress-Archive -Path ./artifacts/desktop-win-x64/* -DestinationPath "ZTR_OS-$env:TAG-desktop-win-x64.zip" -Force
+          Get-ChildItem "ZTR_OS-$env:TAG-desktop-win-x64.zip" | Select-Object Name, Length
         shell: pwsh
 
       - uses: softprops/action-gh-release@v2
