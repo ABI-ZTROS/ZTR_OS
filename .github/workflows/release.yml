@@ -10,6 +10,9 @@ on:
         required: true
         default: 'latest'
 
+permissions:
+  contents: write
+
 env:
   TAG: ${{ github.event.release.tag_name || github.event.inputs.tag }}
 
