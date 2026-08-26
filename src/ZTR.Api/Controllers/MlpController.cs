@@ -33,15 +33,17 @@ public class MlpController : ControllerBase
     [ProducesResponseType<ApiResponse<MlpConfigResponse>>(StatusCodes.Status200OK)]
     public ActionResult<ApiResponse<MlpConfigResponse>> GetConfig()
     {
-        var response = new MlpConfigResponse(
-            LearningRate: _config.LearningRate,
-            HiddenLayers: new[] { _config.HiddenLayerSize, Math.Max(_config.HiddenLayerSize / 2, 16) },
-            InputSize: _config.InputSize,
-            OutputSize: _config.OutputSize,
-            IsTraining: _isTraining,
-            Epochs: 0,
-            CurrentEpoch: 0,
-            Loss: 0);
+        var response = new MlpConfigResponse
+        {
+            LearningRate = _config.LearningRate,
+            HiddenLayers = new List<int> { _config.HiddenLayerSize, Math.Max(_config.HiddenLayerSize / 2, 16) },
+            InputSize = _config.InputSize,
+            OutputSize = _config.OutputSize,
+            IsTraining = _isTraining,
+            Epochs = 0,
+            CurrentEpoch = 0,
+            Loss = 0
+        };
 
         return Ok(new ApiResponse<MlpConfigResponse>(true, response));
     }
@@ -114,14 +116,15 @@ public class MlpController : ControllerBase
     public ActionResult<ApiResponse<List<MlpDecisionResponse>>> GetDecisions(int count = 50)
     {
         var decisions = _decisionLogger.GetRecentDecisions(count);
-        var response = decisions.Select(d => new MlpDecisionResponse(
-            Id: d.Timestamp.ToString("o"),
-            Timestamp: d.Timestamp,
-            Input: d.InputFeatures,
-            Output: d.OutputActions,
-            Confidence: d.Confidence,
-            Action: d.ActionType
-        )).ToList();
+        var response = decisions.Select(d => new MlpDecisionResponse
+        {
+            Id = d.Timestamp.ToString("o"),
+            Timestamp = d.Timestamp,
+            Input = d.InputFeatures,
+            Output = d.OutputActions,
+            Confidence = d.Confidence,
+            Action = d.ActionType
+        }).ToList();
 
         return Ok(new ApiResponse<List<MlpDecisionResponse>>(true, response));
     }
@@ -130,11 +133,12 @@ public class MlpController : ControllerBase
     [ProducesResponseType<ApiResponse<MlpStatusResponse>>(StatusCodes.Status200OK)]
     public ActionResult<ApiResponse<MlpStatusResponse>> GetStatus()
     {
-        return Ok(new ApiResponse<MlpStatusResponse>(true, new MlpStatusResponse(
-            Status: _isTraining ? "training" : "idle",
-            Loss: 0,
-            Epoch: 0
-        )));
+        return Ok(new ApiResponse<MlpStatusResponse>(true, new MlpStatusResponse
+        {
+            Status = _isTraining ? "training" : "idle",
+            Loss = 0,
+            Epoch = 0
+        }));
     }
 }
 
