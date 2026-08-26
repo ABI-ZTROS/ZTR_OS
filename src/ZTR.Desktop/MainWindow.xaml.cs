@@ -1,23 +1,12 @@
 using System.IO;
-using System.Net;
-using System.Net.Sockets;
-using System.Text.Json;
 using System.Windows;
 using System.Windows.Threading;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.Extensions.DependencyInjection;
-using ZTR.Api.Extensions;
-using ZTR.Api.Hubs;
-using ZTR.Api.Middleware;
 
 namespace ZTR.Desktop;
 
 public partial class MainWindow : Window
 {
     private readonly ApiServerHost _apiServer = new();
-    private int _port;
 
     public MainWindow()
     {
@@ -28,42 +17,47 @@ public partial class MainWindow : Window
     {
         StatusText.Text = "Starting embedded API server...";
 
-        _port = GetAvailablePort();
-        bool serverStarted = await _apiServer.StartAsync(_port);
+        bool serverStarted = await _apiServer.StartAsync();
 
         if (!serverStarted)
         {
-            StatusText.Text = "ERROR: Failed to start API server";
-            MessageBox.Show("Failed to start embedded API server.", "ZTR_OS Error",
-                MessageBoxButton.OK, MessageBoxImage.Error);
+            StatusText.Text = "ERROR: No port available in range 5000-5010";
+            MessageBox.Show("Failed to allocate API server port (5000-5010).\nPlease close the conflicting application and try again.",
+                "ZTR_OS Error", MessageBoxButton.OK, MessageBoxImage.Error);
             return;
         }
 
-        StatusText.Text = "Loading interface...";
-        PortText.Text = $"Port: {_port}";
+        StatusText.Text = "Initializing WebView2...";
+        PortText.Text = $"API: localhost:{_apiServer.Port}";
 
         await WebView.EnsureCoreWebView2Async();
         WebView.CoreWebView2.Settings.AreDevToolsEnabled = false;
 
-        string url = $"http://localhost:{_port}/";
-        WebView.Source = new Uri(url);
+        string wwwrootPath = Path.Combine(AppContext.BaseDirectory, "wwwroot");
+        if (!Directory.Exists(wwwrootPath))
+        {
+            StatusText.Text = "ERROR: Frontend files not found";
+            MessageBox.Show($"Frontend files not found at:\n{wwwrootPath}\n\nPlease ensure the desktop package is complete.",
+                "ZTR_OS Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        WebView.CoreWebView2.SetVirtualHostNameToFolderMapping(
+            "app.local", wwwrootPath,
+            Microsoft.Web.WebView2.Core.CoreWebView2HostResourceAccessKind.Allow);
+
+        string apiUrl = $"http://localhost:{_apiServer.Port}";
+        string injectScript = $"window.__API_BASE_URL__='{apiUrl}';window.__IS_DESKTOP__=true;";
+        WebView.CoreWebView2.AddScriptToExecuteOnDocumentCreatedAsync(injectScript);
+
+        WebView.Source = new Uri("http://app.local/index.html");
 
         StatusText.Text = "Ready";
-    }
-
-    private static int GetAvailablePort()
-    {
-        using var listener = new TcpListener(IPAddress.Loopback, 0);
-        listener.Start();
-        int port = ((IPEndPoint)listener.LocalEndpoint).Port;
-        listener.Stop();
-        return port;
     }
 
     private void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
         StatusText.Text = "Shutting down...";
-        Dispatcher.ShutdownStarted += (_, _) => { };
         _apiServer.StopAsync().Wait(TimeSpan.FromSeconds(5));
     }
 }

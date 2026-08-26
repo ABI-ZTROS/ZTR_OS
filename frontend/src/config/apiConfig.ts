@@ -1,6 +1,13 @@
 declare global {
   interface Window {
     __API_BASE_URL__?: string
+    __IS_DESKTOP__?: boolean
+    chrome?: {
+      webview?: {
+        addHostObjectToScript?: boolean
+        postWebMessageAsJson?: (message: string) => void
+      }
+    }
   }
 }
 
@@ -23,5 +30,7 @@ export function getApiUrl(path: string): string {
 
 export function isDesktopMode(): boolean {
   if (typeof window === 'undefined') return false
-  return !!window.__API_BASE_URL__
+  if (window.__IS_DESKTOP__) return true
+  if (window.chrome?.webview) return true
+  return false
 }

@@ -179,20 +179,24 @@ jobs:
           npm ci
           npm run build
 
-      - name: Publish Desktop
+      - name: Publish Desktop (self-contained, frontend bundled via csproj)
         run: |
-          dotnet publish src/ZTR.Desktop/ZTR.Desktop.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -p:DebugSymbols=false -o ./artifacts/desktop-win-x64
+          dotnet publish src/ZTR.Desktop/ZTR.Desktop.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -p:DebugSymbols=false -p:BuildFrontend=false -o ./artifacts/desktop-win-x64
         shell: pwsh
 
-      - name: Copy frontend to desktop output
+      - name: Verify frontend in wwwroot
         run: |
-          New-Item -ItemType Directory -Force -Path ./artifacts/desktop-win-x64/wwwroot | Out-Null
-          Copy-Item -Path frontend/dist/* -Destination ./artifacts/desktop-win-x64/wwwroot/ -Recurse -Force
+          if (-not (Test-Path ./artifacts/desktop-win-x64/wwwroot/index.html)) {
+            Write-Error "wwwroot/index.html not found! Frontend bundling failed."
+            exit 1
+          }
+          Write-Output "wwwroot contains:"
+          Get-ChildItem ./artifacts/desktop-win-x64/wwwroot -Recurse | Select-Object FullName, Length
         shell: pwsh
 
       - name: Package desktop release
         run: |
-          "ZTR_OS $env:TAG Desktop Release`nWPF + WebView2 + Embedded Kestrel`nSingle-file self-contained. No .NET runtime required." | Out-File -FilePath ./artifacts/desktop-win-x64/README.txt -Encoding utf8
+          "ZTR_OS $env:TAG Desktop Release`nWPF + WebView2 + Virtual Host Frontend`nEmbedded Kestrel API on port 5000-5010`nSingle-file self-contained. No .NET runtime required." | Out-File -FilePath ./artifacts/desktop-win-x64/README.txt -Encoding utf8
           Compress-Archive -Path ./artifacts/desktop-win-x64/* -DestinationPath "ZTR_OS-$env:TAG-desktop-win-x64.zip" -Force
           Get-ChildItem "ZTR_OS-$env:TAG-desktop-win-x64.zip" | Select-Object Name, Length
         shell: pwsh
