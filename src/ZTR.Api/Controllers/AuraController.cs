@@ -58,7 +58,8 @@ public class AuraController : ControllerBase
     [ProducesResponseType<ApiResponse>(StatusCodes.Status400BadRequest)]
     public ActionResult<ApiResponse> SetEffect(string deviceId, [FromBody] SetDeviceEffectRequest request)
     {
-        if (!Enum.TryParse<AuraMode>(request.Effect, ignoreCase: true, out var mode))
+        var effectName = request.Effect?.ToLowerInvariant();
+        if (!TryParseAuraEffect(effectName, out var mode))
         {
             return BadRequest(new ApiResponse(false, $"Unknown effect: {request.Effect}"));
         }
@@ -71,11 +72,25 @@ public class AuraController : ControllerBase
             _ => AuraZone.Keyboard
         };
 
-        int r = request.Params?.Color?.R ?? 0;
-        int g = request.Params?.Color?.G ?? 255;
-        int b = request.Params?.Color?.B ?? 170;
+        byte r = 0, g = 255, b = 170;
+        if (!string.IsNullOrEmpty(request.Color))
+        {
+            var (cr, cg, cb) = ParseHexColor(request.Color);
+            r = cr; g = cg; b = cb;
+        }
+        else if (request.Params?.Color != null)
+        {
+            r = (byte)Math.Clamp(request.Params.Color.R, 0, 255);
+            g = (byte)Math.Clamp(request.Params.Color.G, 0, 255);
+            b = (byte)Math.Clamp(request.Params.Color.B, 0, 255);
+        }
 
-        var result = _auraLighting.SetMode(mode, zone, (byte)r, (byte)g, (byte)b);
+        int speed = request.Params?.Speed ?? 50;
+        int intensity = request.Params?.Intensity ?? 70;
+
+        _auraLighting.SetBrightness(request.Params?.Brightness ?? 80);
+
+        var result = _auraLighting.SetMode(mode, zone, r, g, b, speed, 0, (byte)intensity);
         if (!result)
         {
             return BadRequest(new ApiResponse(false, $"Failed to set effect {request.Effect} on {deviceId}"));
@@ -89,15 +104,7 @@ public class AuraController : ControllerBase
     [ProducesResponseType<ApiResponse>(StatusCodes.Status400BadRequest)]
     public ActionResult<ApiResponse> SetColor(string deviceId, [FromBody] SetDeviceColorRequest request)
     {
-        var hex = request.Color?.TrimStart('#');
-        if (string.IsNullOrEmpty(hex) || hex.Length != 6)
-        {
-            return BadRequest(new ApiResponse(false, "Invalid color format. Use #RRGGBB"));
-        }
-
-        byte r = Convert.ToByte(hex.Substring(0, 2), 16);
-        byte g = Convert.ToByte(hex.Substring(2, 2), 16);
-        byte b = Convert.ToByte(hex.Substring(4, 2), 16);
+        var (r, g, b) = ParseHexColor(request.Color);
 
         var zone = deviceId switch
         {
@@ -121,6 +128,87 @@ public class AuraController : ControllerBase
     public ActionResult<ApiResponse> SetBrightness(string deviceId, [FromBody] SetBrightnessRequest request)
     {
         _auraLighting.SetBrightness(request.Brightness);
+
+        var zone = deviceId switch
+        {
+            "keyboard" => AuraZone.Keyboard,
+            "body" => AuraZone.Body,
+            "touchpad" => AuraZone.Touchpad,
+            _ => AuraZone.Keyboard
+        };
+
+        var currentColor = _auraLighting.CurrentColor;
+        _auraLighting.SetMode(_auraLighting.CurrentMode, zone,
+            (byte)(currentColor.R * request.Brightness / 100),
+            (byte)(currentColor.G * request.Brightness / 100),
+            (byte)(currentColor.B * request.Brightness / 100));
+
+        return Ok(new ApiResponse(true));
+    }
+
+    [HttpPost("devices/{deviceId}/speed")]
+    [ProducesResponseType<ApiResponse>(StatusCodes.Status200OK)]
+    public ActionResult<ApiResponse> SetSpeed(string deviceId, [FromBody] SetSpeedRequest request)
+    {
+        var zone = deviceId switch
+        {
+            "keyboard" => AuraZone.Keyboard,
+            "body" => AuraZone.Body,
+            "touchpad" => AuraZone.Touchpad,
+            _ => AuraZone.Keyboard
+        };
+
+        _auraLighting.SetMode(_auraLighting.CurrentMode, zone,
+            _auraLighting.CurrentColor.R,
+            _auraLighting.CurrentColor.G,
+            _auraLighting.CurrentColor.B,
+            request.Speed);
+
+        return Ok(new ApiResponse(true));
+    }
+
+    [HttpPost("devices/{deviceId}/intensity")]
+    [ProducesResponseType<ApiResponse>(StatusCodes.Status200OK)]
+    public ActionResult<ApiResponse> SetIntensity(string deviceId, [FromBody] SetIntensityRequest request)
+    {
+        var zone = deviceId switch
+        {
+            "keyboard" => AuraZone.Keyboard,
+            "body" => AuraZone.Body,
+            "touchpad" => AuraZone.Touchpad,
+            _ => AuraZone.Keyboard
+        };
+
+        _auraLighting.SetMode(_auraLighting.CurrentMode, zone,
+            _auraLighting.CurrentColor.R,
+            _auraLighting.CurrentColor.G,
+            _auraLighting.CurrentColor.B,
+            0, 0, (byte)request.Intensity);
+
+        return Ok(new ApiResponse(true));
+    }
+
+    [HttpPost("devices/{deviceId}/enable")]
+    [ProducesResponseType<ApiResponse>(StatusCodes.Status200OK)]
+    public ActionResult<ApiResponse> SetEnable(string deviceId, [FromBody] SetEnableRequest request)
+    {
+        if (!request.Enabled)
+        {
+            _auraLighting.TurnOffAll();
+        }
+        else
+        {
+            var zone = deviceId switch
+            {
+                "keyboard" => AuraZone.Keyboard,
+                "body" => AuraZone.Body,
+                "touchpad" => AuraZone.Touchpad,
+                _ => AuraZone.Keyboard
+            };
+            var color = _auraLighting.CurrentColor;
+            _auraLighting.SetMode(AuraMode.Breathe, zone, color.R, color.G, color.B);
+        }
+
         return Ok(new ApiResponse(true));
     }
 
@@ -144,6 +232,38 @@ public class AuraController : ControllerBase
         _logger.LogInformation("Saving Aura preset: {Name}", request.Name);
         return Ok(new ApiResponse(true));
     }
+
+    private static bool TryParseAuraEffect(string? effectName, out AuraMode mode)
+    {
+        mode = effectName switch
+        {
+            "static" => AuraMode.Static,
+            "breathe" => AuraMode.Breathe,
+            "rainbow" => AuraMode.Rainbow,
+            "audio" => AuraMode.Audio,
+            "heatmap" => AuraMode.Heatmap,
+            "wave" => AuraMode.ColorCycle,
+            "ripple" => AuraMode.Ripple,
+            "starry" => AuraMode.Star,
+            _ => AuraMode.Static
+        };
+        return effectName is "static" or "breathe" or "rainbow" or "audio" or "heatmap" or "wave" or "ripple" or "starry";
+    }
+
+    private static (byte R, byte G, byte B) ParseHexColor(string hex)
+    {
+        if (string.IsNullOrEmpty(hex))
+            return (0, 255, 170);
+
+        hex = hex.TrimStart('#');
+        if (hex.Length != 6)
+            return (0, 255, 170);
+
+        byte r = Convert.ToByte(hex.Substring(0, 2), 16);
+        byte g = Convert.ToByte(hex.Substring(2, 2), 16);
+        byte b = Convert.ToByte(hex.Substring(4, 2), 16);
+        return (r, g, b);
+    }
 }
 
 public class AuraDeviceInfo
@@ -159,6 +279,7 @@ public class AuraDeviceInfo
 public class SetDeviceEffectRequest
 {
     public string Effect { get; set; } = string.Empty;
+    public string? Color { get; set; }
     public EffectParams? Params { get; set; }
 }
 
@@ -185,6 +306,21 @@ public class SetDeviceColorRequest
 public class SetBrightnessRequest
 {
     public int Brightness { get; set; }
+}
+
+public class SetSpeedRequest
+{
+    public int Speed { get; set; }
+}
+
+public class SetIntensityRequest
+{
+    public int Intensity { get; set; }
+}
+
+public class SetEnableRequest
+{
+    public bool Enabled { get; set; }
 }
 
 public class SavePresetRequest

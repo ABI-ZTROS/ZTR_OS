@@ -51,9 +51,9 @@ export function Performance() {
         const power = powerRes.value.data
         setCpuPower(power.cpu ?? 0)
         setGpuPower(power.gpu ?? 0)
-        setSpl((power as Record<string, number>).spl ?? 0)
-        setSppt((power as Record<string, number>).sppt ?? 0)
-        setFppt((power as Record<string, number>).fppt ?? 0)
+        setSpl(power.spl ?? 0)
+        setSppt(power.sppt ?? 0)
+        setFppt(power.fppt ?? 0)
       }
 
       if (curvesRes.status === 'fulfilled' && curvesRes.value.success) {

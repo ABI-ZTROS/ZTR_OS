@@ -9,22 +9,37 @@ namespace ZTR.Api.Controllers;
 public class PerformanceController : ControllerBase
 {
     private readonly ModeControl _modeControl;
+    private readonly PowerLimitManager _powerManager;
+    private readonly GPUModeControl _gpuModeControl;
     private readonly ILogger<PerformanceController> _logger;
 
     public PerformanceController(
         ModeControl modeControl,
+        PowerLimitManager powerManager,
+        GPUModeControl gpuModeControl,
         ILogger<PerformanceController> logger)
     {
         _modeControl = modeControl;
+        _powerManager = powerManager;
+        _gpuModeControl = gpuModeControl;
         _logger = logger;
     }
 
     [HttpGet("mode")]
-    [ProducesResponseType<ApiResponse<AsusMode>>(StatusCodes.Status200OK)]
-    public ActionResult<ApiResponse<AsusMode>> GetMode()
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status200OK)]
+    public ActionResult<ApiResponse<object>> GetMode()
     {
         var mode = _modeControl.GetCurrentMode();
-        return Ok(new ApiResponse<AsusMode>(true, mode));
+        var modeStr = mode switch
+        {
+            AsusMode.PerformanceSilent => "silent",
+            AsusMode.PerformanceBalanced => "balanced",
+            AsusMode.PerformanceTurbo => "turbo",
+            AsusMode.PerformanceFullSpeed => "fullspeed",
+            AsusMode.PerformanceManual => "manual",
+            _ => "balanced"
+        };
+        return Ok(new ApiResponse<object>(true, new { mode = modeStr }));
     }
 
     [HttpPost("mode")]
@@ -32,13 +47,72 @@ public class PerformanceController : ControllerBase
     [ProducesResponseType<ApiResponse>(StatusCodes.Status400BadRequest)]
     public ActionResult<ApiResponse> SetMode([FromBody] SetPerformanceModeRequest request)
     {
-        var result = _modeControl.SetMode(request.Mode);
+        if (!TryParseMode(request.Mode, out var mode))
+        {
+            return BadRequest(new ApiResponse(false, $"Unknown performance mode: {request.Mode}"));
+        }
+
+        var result = _modeControl.SetMode(mode);
         if (!result)
         {
             return BadRequest(new ApiResponse(false, $"Failed to set performance mode to {request.Mode}"));
         }
 
         return Ok(new ApiResponse(true));
+    }
+
+    [HttpGet("power-limits")]
+    [ProducesResponseType<ApiResponse<object>>(StatusCodes.Status200OK)]
+    public ActionResult<ApiResponse<object>> GetPowerLimits()
+    {
+        var state = _powerManager.GetPowerState();
+        return Ok(new ApiResponse<object>(true, new
+        {
+            cpu = state.SPL,
+            gpu = 0,
+            spl = state.SPL,
+            sppt = state.SPPT,
+            fppt = state.FPPT
+        }));
+    }
+
+    [HttpPost("power-limits")]
+    [ProducesResponseType<ApiResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ApiResponse>(StatusCodes.Status400BadRequest)]
+    public ActionResult<ApiResponse> SetPowerLimits([FromBody] SetPowerLimitRequest request)
+    {
+        var result = _modeControl.SetPowerLimits(request.SPL, request.SPPT, request.FPPT);
+        if (!result)
+        {
+            return BadRequest(new ApiResponse(false, "Failed to set power limits"));
+        }
+
+        return Ok(new ApiResponse(true));
+    }
+
+    [HttpPost("cpu-power")]
+    [ProducesResponseType<ApiResponse>(StatusCodes.Status200OK)]
+    public ActionResult<ApiResponse> SetCpuPower([FromBody] SetCpuPowerRequest request)
+    {
+        var result = _powerManager.SetSPL(request.Watts);
+        return Ok(new ApiResponse(result));
+    }
+
+    [HttpPost("gpu-power")]
+    [ProducesResponseType<ApiResponse>(StatusCodes.Status200OK)]
+    public ActionResult<ApiResponse> SetGpuPower([FromBody] SetGpuPowerRequest request)
+    {
+        try
+        {
+            var acpi = _modeControl.GetAcpi();
+            int result = acpi.DeviceSet(AsusDevice.PPT_GPUC0, request.Watts, $"SetGpuPower({request.Watts}W)");
+            return Ok(new ApiResponse(result == 1));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to set GPU power limit");
+            return Ok(new ApiResponse(false, ex.Message));
+        }
     }
 
     [HttpGet("fan-curves")]
@@ -51,9 +125,9 @@ public class PerformanceController : ControllerBase
 
         var curves = new
         {
-            Cpu = cpuCurve,
-            Gpu = gpuCurve,
-            Mid = midCurve
+            cpu = cpuCurve.Select(p => p.Speed).ToArray(),
+            gpu = gpuCurve.Select(p => p.Speed).ToArray(),
+            mid = midCurve.Select(p => p.Speed).ToArray()
         };
 
         return Ok(new ApiResponse<object>(true, curves));
@@ -64,7 +138,7 @@ public class PerformanceController : ControllerBase
     [ProducesResponseType<ApiResponse>(StatusCodes.Status400BadRequest)]
     public ActionResult<ApiResponse> SetFanCurves([FromBody] SetFanCurveRequest request)
     {
-        var points = FanCurveCalculator.BytesToCurve(request.Curve);
+        var points = SpeedArrayToCurve(request.Curve);
         var result = request.Device switch
         {
             AsusFan.CPU => _modeControl.SetCpuFanCurve(points),
@@ -81,17 +155,44 @@ public class PerformanceController : ControllerBase
         return Ok(new ApiResponse(true));
     }
 
-    [HttpPost("power-limits")]
-    [ProducesResponseType<ApiResponse>(StatusCodes.Status200OK)]
-    [ProducesResponseType<ApiResponse>(StatusCodes.Status400BadRequest)]
-    public ActionResult<ApiResponse> SetPowerLimits([FromBody] SetPowerLimitRequest request)
+    private static bool TryParseMode(string modeStr, out AsusMode mode)
     {
-        var result = _modeControl.SetPowerLimits(request.SPL, request.SPPT, request.FPPT);
-        if (!result)
+        mode = modeStr switch
         {
-            return BadRequest(new ApiResponse(false, "Failed to set power limits"));
-        }
-
-        return Ok(new ApiResponse(true));
+            "silent" => AsusMode.PerformanceSilent,
+            "balanced" => AsusMode.PerformanceBalanced,
+            "turbo" => AsusMode.PerformanceTurbo,
+            "fullspeed" => AsusMode.PerformanceFullSpeed,
+            "manual" => AsusMode.PerformanceManual,
+            _ => AsusMode.PerformanceBalanced
+        };
+        return modeStr is "silent" or "balanced" or "turbo" or "fullspeed" or "manual";
     }
+
+    private static FanCurvePoint[] SpeedArrayToCurve(int[] speeds)
+    {
+        if (speeds == null || speeds.Length == 0)
+            return Array.Empty<FanCurvePoint>();
+
+        var points = new FanCurvePoint[Math.Min(speeds.Length, FanCurveCalculator.CurvePointCount)];
+        for (int i = 0; i < points.Length; i++)
+        {
+            points[i] = new FanCurvePoint
+            {
+                Temperature = (byte)(30 + i * 10),
+                Speed = (int)Math.Clamp(speeds[i], 0, 100)
+            };
+        }
+        return points;
+    }
+}
+
+public class SetCpuPowerRequest
+{
+    public int Watts { get; set; }
+}
+
+public class SetGpuPowerRequest
+{
+    public int Watts { get; set; }
 }

@@ -123,4 +123,17 @@ public class BindingController : ControllerBase
 
         return Ok(new ApiResponse<object>(true, topology));
     }
+
+    [HttpPost("auto-bind")]
+    [ProducesResponseType<ApiResponse>(StatusCodes.Status200OK)]
+    public ActionResult<ApiResponse> SetAutoBind([FromBody] SetAutoBindRequest request)
+    {
+        _logger.LogInformation("Auto-bind games set to: {Enabled}", request.Enabled);
+        return Ok(new ApiResponse(true));
+    }
+}
+
+public class SetAutoBindRequest
+{
+    public bool Enabled { get; set; }
 }

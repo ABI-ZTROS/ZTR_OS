@@ -8,16 +8,24 @@ export const bindingApi = {
     api.delete<void>(`/api/binding/${processId}`),
   getProcesses: () => api.get<Array<Record<string, unknown>>>('/api/binding/processes'),
   getTopology: () => api.get<Array<Record<string, unknown>>>('/api/binding/topology'),
+  setAutoBindGames: (enabled: boolean) =>
+    api.post<void>('/api/binding/auto-bind', { enabled }),
 }
 
 export const auraApi = {
   getDevices: () => api.get<Array<Record<string, unknown>>>('/api/aura/devices'),
   setEffect: (deviceId: string, effect: string, params?: Record<string, unknown>) =>
-    api.post<void>(`/api/aura/devices/${deviceId}/effect`, { effect, params }),
+    api.post<void>(`/api/aura/devices/${deviceId}/effect`, { effect, ...params }),
   setColor: (deviceId: string, color: string) =>
     api.post<void>(`/api/aura/devices/${deviceId}/color`, { color }),
   setBrightness: (deviceId: string, brightness: number) =>
     api.post<void>(`/api/aura/devices/${deviceId}/brightness`, { brightness }),
+  setSpeed: (deviceId: string, speed: number) =>
+    api.post<void>(`/api/aura/devices/${deviceId}/speed`, { speed }),
+  setIntensity: (deviceId: string, intensity: number) =>
+    api.post<void>(`/api/aura/devices/${deviceId}/intensity`, { intensity }),
+  setEnable: (deviceId: string, enabled: boolean) =>
+    api.post<void>(`/api/aura/devices/${deviceId}/enable`, { enabled }),
   getPresets: () => api.get<Array<Record<string, unknown>>>('/api/aura/presets'),
   savePreset: (name: string) =>
     api.post<void>('/api/aura/presets', { name }),

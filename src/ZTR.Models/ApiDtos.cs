@@ -7,9 +7,9 @@ public record HardwareStateResponse(
     FanState Fan,
     DateTime Timestamp);
 
-public record SetPerformanceModeRequest(AsusMode Mode);
+public record SetPerformanceModeRequest(string Mode);
 public record SetGpuModeRequest(AsusGPU Mode);
-public record SetFanCurveRequest(AsusFan Device, byte[] Curve);
+public record SetFanCurveRequest(AsusFan Device, int[] Curve);
 public record SetPowerLimitRequest(int SPL, int SPPT, int FPPT);
 public record SetCpuAffinityRequest(int ProcessId, long AffinityMask);
 public record SetGpuAffinityRequest(int ProcessId, int GpuIndex);

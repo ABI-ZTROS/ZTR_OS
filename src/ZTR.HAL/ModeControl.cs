@@ -385,6 +385,11 @@ public class ModeControl : IDisposable
         }
     }
 
+    /// <summary>
+    /// Gets the underlying ACPI interface for direct hardware access.
+    /// </summary>
+    public AsusAcpi GetAcpi() => _acpi;
+
     /// <inheritdoc />
     public void Dispose()
     {

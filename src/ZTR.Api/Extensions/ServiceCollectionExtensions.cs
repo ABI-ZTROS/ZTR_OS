@@ -14,6 +14,7 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<WmiHelper>();
         services.AddSingleton<BatteryControl>();
         services.AddSingleton<PowerLimitManager>();
+        services.AddSingleton<GPUModeControl>();
         services.AddSingleton<ModeControl>();
         services.AddSingleton<AuraLighting>();
         services.AddSingleton<CpuAffinityManager>();

@@ -89,6 +89,15 @@ export function Binding() {
     }
   }, [])
 
+  const handleAutoBindToggle = useCallback(async (enabled: boolean) => {
+    setAutoBindGames(enabled)
+    try {
+      await bindingApi.setAutoBindGames(enabled)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to set auto-bind')
+    }
+  }, [])
+
   const handleSelectProcess = useCallback((process: ProcessInfo) => {
     setSelectedProcess(process)
   }, [])
@@ -140,7 +149,7 @@ export function Binding() {
           <div className="card-section">
             <ToggleSwitch
               checked={autoBindGames}
-              onChange={setAutoBindGames}
+              onChange={handleAutoBindToggle}
               label="Auto-bind game processes"
               description="Automatically bind detected game processes to dedicated cores"
               color="primary"

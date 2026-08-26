@@ -60,20 +60,50 @@ export function Aura() {
 
   const applyEffect = useCallback(async (effect: AuraEffectType) => {
     setSelectedEffect(effect)
-    const params = {
-      color: selectedColor,
-      brightness,
-      speed,
-      intensity,
-    }
     try {
       if (isEnabled) {
-        await auraApi.setEffect(selectedZone, effect, params)
+        await auraApi.setEffect(selectedZone, effect, {
+          color: selectedColor,
+          brightness,
+          speed,
+          intensity,
+        })
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to apply effect')
     }
   }, [selectedColor, brightness, speed, intensity, selectedZone, isEnabled])
+
+  const handleSpeedChange = useCallback(async (value: number) => {
+    setSpeed(value)
+    try {
+      if (isEnabled) {
+        await auraApi.setSpeed(selectedZone, value)
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to set speed')
+    }
+  }, [selectedZone, isEnabled])
+
+  const handleIntensityChange = useCallback(async (value: number) => {
+    setIntensity(value)
+    try {
+      if (isEnabled) {
+        await auraApi.setIntensity(selectedZone, value)
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to set intensity')
+    }
+  }, [selectedZone, isEnabled])
+
+  const handleEnableToggle = useCallback(async (enabled: boolean) => {
+    setIsEnabled(enabled)
+    try {
+      await auraApi.setEnable(selectedZone, enabled)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to toggle Aura')
+    }
+  }, [selectedZone])
 
   const applyColor = useCallback(async (color: string) => {
     setSelectedColor(color)
@@ -136,7 +166,7 @@ export function Aura() {
         <GlowCard title="Zone Selection" glowColor="primary">
           <ToggleSwitch
             checked={isEnabled}
-            onChange={setIsEnabled}
+            onChange={handleEnableToggle}
             label="Aura Enabled"
             description="Master switch for all lighting effects"
             color="primary"
@@ -256,7 +286,7 @@ export function Aura() {
             max={100}
             step={1}
             unit="%"
-            onChange={setSpeed}
+            onChange={handleSpeedChange}
             color="primary"
           />
           <div className="divider" />
@@ -267,7 +297,7 @@ export function Aura() {
             max={100}
             step={1}
             unit="%"
-            onChange={setIntensity}
+            onChange={handleIntensityChange}
             color="secondary"
           />
           <div className="divider" />
