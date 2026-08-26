@@ -19,7 +19,7 @@
     <AnalysisMode>All</AnalysisMode>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <NoWarn>
-      CS1591;CS1573;CS1712;CS8618;CS8601;CS8602;CS8604;CS8625;CS8765;CS8767;CS9264;CS1998;
+      CS0162;CS0164;CS0219;CS0414;CS0618;CS1591;CS1573;CS1712;CS8618;CS8601;CS8602;CS8604;CS8625;CS8765;CS8767;CS9264;CS1998;CS8600;CS8619;CS8632;CS8668;
       CA1001;CA1002;CA1003;CA1008;CA1010;CA1012;CA1014;CA1016;CA1017;CA1018;CA1019;CA1021;CA1024;CA1027;CA1028;
       CA1031;CA1032;CA1033;CA1034;CA1036;CA1040;CA1041;CA1043;CA1044;CA1045;CA1046;CA1050;CA1051;CA1052;CA1053;CA1054;CA1055;CA1056;CA1058;CA1059;CA1060;CA1061;CA1062;CA1063;CA1064;CA1065;CA1066;CA1067;CA1068;CA1069;CA1070;
       CA1200;CA1303;CA1305;CA1307;CA1308;CA1309;CA1310;CA1311;
@@ -84,17 +84,8 @@
     <ProjectReference Include="..\ZTR.Common\ZTR.Common.csproj" />
   </ItemGroup>
 
-  <Target Name="EnsureFrontendBuilt" BeforeTargets="Build"
-          Condition="'$(BuildFrontend)' == 'true'">
-    <Message Text="Checking frontend build..." Importance="high" />
-    <Exec Command="npm ci" WorkingDirectory="$(FrontendDir)" StandardOutputImportance="normal"
-          Condition="!Exists('$(FrontendBuildDir)\index.html')" />
-    <Exec Command="npm run build" WorkingDirectory="$(FrontendDir)" StandardOutputImportance="normal"
-          Condition="!Exists('$(FrontendBuildDir)\index.html')" />
-  </Target>
-
   <!-- ═══════════════════════════════════════════════════════════════ -->
-  <!-- 🌐 前端构建与资源集成                                       -->
+  <!-- 🌐 前端构建与资源集成（单一可信源 BuildFrontend）            -->
   <!-- ═══════════════════════════════════════════════════════════════ -->
 
   <Target Name="DiagnoseFrontendPaths" BeforeTargets="PrepareForBuild">
@@ -125,22 +116,15 @@
     <Message Condition="Exists('$(FrontendDir)\package.json') And '$(PublishDir)' == '' And !Exists('$(FrontendBuildDir)\index.html')"
              Text="🌐 [BuildFrontend] 检测到前端尚未构建，开始 npm install + npm run build..." Importance="high" />
 
-    <Exec Condition="Exists('$(FrontendDir)\package.json') And !Exists('$(FrontendDir)\node_modules') And ('$(PublishDir)' != '' Or !Exists('$(FrontendBuildDir)\index.html'))"
-          Command="npm install"
-          WorkingDirectory="$(FrontendDir)"
-          ContinueOnError="false"
-          StandardOutputImportance="high"
-          StandardErrorImportance="high" />
-
     <Exec Condition="Exists('$(FrontendDir)\package.json') And ('$(PublishDir)' != '' Or !Exists('$(FrontendBuildDir)\index.html'))"
-          Command="npm run build"
+          Command="cmd /c cd /d &quot;$(FrontendDir)&quot; &amp;&amp; if not exist node_modules (echo Installing dependencies... &amp;&amp; call npm install) else (echo Dependencies already installed) &amp;&amp; echo Building frontend... &amp;&amp; call npm run build"
           WorkingDirectory="$(FrontendDir)"
           ContinueOnError="false"
           StandardOutputImportance="high"
           StandardErrorImportance="high" />
 
     <Error Condition="Exists('$(FrontendDir)\package.json') And ('$(PublishDir)' != '' Or !Exists('$(FrontendBuildDir)\index.html')) And !Exists('$(FrontendBuildDir)\index.html')"
-           Text="❌ [BuildFrontend] 前端构建后仍未找到 dist\index.html。请检查 npm run build 输出。" />
+           Text="❌ [BuildFrontend] 前端构建后仍未找到 dist\index.html。请在 $(FrontendDir) 目录手动运行 npm install &amp;&amp; npm run build。" />
   </Target>
 
   <Target Name="WarnFrontendMissing" BeforeTargets="PrepareForBuild">

@@ -14,7 +14,7 @@
   </ItemGroup>
 
   <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net9.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
@@ -34,9 +34,8 @@
   </PropertyGroup>
 
   <Target Name="BuildFrontend" BeforeTargets="Build" Condition="'$(BuildFrontend)' == 'true'">
-    <Message Text="Building frontend..." Importance="high" />
-    <Exec Command="npm ci" WorkingDirectory="$(FrontendDir)" StandardOutputImportance="normal" />
-    <Exec Command="npm run build" WorkingDirectory="$(FrontendDir)" StandardOutputImportance="normal" />
+    <Message Text="[ZTR.Api] 检查并构建前端..." Importance="high" />
+    <Exec Command="cmd /c cd /d &quot;$(FrontendDir)&quot; &amp;&amp; if not exist node_modules (echo Installing... &amp;&amp; call npm install) else (echo Dependencies OK) &amp;&amp; echo Building... &amp;&amp; call npm run build" WorkingDirectory="$(FrontendDir)" StandardOutputImportance="normal" />
   </Target>
 
   <Target Name="CopyFrontendToWwwroot" AfterTargets="Build" Condition="'$(CopyFrontend)' == 'true' And Exists('$(FrontendBuildDir)')">

@@ -61,7 +61,7 @@ public class WebView2BridgeService : IWebView2BridgeService
             if (root.TryGetProperty("method", out var methodEl) && root.TryGetProperty("args", out var argsEl))
             {
                 var method = methodEl.GetString()!;
-                var args = argsEl.EnumerateArray().Select(a => (object?)a.GetValue<string>()).ToArray();
+                var args = argsEl.EnumerateArray().Select(a => (object?)a.GetString()).ToArray();
                 EventReceived?.Invoke(this, new BridgeEventArgs(method, args));
 
                 if (_handlers.TryGetValue(method, out var handler))

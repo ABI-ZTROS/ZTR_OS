@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using DiagnosticsProcess = System.Diagnostics.Process;
 
 namespace ZTR.Desktop.Features.Process.Services;
 
@@ -92,7 +93,7 @@ public class ProcessManagerService : IProcessManagerService
     {
         try
         {
-            using var proc = Process.GetProcessById(processId);
+            using var proc = DiagnosticsProcess.GetProcessById(processId);
             return (int)proc.PriorityClass;
         }
         catch { return 0; }

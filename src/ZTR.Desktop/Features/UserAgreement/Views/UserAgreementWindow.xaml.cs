@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Threading;
+using Microsoft.Extensions.DependencyInjection;
 using ZTR.Desktop.Features.UserAgreement.Services;
 
 namespace ZTR.Desktop.Features.UserAgreement.Views;
@@ -65,7 +66,7 @@ public partial class UserAgreementWindow : Window
     {
         try
         {
-            var service = App.Services.GetService<IUserAgreementService>();
+            var service = (IUserAgreementService?)App.Services.GetService(typeof(IUserAgreementService));
             if (service != null)
             {
                 ForceLog.Write("[USER-AGREEMENT] 从 DI 容器解析 IUserAgreementService 成功");

@@ -33,7 +33,7 @@ public static class GlobalExceptionHandler
             e.SetObserved();
         };
 
-        Dispatcher.DispatcherUnhandledException += (_, e) =>
+        Application.Current.DispatcherUnhandledException += (_, e) =>
         {
             ForceLog.Write($"[FATAL] DispatcherUnhandledException: {e.Exception}");
             try { Log.Fatal(e.Exception, "[FATAL] UI 线程未处理异常 DispatcherUnhandledException"); } catch { }

@@ -9,9 +9,6 @@ public class WindowEffectsService : IWindowEffectsService
     private const int DWMWA_USE_IMMERSIVE_DARK_MODE = 20;
     private const int DWMWA_WINDOW_CORNER_PREFERENCE = 33;
 
-    [StructLayout(LayoutKind.Sequential)]
-    private struct DWM_WINDOW_CORNER_PREFERENCE { }
-
     [DllImport("dwmapi.dll")]
     private static extern int DwmSetWindowAttribute(IntPtr hwnd, int dwAttribute, ref int pvAttribute, int cbAttribute);
 
