@@ -1,10 +1,13 @@
+using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using System.Text.Json;
+using System.Threading;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.FileProviders;
 using ZTR.Api.Extensions;
 using ZTR.Api.Hubs;
 using ZTR.Api.Middleware;
@@ -120,7 +123,8 @@ public class ApiServerHost : IDisposable
         {
             try
             {
-                await _app.StopAsync(TimeSpan.FromSeconds(3));
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+                await _app.StopAsync(cts.Token);
             }
             catch { }
             try
@@ -136,7 +140,7 @@ public class ApiServerHost : IDisposable
     {
         if (!_disposed)
         {
-            StopAsync().Wait(TimeSpan.FromSeconds(3));
+            StopAsync().Wait(TimeSpan.FromSeconds(5));
             _disposed = true;
         }
     }
