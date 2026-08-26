@@ -35,7 +35,7 @@ public class IntegrationPipelineTests : IClassFixture<TestWebApplicationFactory>
 
         response.EnsureSuccessStatusCode();
         var json = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<ApiResponse<HardwareState>>(json, _jsonOptions);
+        var result = JsonSerializer.Deserialize<ApiResponse<ZTR.Api.DTOs.HardwareResponse>>(json, _jsonOptions);
 
         Assert.NotNull(result);
         Assert.True(result.Success);
@@ -43,7 +43,7 @@ public class IntegrationPipelineTests : IClassFixture<TestWebApplicationFactory>
         Assert.NotNull(result.Data!.Cpu);
         Assert.NotNull(result.Data.Gpu);
         Assert.NotNull(result.Data.Battery);
-        Assert.NotNull(result.Data.Fan);
+        Assert.NotNull(result.Data.Fans);
         Assert.True(result.Data.Timestamp != default);
     }
 
@@ -249,7 +249,7 @@ public class IntegrationPipelineTests : IClassFixture<TestWebApplicationFactory>
         response.EnsureSuccessStatusCode();
 
         var json = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<ApiResponse<HardwareState>>(json, _jsonOptions);
+        var result = JsonSerializer.Deserialize<ApiResponse<ZTR.Api.DTOs.HardwareResponse>>(json, _jsonOptions);
 
         Assert.NotNull(result?.Data);
         var state = result.Data!;
@@ -279,7 +279,7 @@ public class IntegrationPipelineTests : IClassFixture<TestWebApplicationFactory>
         response.EnsureSuccessStatusCode();
 
         var json = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<ApiResponse<CpuState>>(json, _jsonOptions);
+        var result = JsonSerializer.Deserialize<ApiResponse<ZTR.Api.DTOs.CpuResponse>>(json, _jsonOptions);
 
         Assert.NotNull(result);
         Assert.True(result.Success);
@@ -294,7 +294,7 @@ public class IntegrationPipelineTests : IClassFixture<TestWebApplicationFactory>
         response.EnsureSuccessStatusCode();
 
         var json = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<ApiResponse<GpuState>>(json, _jsonOptions);
+        var result = JsonSerializer.Deserialize<ApiResponse<ZTR.Api.DTOs.GpuResponse>>(json, _jsonOptions);
 
         Assert.NotNull(result);
         Assert.True(result.Success);
@@ -308,7 +308,7 @@ public class IntegrationPipelineTests : IClassFixture<TestWebApplicationFactory>
         response.EnsureSuccessStatusCode();
 
         var json = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<ApiResponse<BatteryState>>(json, _jsonOptions);
+        var result = JsonSerializer.Deserialize<ApiResponse<ZTR.Api.DTOs.BatteryResponse>>(json, _jsonOptions);
 
         Assert.NotNull(result);
         Assert.True(result.Success);
@@ -322,7 +322,7 @@ public class IntegrationPipelineTests : IClassFixture<TestWebApplicationFactory>
         response.EnsureSuccessStatusCode();
 
         var json = await response.Content.ReadAsStringAsync();
-        var result = JsonSerializer.Deserialize<ApiResponse<FanState>>(json, _jsonOptions);
+        var result = JsonSerializer.Deserialize<ApiResponse<List<ZTR.Api.DTOs.FanResponse>>>(json, _jsonOptions);
 
         Assert.NotNull(result);
         Assert.True(result.Success);

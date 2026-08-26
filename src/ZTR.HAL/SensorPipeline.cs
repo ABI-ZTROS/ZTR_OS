@@ -3,12 +3,6 @@ using ZTR.Models;
 
 namespace ZTR.HAL;
 
-/// <summary>
-/// Collects and aggregates sensor data from all hardware sources including CPU, GPU, battery, and fans.
-/// Uses a configurable polling interval with background timer-based collection.
-/// Integrates with <see cref="SensorAggregator"/>, <see cref="SensorQueue"/>, and
-/// <see cref="SensorDegradationHandler"/> for comprehensive sensor data management.
-/// </summary>
 public class SensorPipeline : IDisposable
 {
     private readonly AsusAcpi? _acpi;
@@ -17,6 +11,7 @@ public class SensorPipeline : IDisposable
     private readonly SensorAggregator _aggregator;
     private readonly SensorQueue _queue;
     private readonly SensorDegradationHandler _degradationHandler;
+    private readonly ISystemSensorFallback? _systemFallback;
     private readonly ILogger<SensorPipeline>? _logger;
     private readonly Timer _timer;
     private int _intervalMs = 1000;
@@ -56,16 +51,6 @@ public class SensorPipeline : IDisposable
     /// </summary>
     public SensorAggregator Aggregator => _aggregator;
 
-    /// <summary>
-    /// Creates a new instance of the <see cref="SensorPipeline"/> class.
-    /// </summary>
-    /// <param name="acpi">The ASUS ACPI interface for hardware communication. Can be null.</param>
-    /// <param name="gpuControl">The GPU control interface. Can be null.</param>
-    /// <param name="batteryControl">The battery control. Can be null.</param>
-    /// <param name="aggregator">Optional sensor aggregator. A default instance is created if null.</param>
-    /// <param name="queue">Optional sensor queue. A default instance is created if null.</param>
-    /// <param name="degradationHandler">Optional degradation handler. A default instance is created if null.</param>
-    /// <param name="logger">Optional logger instance.</param>
     public SensorPipeline(
         AsusAcpi? acpi = null,
         IGpuControl? gpuControl = null,
@@ -73,6 +58,7 @@ public class SensorPipeline : IDisposable
         SensorAggregator? aggregator = null,
         SensorQueue? queue = null,
         SensorDegradationHandler? degradationHandler = null,
+        ISystemSensorFallback? systemFallback = null,
         ILogger<SensorPipeline>? logger = null)
     {
         _acpi = acpi;
@@ -81,7 +67,17 @@ public class SensorPipeline : IDisposable
         _aggregator = aggregator ?? new SensorAggregator();
         _queue = queue ?? new SensorQueue(1000);
         _degradationHandler = degradationHandler ?? new SensorDegradationHandler();
+        _systemFallback = systemFallback;
         _logger = logger;
+
+        if (_systemFallback == null || !_systemFallback.IsAvailable)
+        {
+            _logger?.LogWarning("SystemSensorFallback is not available. Some sensors may show as 0.");
+        }
+        else
+        {
+            _logger?.LogInformation("SystemSensorFallback is available for basic sensor data.");
+        }
 
         RegisterSensors();
 
@@ -177,9 +173,15 @@ public class SensorPipeline : IDisposable
     private IEnumerable<SensorReading> CollectCpuReadings(DateTime timestamp)
     {
         var readings = new List<SensorReading>();
+        bool useFallback = _acpi == null || !_acpi.IsAvailable;
 
         int cpuTemp = SafeDeviceGet(AsusDevice.CPU_Fan);
-        if (_degradationHandler.IsValueInRange("CPU Temperature", cpuTemp))
+        if (cpuTemp <= 0 && _systemFallback?.IsAvailable == true)
+        {
+            cpuTemp = _systemFallback.GetCpuTemperature();
+        }
+
+        if (cpuTemp > 0 && _degradationHandler.IsValueInRange("CPU Temperature", cpuTemp))
         {
             readings.Add(new SensorReading
             {
@@ -194,32 +196,63 @@ public class SensorPipeline : IDisposable
         else
         {
             _degradationHandler.ReportFailure("CPU Temperature", "Out of range");
-            var fallback = _degradationHandler.GetFallbackValue("CPU Temperature");
-            if (fallback.HasValue)
-                readings.Add(new SensorReading { Name = "CPU Temperature", Value = fallback.Value, Unit = "°C", Type = SensorType.Temperature, Timestamp = timestamp });
+        }
+
+        int cpuUsage = 0;
+        if (_systemFallback?.IsAvailable == true)
+        {
+            cpuUsage = _systemFallback.GetCpuUsage();
+        }
+        else
+        {
+            cpuUsage = SafeDeviceGet(AsusDevice.CPU_Fan);
+        }
+
+        if (cpuUsage > 0)
+        {
+            readings.Add(new SensorReading
+            {
+                Name = "CPU Usage",
+                Value = cpuUsage,
+                Unit = "%",
+                Type = SensorType.Usage,
+                Timestamp = timestamp
+            });
+            _degradationHandler.ReportSuccess("CPU Usage", cpuUsage, timestamp);
         }
 
         int cpuPower = SafeDeviceGet(AsusDevice.PPT_APUA0);
-        readings.Add(new SensorReading
+        if (cpuPower <= 0 && _systemFallback?.IsAvailable == true)
         {
-            Name = "CPU Power",
-            Value = cpuPower,
-            Unit = "W",
-            Type = SensorType.Power,
-            Timestamp = timestamp
-        });
-        _degradationHandler.ReportSuccess("CPU Power", cpuPower, timestamp);
+            cpuPower = _systemFallback.GetCpuPower();
+        }
+
+        if (cpuPower > 0)
+        {
+            readings.Add(new SensorReading
+            {
+                Name = "CPU Power",
+                Value = cpuPower,
+                Unit = "W",
+                Type = SensorType.Power,
+                Timestamp = timestamp
+            });
+            _degradationHandler.ReportSuccess("CPU Power", cpuPower, timestamp);
+        }
 
         int cpuPowerLimit = SafeDeviceGet(AsusDevice.PPT_APUC1);
-        readings.Add(new SensorReading
+        if (cpuPowerLimit > 0)
         {
-            Name = "CPU PowerLimit",
-            Value = cpuPowerLimit,
-            Unit = "W",
-            Type = SensorType.Power,
-            Timestamp = timestamp
-        });
-        _degradationHandler.ReportSuccess("CPU PowerLimit", cpuPowerLimit, timestamp);
+            readings.Add(new SensorReading
+            {
+                Name = "CPU PowerLimit",
+                Value = cpuPowerLimit,
+                Unit = "W",
+                Type = SensorType.Power,
+                Timestamp = timestamp
+            });
+            _degradationHandler.ReportSuccess("CPU PowerLimit", cpuPowerLimit, timestamp);
+        }
 
         int cpuClock = SafeDeviceGet(AsusDevice.GPUBase);
         if (cpuClock > 0)
@@ -257,6 +290,22 @@ public class SensorPipeline : IDisposable
                 });
                 _degradationHandler.ReportSuccess("GPU Temperature", gpuTemp.Value, timestamp);
             }
+            else if (_systemFallback?.IsAvailable == true)
+            {
+                int fallbackTemp = _systemFallback.GetGpuTemperature();
+                if (fallbackTemp > 0)
+                {
+                    readings.Add(new SensorReading
+                    {
+                        Name = "GPU Temperature",
+                        Value = fallbackTemp,
+                        Unit = "°C",
+                        Type = SensorType.Temperature,
+                        Timestamp = timestamp
+                    });
+                    _degradationHandler.ReportSuccess("GPU Temperature", fallbackTemp, timestamp);
+                }
+            }
             else
             {
                 _degradationHandler.ReportFailure("GPU Temperature", "Unavailable");
@@ -288,6 +337,22 @@ public class SensorPipeline : IDisposable
                     Timestamp = timestamp
                 });
                 _degradationHandler.ReportSuccess("GPU Usage", gpuUsage.Value, timestamp);
+            }
+            else if (_systemFallback?.IsAvailable == true)
+            {
+                int fallbackUsage = _systemFallback.GetGpuUsage();
+                if (fallbackUsage >= 0)
+                {
+                    readings.Add(new SensorReading
+                    {
+                        Name = "GPU Usage",
+                        Value = fallbackUsage,
+                        Unit = "%",
+                        Type = SensorType.Usage,
+                        Timestamp = timestamp
+                    });
+                    _degradationHandler.ReportSuccess("GPU Usage", fallbackUsage, timestamp);
+                }
             }
 
             var gpuPower = _gpuControl.GetGpuPower();
@@ -352,6 +417,36 @@ public class SensorPipeline : IDisposable
                 _degradationHandler.ReportSuccess("GPU TotalVRAM", vram.Value.totalMb, timestamp);
             }
         }
+        else if (_systemFallback?.IsAvailable == true)
+        {
+            int gpuTemp = _systemFallback.GetGpuTemperature();
+            if (gpuTemp > 0)
+            {
+                readings.Add(new SensorReading
+                {
+                    Name = "GPU Temperature",
+                    Value = gpuTemp,
+                    Unit = "°C",
+                    Type = SensorType.Temperature,
+                    Timestamp = timestamp
+                });
+                _degradationHandler.ReportSuccess("GPU Temperature", gpuTemp, timestamp);
+            }
+
+            int gpuUsage = _systemFallback.GetGpuUsage();
+            if (gpuUsage >= 0)
+            {
+                readings.Add(new SensorReading
+                {
+                    Name = "GPU Usage",
+                    Value = gpuUsage,
+                    Unit = "%",
+                    Type = SensorType.Usage,
+                    Timestamp = timestamp
+                });
+                _degradationHandler.ReportSuccess("GPU Usage", gpuUsage, timestamp);
+            }
+        }
 
         return readings;
     }
@@ -393,6 +488,30 @@ public class SensorPipeline : IDisposable
                 Timestamp = timestamp
             });
             _degradationHandler.ReportSuccess("ChargeLimit", info.ChargeLimit, timestamp);
+        }
+        else if (_systemFallback?.IsAvailable == true)
+        {
+            var batteryState = _systemFallback.GetBatteryState();
+
+            readings.Add(new SensorReading
+            {
+                Name = "BatteryCharge",
+                Value = batteryState.ChargePercent,
+                Unit = "%",
+                Type = SensorType.Usage,
+                Timestamp = timestamp
+            });
+            _degradationHandler.ReportSuccess("BatteryCharge", batteryState.ChargePercent, timestamp);
+
+            readings.Add(new SensorReading
+            {
+                Name = "Charging",
+                Value = batteryState.IsCharging ? 1 : 0,
+                Unit = "bool",
+                Type = SensorType.Usage,
+                Timestamp = timestamp
+            });
+            _degradationHandler.ReportSuccess("Charging", batteryState.IsCharging ? 1 : 0, timestamp);
         }
         else
         {

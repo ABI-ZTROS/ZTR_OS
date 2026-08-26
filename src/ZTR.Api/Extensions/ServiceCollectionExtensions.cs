@@ -21,6 +21,11 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<TopologyService>();
         services.AddSingleton<ProcessTracker>();
         services.AddSingleton<SensorQueue>();
+        services.AddSingleton<ISystemSensorFallback>(sp =>
+        {
+            var logger = sp.GetService<ILogger<SystemSensorFallback>>();
+            return new SystemSensorFallback(logger);
+        });
         services.AddSingleton<SensorPipeline>();
         services.AddSingleton<DeviceProbe>();
         services.AddSingleton<BindingPolicy>();

@@ -7,17 +7,20 @@ namespace ZTR.Api.Hubs;
 public class SensorSignalRBridge : IDisposable
 {
     private readonly SensorQueue _queue;
-    private readonly IHubContext<SensorHub> _hubContext;
+    private readonly IHubContext<HardwareDataHub> _hardwareHubContext;
+    private readonly IHubContext<SensorHub> _sensorHubContext;
     private readonly ILogger<SensorSignalRBridge> _logger;
     private bool _disposed;
 
     public SensorSignalRBridge(
         SensorQueue queue,
-        IHubContext<SensorHub> hubContext,
+        IHubContext<HardwareDataHub> hardwareHubContext,
+        IHubContext<SensorHub> sensorHubContext,
         ILogger<SensorSignalRBridge> logger)
     {
         _queue = queue;
-        _hubContext = hubContext;
+        _hardwareHubContext = hardwareHubContext;
+        _sensorHubContext = sensorHubContext;
         _logger = logger;
 
         _queue.StateEnqueued += OnStateEnqueued;
@@ -31,9 +34,13 @@ public class SensorSignalRBridge : IDisposable
         try
         {
             var dto = MapToFrontendDto(state);
-            await _hubContext.Clients.All.SendCoreAsync(
+            var hardwareTask = _hardwareHubContext.Clients.All.SendCoreAsync(
                 "HardwareUpdate",
                 new object[] { dto });
+            var sensorTask = _sensorHubContext.Clients.All.SendCoreAsync(
+                "SensorUpdate",
+                new object[] { state });
+            await Task.WhenAll(hardwareTask, sensorTask);
         }
         catch (Exception ex)
         {
@@ -48,9 +55,12 @@ public class SensorSignalRBridge : IDisposable
         try
         {
             var dto = MapToFrontendDto(state);
-            _hubContext.Clients.All.SendCoreAsync(
+            _hardwareHubContext.Clients.All.SendCoreAsync(
                 "HardwareUpdate",
                 new object[] { dto }).Wait();
+            _sensorHubContext.Clients.All.SendCoreAsync(
+                "SensorUpdate",
+                new object[] { state }).Wait();
         }
         catch (Exception ex)
         {

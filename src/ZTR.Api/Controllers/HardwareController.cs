@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using ZTR.Api.DTOs;
+using ZTR.Api.Mappers;
 using ZTR.HAL;
 using ZTR.Models;
 
@@ -20,42 +22,47 @@ public class HardwareController : ControllerBase
     }
 
     [HttpGet("state")]
-    [ProducesResponseType<ApiResponse<HardwareState>>(StatusCodes.Status200OK)]
-    public ActionResult<ApiResponse<HardwareState>> GetState()
+    [ProducesResponseType<ApiResponse<HardwareResponse>>(StatusCodes.Status200OK)]
+    public ActionResult<ApiResponse<HardwareResponse>> GetState()
     {
         var state = _sensorPipeline.CollectOnce();
-        return Ok(new ApiResponse<HardwareState>(true, state));
+        var response = HardwareMapper.ToFrontend(state);
+        return Ok(new ApiResponse<HardwareResponse>(true, response));
     }
 
     [HttpGet("cpu")]
-    [ProducesResponseType<ApiResponse<CpuState>>(StatusCodes.Status200OK)]
-    public ActionResult<ApiResponse<CpuState>> GetCpu()
+    [ProducesResponseType<ApiResponse<CpuResponse>>(StatusCodes.Status200OK)]
+    public ActionResult<ApiResponse<CpuResponse>> GetCpu()
     {
         var state = _sensorPipeline.CollectOnce();
-        return Ok(new ApiResponse<CpuState>(true, state.Cpu));
+        var mapped = HardwareMapper.ToFrontend(state);
+        return Ok(new ApiResponse<CpuResponse>(true, mapped.Cpu));
     }
 
     [HttpGet("gpu")]
-    [ProducesResponseType<ApiResponse<GpuState>>(StatusCodes.Status200OK)]
-    public ActionResult<ApiResponse<GpuState>> GetGpu()
+    [ProducesResponseType<ApiResponse<GpuResponse>>(StatusCodes.Status200OK)]
+    public ActionResult<ApiResponse<GpuResponse>> GetGpu()
     {
         var state = _sensorPipeline.CollectOnce();
-        return Ok(new ApiResponse<GpuState>(true, state.Gpu));
+        var mapped = HardwareMapper.ToFrontend(state);
+        return Ok(new ApiResponse<GpuResponse>(true, mapped.Gpu));
     }
 
     [HttpGet("battery")]
-    [ProducesResponseType<ApiResponse<BatteryState>>(StatusCodes.Status200OK)]
-    public ActionResult<ApiResponse<BatteryState>> GetBattery()
+    [ProducesResponseType<ApiResponse<BatteryResponse>>(StatusCodes.Status200OK)]
+    public ActionResult<ApiResponse<BatteryResponse>> GetBattery()
     {
         var state = _sensorPipeline.CollectOnce();
-        return Ok(new ApiResponse<BatteryState>(true, state.Battery));
+        var mapped = HardwareMapper.ToFrontend(state);
+        return Ok(new ApiResponse<BatteryResponse>(true, mapped.Battery));
     }
 
     [HttpGet("fan")]
-    [ProducesResponseType<ApiResponse<FanState>>(StatusCodes.Status200OK)]
-    public ActionResult<ApiResponse<FanState>> GetFan()
+    [ProducesResponseType<ApiResponse<List<FanResponse>>>(StatusCodes.Status200OK)]
+    public ActionResult<ApiResponse<List<FanResponse>>> GetFan()
     {
         var state = _sensorPipeline.CollectOnce();
-        return Ok(new ApiResponse<FanState>(true, state.Fan));
+        var mapped = HardwareMapper.ToFrontend(state);
+        return Ok(new ApiResponse<List<FanResponse>>(true, mapped.Fans));
     }
 }
