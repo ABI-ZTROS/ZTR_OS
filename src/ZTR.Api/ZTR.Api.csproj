@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <ItemGroup>
+    <ProjectReference Include="..\ZTR.Models\ZTR.Models.csproj" />
+    <ProjectReference Include="..\ZTR.Common\ZTR.Common.csproj" />
+    <ProjectReference Include="..\ZTR.HAL\ZTR.HAL.csproj" />
+    <ProjectReference Include="..\ZTR.Intelligence\ZTR.Intelligence.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+    <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+</PropertyGroup>
+
+<ItemGroup>
+    <InternalsVisibleTo Include="ZTR.Api.Tests" />
+</ItemGroup>
+
+</Project>

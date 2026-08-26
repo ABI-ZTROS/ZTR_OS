@@ -1,0 +1,119 @@
+## Visual Studio
+.vs/
+.vscode/
+.idea/
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+## Visual Studio cache
+.vs/
+*.[Cc]ache
+?*.[Cc]ache/
+
+## Visual Studio auto-generated files
+*_i.c
+*_p.c
+*_h.h
+*.ilk
+*.meta
+*.obj
+*.iobj
+*.pch
+*.pdb
+*.ipdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.tmp_proj
+*_wpftmp.csproj
+*.log
+*.tlog
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+
+## NuGet
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nupkg
+**/[Pp]ackages/**/lib/*
+**/[Pp]ackages/**/content/*
+**/[Pp]ackages/**/contentFiles/*
+**/[Pp]ackages/**/tools/*
+snupkg
+**/[Aa]rtifacts/
+
+## .NET Core
+dotnet/
+publish/
+
+## IDE
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+## Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+## Linux
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+## macOS
+.AppleDouble
+.LSOverride
+._*
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+
+## Resharper
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+## VS Code
+.vscode/
+
+## Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.development
+frontend/.env.production
+
+## GitHub
+.github/workflows/*.yml.bak
+
+## OS generated files
+*.swp
+*.swo
+*~

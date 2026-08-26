@@ -1,0 +1,61 @@
+.glow-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  transition: all var(--transition-normal);
+}
+
+.glow-card--primary {
+  border-color: rgba(0, 255, 170, 0.15);
+}
+
+.glow-card--primary:hover {
+  border-color: rgba(0, 255, 170, 0.4);
+  box-shadow: var(--shadow-neon-green);
+}
+
+.glow-card--secondary {
+  border-color: rgba(255, 0, 170, 0.15);
+}
+
+.glow-card--secondary:hover {
+  border-color: rgba(255, 0, 170, 0.4);
+  box-shadow: var(--shadow-neon-pink);
+}
+
+.glow-card--accent {
+  border-color: rgba(0, 170, 255, 0.15);
+}
+
+.glow-card--accent:hover {
+  border-color: rgba(0, 170, 255, 0.4);
+  box-shadow: var(--shadow-neon-blue);
+}
+
+.glow-card--danger {
+  border-color: rgba(255, 68, 68, 0.15);
+}
+
+.glow-card--danger:hover {
+  border-color: rgba(255, 68, 68, 0.4);
+  box-shadow: var(--shadow-neon-danger);
+}
+
+.glow-card--none:hover {
+  border-color: var(--border-glow);
+}
+
+.glow-card-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 12px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.glow-card-body {
+  font-size: 13px;
+  color: var(--text-secondary);
+}

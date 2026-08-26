@@ -1,0 +1,101 @@
+.topology-tree-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.topology-tree-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.topology-tree-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px;
+}
+
+.topology-svg {
+  width: 100%;
+  height: auto;
+  min-height: 200px;
+}
+
+.topology-card {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 6px 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  font-size: 11px;
+  user-select: none;
+}
+
+.topology-card:hover {
+  border-color: var(--border-glow);
+}
+
+.topology-card--package {
+  border-color: var(--accent);
+  background: rgba(0, 170, 255, 0.08);
+}
+
+.topology-card--core {
+  border-color: var(--primary);
+  background: rgba(0, 255, 170, 0.06);
+}
+
+.topology-card--thread {
+  border-color: var(--border);
+}
+
+.topology-card--selected {
+  border-color: var(--secondary);
+  box-shadow: var(--shadow-neon-pink);
+}
+
+.topology-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topology-bar {
+  height: 3px;
+  background: var(--border);
+  border-radius: 1px;
+  overflow: hidden;
+}
+
+.topology-bar-fill {
+  height: 100%;
+  border-radius: 1px;
+  transition: width var(--transition-normal);
+}
+
+.topology-temp {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.topology-edge {
+  stroke: var(--border-glow);
+  stroke-width: 1;
+}
+
+.topology-connector {
+  fill: var(--accent);
+  box-shadow: 0 0 4px var(--accent);
+}

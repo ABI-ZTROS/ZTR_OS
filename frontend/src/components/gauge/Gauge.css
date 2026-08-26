@@ -1,0 +1,202 @@
+.gauge {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.gauge-svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+
+.gauge-track {
+  fill: none;
+}
+
+.gauge-zone {
+  transition: opacity var(--transition-normal);
+}
+
+.gauge-tick {
+  stroke: var(--text-muted);
+  transition: stroke var(--transition-normal);
+}
+
+.gauge-tick--major {
+  stroke: var(--text-secondary);
+  stroke-width: 1.5;
+}
+
+.gauge-tick--minor {
+  stroke: var(--text-muted);
+  stroke-width: 0.5;
+}
+
+.gauge-numbers {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 500;
+  pointer-events: none;
+}
+
+.gauge-number {
+  fill: var(--text-secondary);
+  font-size: 9px;
+  transition: fill var(--transition-normal);
+}
+
+.gauge--large .gauge-number {
+  font-size: 12px;
+}
+
+.gauge--small .gauge-number {
+  font-size: 7px;
+}
+
+.gauge-needle {
+  stroke: var(--primary);
+  stroke-width: 2.5;
+  transition: x2 200ms ease-out, y2 200ms ease-out, stroke 200ms ease-out;
+  filter: drop-shadow(0 0 4px var(--glow-primary)) drop-shadow(0 0 8px var(--glow-primary));
+}
+
+.gauge--warning .gauge-needle {
+  stroke: var(--warning);
+  filter: drop-shadow(0 0 4px rgba(255, 170, 0, 0.6)) drop-shadow(0 0 8px rgba(255, 170, 0, 0.3));
+}
+
+.gauge--danger .gauge-needle {
+  stroke: var(--danger);
+  filter: drop-shadow(0 0 4px rgba(255, 68, 68, 0.6)) drop-shadow(0 0 8px rgba(255, 68, 68, 0.3));
+}
+
+.gauge-center-cap {
+  fill: var(--bg-card);
+  stroke: var(--border-glow);
+  stroke-width: 2;
+  transition: fill var(--transition-normal);
+}
+
+.gauge-center-bg {
+  fill: var(--bg-glass);
+  stroke: var(--border);
+  stroke-width: 1;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.gauge-center-inner {
+  fill: var(--bg-card);
+  opacity: 0.6;
+}
+
+.gauge-center-display {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.gauge-value {
+  font-family: 'SF Mono', 'JetBrains Mono', 'Consolas', monospace;
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  transition: color var(--transition-normal), text-shadow var(--transition-normal);
+}
+
+.gauge--large .gauge-value {
+  font-size: 36px;
+}
+
+.gauge--medium .gauge-value {
+  font-size: 24px;
+}
+
+.gauge--small .gauge-value {
+  font-size: 16px;
+}
+
+.gauge-value--normal {
+  color: var(--primary);
+  text-shadow: 0 0 8px var(--glow-primary), 0 0 16px var(--glow-primary);
+}
+
+.gauge-value--warning {
+  color: var(--warning);
+  text-shadow: 0 0 8px rgba(255, 170, 0, 0.6), 0 0 16px rgba(255, 170, 0, 0.3);
+}
+
+.gauge-value--danger {
+  color: var(--danger);
+  text-shadow: 0 0 8px rgba(255, 68, 68, 0.6), 0 0 16px rgba(255, 68, 68, 0.3);
+  animation: gauge-danger-pulse 1s ease-in-out infinite;
+}
+
+@keyframes gauge-danger-pulse {
+  0%, 100% { text-shadow: 0 0 8px rgba(255, 68, 68, 0.6), 0 0 16px rgba(255, 68, 68, 0.3); }
+  50% { text-shadow: 0 0 12px rgba(255, 68, 68, 0.9), 0 0 24px rgba(255, 68, 68, 0.5); }
+}
+
+.gauge-unit {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  letter-spacing: 0.5px;
+}
+
+.gauge--small .gauge-unit {
+  font-size: 9px;
+}
+
+.gauge-label {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.gauge--large .gauge-label {
+  font-size: 13px;
+  letter-spacing: 1.5px;
+}
+
+.gauge--small .gauge-label {
+  font-size: 8px;
+  letter-spacing: 0.5px;
+  bottom: 2px;
+}
+
+.gauge--normal .gauge-center-cap {
+  stroke: var(--primary);
+  filter: drop-shadow(0 0 3px var(--glow-primary));
+}
+
+.gauge--warning .gauge-center-cap {
+  stroke: var(--warning);
+  filter: drop-shadow(0 0 3px rgba(255, 170, 0, 0.6));
+}
+
+.gauge--danger .gauge-center-cap {
+  stroke: var(--danger);
+  filter: drop-shadow(0 0 3px rgba(255, 68, 68, 0.6));
+}
+
+.gauge-glow-filter {
+  overflow: visible;
+}

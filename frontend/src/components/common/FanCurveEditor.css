@@ -1,0 +1,96 @@
+.fan-curve-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+}
+
+.fan-curve-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.fan-curve-svg {
+  width: 100%;
+  height: auto;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: crosshair;
+}
+
+.fan-curve-grid {
+  stroke: var(--border);
+  stroke-width: 0.5;
+  stroke-dasharray: 2,2;
+}
+
+.fan-curve-axis-label {
+  font-size: 9px;
+  fill: var(--text-muted);
+  font-family: inherit;
+}
+
+.fan-curve-axis-label--x {
+  text-align: center;
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.fan-curve-axis-label--y {
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: rotate(-90deg) translateX(50%);
+  transform-origin: left center;
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.fan-curve-area {
+  fill: url(#fanGradient);
+  opacity: 0.2;
+}
+
+.fan-curve-line {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 4px rgba(0, 255, 170, 0.5));
+}
+
+.fan-curve-point {
+  fill: var(--bg-primary);
+  stroke: var(--primary);
+  stroke-width: 2;
+  cursor: grab;
+  transition: r var(--transition-fast);
+}
+
+.fan-curve-point:hover {
+  fill: var(--primary);
+}
+
+.fan-curve-point--dragging {
+  cursor: grabbing;
+  fill: var(--primary);
+  filter: drop-shadow(0 0 6px rgba(0, 255, 170, 0.8));
+}
+
+.fan-curve-tooltip {
+  fill: var(--bg-card);
+  stroke: var(--primary);
+  stroke-width: 1;
+}
+
+.fan-curve-tooltip-text {
+  font-size: 10px;
+  fill: var(--text-primary);
+  font-family: 'Monaco', 'Menlo', monospace;
+}

@@ -1,0 +1,38 @@
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - dotnet
+    groups:
+      microsoft:
+        dependency-name: "Microsoft.*"
+      swashbuckle:
+        dependency-name: "Swashbuckle.*"
+      xunit:
+        dependency-name: "xunit*"
+
+  - package-ecosystem: npm
+    directory: "/frontend"
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+    open-pull-requests-limit: 10
+    labels:
+      - dependencies
+      - frontend
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    labels:
+      - dependencies
+      - github-actions

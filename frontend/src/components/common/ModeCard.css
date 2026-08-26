@@ -1,0 +1,81 @@
+.mode-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 20px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  min-width: 120px;
+}
+
+.mode-card:hover {
+  border-color: var(--border-glow);
+  color: var(--text-primary);
+  transform: translateY(-2px);
+}
+
+.mode-card--primary.mode-card--selected {
+  border-color: var(--primary);
+  color: var(--primary);
+  box-shadow: var(--shadow-neon-green);
+}
+
+.mode-card--secondary.mode-card--selected {
+  border-color: var(--secondary);
+  color: var(--secondary);
+  box-shadow: var(--shadow-neon-pink);
+}
+
+.mode-card--accent.mode-card--selected {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: var(--shadow-neon-blue);
+}
+
+.mode-card-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 10px;
+  padding: 2px 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+}
+
+.mode-card-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.mode-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.mode-card-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-align: center;
+  line-height: 1.4;
+}
+
+.mode-card-check {
+  position: absolute;
+  bottom: 8px;
+  right: 10px;
+  font-size: 12px;
+  opacity: 0.5;
+}
+
+.mode-card--selected .mode-card-check {
+  opacity: 1;
+}

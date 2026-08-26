@@ -1,0 +1,123 @@
+.binding-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(255, 68, 68, 0.08);
+  border: 1px solid rgba(255, 68, 68, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.binding-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.binding-action-panel {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.binding-action-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.binding-action-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.binding-action-stats {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.process-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.process-item {
+  display: grid;
+  grid-template-columns: 180px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: grab;
+  transition: all var(--transition-fast);
+}
+
+.process-item:hover {
+  border-color: var(--border-glow);
+  transform: translateX(2px);
+}
+
+.process-item--selected {
+  border-color: var(--primary);
+  box-shadow: var(--shadow-neon-green);
+}
+
+.process-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.process-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.process-id {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.process-stats {
+  display: flex;
+  gap: 16px;
+}
+
+.process-stat {
+  display: grid;
+  grid-template-columns: 30px 1fr 50px;
+  gap: 6px;
+  align-items: center;
+}
+
+.process-stat-label {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.process-stat-value {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.process-affinity {
+  display: flex;
+  justify-content: flex-end;
+}

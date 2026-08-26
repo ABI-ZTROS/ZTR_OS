@@ -1,0 +1,57 @@
+name: Pull Request
+about: Create a pull request for ZTR_OS
+title: ""
+labels: ""
+assignees: ""
+
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: A brief summary of the changes in this pull request.
+    validations:
+      required: true
+
+  - type: textarea
+    id: changes
+    attributes:
+      label: Changes Made
+      description: Detailed description of the changes.
+      placeholder: |
+        - Feature: ...
+        - Fix: ...
+        - Refactor: ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: testing
+    attributes:
+      label: Testing
+      description: Describe how you tested these changes.
+      placeholder: |
+        - [ ] Unit tests pass
+        - [ ] Integration tests pass
+        - [ ] Manually tested on hardware
+    validations:
+      required: true
+
+  - type: textarea
+    id: checklist
+    attributes:
+      label: Checklist
+      value: |
+        - [ ] Code follows project style conventions
+        - [ ] Self-review of code completed
+        - [ ] Documentation updated if necessary
+        - [ ] Tests added or updated for the changes
+        - [ ] All tests pass locally
+        - [ ] No new warnings or errors introduced
+
+  - type: textarea
+    id: related
+    attributes:
+      label: Related Issues
+      description: Link any related issues.
+      placeholder: Closes # (insert issue number)

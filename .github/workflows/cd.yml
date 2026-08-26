@@ -1,0 +1,63 @@
+name: CD
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Publish ZTR.Api (self-contained)
+        run: >
+          dotnet publish src/ZTR.Api/ZTR.Api.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:EnableCompressionInSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -o ./artifacts/api-win-x64
+
+      - name: Publish ZTR.Service (self-contained)
+        run: >
+          dotnet publish src/ZTR.Service/ZTR.Service.csproj
+          -c Release
+          -r win-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:EnableCompressionInSingleFile=true
+          -p:IncludeNativeLibrariesForSelfExtract=true
+          -o ./artifacts/service-win-x64
+
+      - name: Publish ZTR.Api (Linux)
+        run: >
+          dotnet publish src/ZTR.Api/ZTR.Api.csproj
+          -c Release
+          -r linux-x64
+          --self-contained true
+          -p:PublishSingleFile=true
+          -p:EnableCompressionInSingleFile=true
+          -o ./artifacts/api-linux-x64
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ztr-os-${{ github.event.release.tag_name }}
+          path: |
+            ./artifacts/api-win-x64/**
+            ./artifacts/service-win-x64/**
+            ./artifacts/api-linux-x64/**
+          retention-days: 90

@@ -1,0 +1,33 @@
+* text=auto eol=lf
+
+*.cs        text diff=csharp
+*.csproj    text xml
+*.sln       text xml
+*.json      text json
+*.md        text markdown
+*.yml       text yaml
+*.yaml      text yaml
+*.ps1       text powershell
+*.sql       text sql
+*.css       text css
+*.tsx       text tsx
+*.ts        text ts
+*.js        text javascript
+*.html      text html
+*.svg       text xml
+*.editorconfig text
+
+*.png       binary
+*.jpg       binary
+*.jpeg      binary
+*.gif       binary
+*.ico       binary
+*.woff      binary
+*.woff2     binary
+*.ttf       binary
+*.eot       binary
+*.pdf       binary
+*.zip       binary
+*.dll       binary
+*.exe       binary
+*.pdb       binary
