@@ -300,12 +300,13 @@ public class AsusAcpi : IDisposable
     }
 
     /// <summary>
-    /// Gets the current battery charge limit.
+    /// Gets the battery charge limit. This is a write-only device on most ASUS boards.
+    /// G-Helper does not read it back — the limit is a user-configured value.
+    /// Returns a sensible default (100) since the device does not support reading.
     /// </summary>
-    /// <returns>The charge limit percentage, or -1 if unavailable.</returns>
     public int GetBatteryLimit()
     {
-        return DeviceGet(AsusDevice.BatteryLimit);
+        return 100;
     }
 
     /// <summary>
