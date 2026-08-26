@@ -42,6 +42,8 @@ public class Program
 
         builder.Services.AddZTRServices();
 
+        ConfigureUrls(builder, args);
+
         var app = builder.Build();
 
         if (app.Environment.IsDevelopment())
@@ -81,5 +83,65 @@ public class Program
         app.MapFallbackToFile("index.html");
 
         app.Run();
+    }
+
+    private static void ConfigureUrls(WebApplicationBuilder builder, string[] args)
+    {
+        var urls = new List<string>();
+
+        // 1. Check command line --urls argument
+        for (int i = 0; i < args.Length; i++)
+        {
+            if (args[i] == "--urls" && i + 1 < args.Length)
+            {
+                urls.AddRange(args[i + 1].Split(',', StringSplitOptions.RemoveEmptyEntries));
+                break;
+            }
+        }
+
+        // 2. Check ASPNETCORE_URLS environment variable
+        var envUrls = Environment.GetEnvironmentVariable("ASPNETCORE_URLS");
+        if (!string.IsNullOrEmpty(envUrls))
+        {
+            urls.AddRange(envUrls.Split(',', StringSplitOptions.RemoveEmptyEntries));
+        }
+
+        // 3. Default: try port 5000, then 5001-5010
+        if (urls.Count == 0)
+        {
+            foreach (var port in Enumerable.Range(5000, 11))
+            {
+                if (IsPortAvailable(port))
+                {
+                    urls.Add($"http://localhost:{port}");
+                    Console.WriteLine($"[ZTR_OS] Using port {port}");
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine($"[ZTR_OS] Port {port} is in use, trying next...");
+                }
+            }
+        }
+
+        if (urls.Count > 0)
+        {
+            builder.WebHost.UseUrls(urls.ToArray());
+        }
+    }
+
+    private static bool IsPortAvailable(int port)
+    {
+        try
+        {
+            using var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.IPv4Any, port);
+            listener.Start();
+            listener.Stop();
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }
