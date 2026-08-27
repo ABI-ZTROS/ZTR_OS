@@ -31,7 +31,7 @@ public class BootSequence
         var services = new ServiceCollection();
         services.AddSingleton<Serilog.ILogger>(Log.Logger);
 
-        await RegisterServices(services);
+        await RegisterServices(services, agreementService);
 
         await Step(95, "正在构建服务容器...", "[BUILD] 验证服务契约拓扑...");
         _serviceProvider = services.BuildServiceProvider();
@@ -46,13 +46,13 @@ public class BootSequence
         ForceLog.Write($"[BOOT] Boot 完成: {_stats.Ok} OK, {_stats.Fail} FAIL");
     }
 
-    private async Task RegisterServices(IServiceCollection services)
+    private async Task RegisterServices(IServiceCollection services, IUserAgreementService agreementService)
     {
         // V8 FIXED: Use the already-agreed agreementService instance instead of creating
         // a new un-agreed one. Previously the pre-agreed instance was thrown away and a fresh
         // UserAgreementService was registered in DI → IUserAgreementService would get an
         // instance that bypassed the protocol gate.
-        await Register<IUserAgreementService>(agreementService!, services, 10, "用户协议服务", "状态持久化");
+        await Register<IUserAgreementService>(agreementService, services, 10, "用户协议服务", "状态持久化");
         await Register<IThemeService, ThemeService>(services, 20, "主题服务", "亮/暗切换");
         await Register<IConfigurationService, ConfigurationService>(services, 30, "配置服务", "JSON 持久化");
         await Register<IWindowEffectsService, WindowEffectsService>(services, 45, "窗口特效服务", "Mica/圆角/暗色标题栏");
