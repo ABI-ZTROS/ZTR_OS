@@ -275,7 +275,7 @@ public class SystemSensorFallback : ISystemSensorFallback
         {
             var temps = ReadThermalZoneTemperatures();
             var cpuTemp = temps.FirstOrDefault(t => t.InstanceName.Contains("CPU", StringComparison.OrdinalIgnoreCase));
-            if (cpuTemp.Temperature > 0)
+            if (cpuTemp != null && cpuTemp.Temperature > 0)
                 return cpuTemp.Temperature;
         }
         catch (Exception ex)
@@ -417,7 +417,7 @@ public class SystemSensorFallback : ISystemSensorFallback
                 .OrderByDescending(t => t.Temperature)
                 .FirstOrDefault();
 
-            if (gpuTemp.Temperature > 0)
+            if (gpuTemp != null && gpuTemp.Temperature > 0)
                 return gpuTemp.Temperature;
 
             if (temps.Count > 0 && temps[0].Temperature > 0)
@@ -684,7 +684,7 @@ public class SystemSensorFallback : ISystemSensorFallback
                 new System.Management.ObjectQuery("SELECT * FROM MSAcpi_ThermalZoneTemperature"));
             using var results = searcher.Get();
 
-            var fanZone = results.Cast<System.Management.ManagementObject>()
+            var fanZone = results!.Cast<System.Management.ManagementObject>()
                 .FirstOrDefault(obj => obj["InstanceName"]?.ToString().Contains("Fan", StringComparison.OrdinalIgnoreCase) == true);
 
             if (fanZone?["CurrentTemperature"] != null)

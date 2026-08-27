@@ -100,7 +100,7 @@ public class ScreenController : ControllerBase
     }
 
     [HttpPost("keyboard-brightness")]
-    public ActionResult<ApiResponse> SetKeyboardBrightness([FromBody] SetBrightnessRequest request)
+    public ActionResult<ApiResponse> SetKeyboardBrightness([FromBody] SetKeyboardBrightnessRequest request)
     {
         var result = _keyboardControl.SetBrightness(request.Level);
         return Ok(new ApiResponse(result));
@@ -111,4 +111,4 @@ public class SetRefreshRateRequest { public int Rate { get; set; } }
 public class SetOverdriveRequest { public bool Enabled { get; set; } }
 public class SetMiniLedRequest { public string Mode { get; set; } = string.Empty; }
 public class SetBoolRequest { public bool Enabled { get; set; } }
-public class SetBrightnessRequest { public int Level { get; set; } }
+public class SetKeyboardBrightnessRequest { public int Level { get; set; } }
