@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.SignalR;
+using ZTR.Api.Mappers;
 using ZTR.HAL;
 using ZTR.Models;
 
@@ -94,7 +95,8 @@ public class SensorSignalRBridge : IDisposable
         var battery = new
         {
             percentage = state.Battery.ChargePercent,
-            status = state.Battery.IsCharging ? "AC" : "DC",
+            // V7 FIXED: Use shared mapping instead of inline ternary with opposite semantics
+            status = HardwareMapper.MapBatteryStatus(state.Battery.IsCharging),
             timeRemaining = 0,
             powerDraw = state.Battery.ChargeLimit
         };

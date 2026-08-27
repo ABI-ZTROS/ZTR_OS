@@ -48,12 +48,37 @@ public class BootSequence
 
     private async Task RegisterServices(IServiceCollection services)
     {
-        await Register<IUserAgreementService, UserAgreementService>(services, 10, "用户协议服务", "状态持久化");
+        // V8 FIXED: Use the already-agreed agreementService instance instead of creating
+        // a new un-agreed one. Previously the pre-agreed instance was thrown away and a fresh
+        // UserAgreementService was registered in DI → IUserAgreementService would get an
+        // instance that bypassed the protocol gate.
+        await Register<IUserAgreementService>(agreementService!, services, 10, "用户协议服务", "状态持久化");
         await Register<IThemeService, ThemeService>(services, 20, "主题服务", "亮/暗切换");
         await Register<IConfigurationService, ConfigurationService>(services, 30, "配置服务", "JSON 持久化");
         await Register<IWindowEffectsService, WindowEffectsService>(services, 45, "窗口特效服务", "Mica/圆角/暗色标题栏");
         await Register<IWebView2BridgeService, WebView2BridgeService>(services, 60, "WebView2 桥接服务", "JS↔C# 双向通信");
         await Register<IProcessManagerService, ProcessManagerService>(services, 75, "进程管理服务", "亲和性/优先级");
+    }
+
+    // V8 FIXED: New overload that registers a pre-built instance instead of creating one
+    private async Task Register<TService>(TService instance, IServiceCollection services, int percent, string displayName, string description)
+        where TService : class
+    {
+        _startupWindow.SetProgress(percent, $"加载 {displayName}...");
+        _startupWindow.AppendLog($"[LOAD] {displayName} ({description})...");
+        await Task.Delay(40);
+        try
+        {
+            services.AddSingleton<TService>(instance);
+            _stats.Ok++;
+            _startupWindow.AppendLog($"[OK]   {displayName,-20} ← {instance.GetType().Name} // {description}", isSuccess: true);
+        }
+        catch (Exception ex)
+        {
+            _stats.Fail++;
+            _startupWindow.AppendLog($"[ERR]  {displayName,-20} 加载失败: {ex.Message}", isError: true);
+        }
+        await Task.Delay(40);
     }
 
     private async Task Register<TService, TImpl>(IServiceCollection services, int percent, string displayName, string description)

@@ -1,7 +1,9 @@
 <Application x:Class="ZTR.Desktop.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             StartupUri="MainWindow.xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- V3 FIXED: StartupUri removed. OnStartup in App.xaml.cs is the single
+         source of window creation. Without this fix, WPF auto-creates a
+         MainWindow AND OnStartup creates another → dual windows at launch. -->
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

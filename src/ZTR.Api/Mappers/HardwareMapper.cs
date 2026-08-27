@@ -9,17 +9,20 @@ public static class HardwareMapper
 {
     public static HardwareResponse ToFrontend(HardwareState state)
     {
+        // V10 FIXED: Align Cores list cap with CoreCount so frontend doesn't
+        // render out-of-bounds. Both use Math.Min(coreCount, 16) consistently.
         int coreCount = Environment.ProcessorCount;
         int threadCount = GetLogicalProcessors();
+        int coreCap = Math.Min(coreCount, 16);
 
-        var cores = GenerateCoreStates(coreCount, threadCount, state.Cpu.Usage, state.Cpu.Temperature);
+        var cores = GenerateCoreStates(coreCap, threadCount, state.Cpu.Usage, state.Cpu.Temperature);
 
         return new HardwareResponse(
             Cpu: new CpuResponse(
                 Usage: state.Cpu.Usage,
                 Temperature: state.Cpu.Temperature,
                 PowerDraw: state.Cpu.Power,
-                CoreCount: coreCount,
+                CoreCount: coreCap,
                 ThreadCount: threadCount,
                 Cores: cores
             ),
@@ -34,7 +37,10 @@ public static class HardwareMapper
             ),
             Battery: new BatteryResponse(
                 Percentage: state.Battery.ChargePercent,
-                Status: state.Battery.IsCharging ? "Charging" : "AC",
+                // V7 FIXED: Use shared battery status mapping.
+                // Previously this returned "Charging"/"AC" while SignalR returned "AC"/"DC"
+                // (opposite semantics). Now both use "AC" (charging) / "DC" (not charging).
+                Status: MapBatteryStatus(state.Battery.IsCharging),
                 TimeRemaining: 0,
                 PowerDraw: 0
             ),
@@ -59,6 +65,12 @@ public static class HardwareMapper
         }
 
         return cores;
+    }
+
+    // V7 FIXED: Shared battery status mapping used by both REST and SignalR paths
+    public static string MapBatteryStatus(bool isCharging)
+    {
+        return isCharging ? "AC" : "DC";
     }
 
     private static List<FanResponse> BuildFanList(FanState fan)

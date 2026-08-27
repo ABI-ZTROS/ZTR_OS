@@ -51,7 +51,7 @@ public class DiagnosticsController : ControllerBase
                 AcpiAvailable = _acpi.IsAvailable,
                 HidInitialized = _hid.IsInitialized,
                 HidDeviceCount = _hid.DeviceCount,
-                ModeControlActive = true,
+                ModeControlActive = _modeControl != null, // P1 FIXED: Use real state instead of hardcoded true
                 SystemFallbackAvailable = _systemFallback.IsAvailable,
                 SystemFallbackInitProgress = _systemFallback.GetInitializationProgress(),
                 SupportedDevices = deviceInfo.SupportedFeatures.ToList(),

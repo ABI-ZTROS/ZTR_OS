@@ -48,6 +48,20 @@ public class Program
 
         var app = builder.Build();
 
+        // V2 FIXED: Force-resolve SensorSignalRBridge so its constructor subscribes
+        // to SensorQueue.StateEnqueued events. Without this, the bridge singleton
+        // was registered but never constructed → no event subscription → real-time
+        // SignalR push was a dead chain.
+        try
+        {
+            var bridge = app.Services.GetRequiredService<ZTR.Api.Hubs.SensorSignalRBridge>();
+            Console.WriteLine("[ZTR_OS] SensorSignalRBridge resolved - real-time push enabled");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[ZTR_OS] WARNING: SensorSignalRBridge failed to resolve: {ex.Message}");
+        }
+
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
@@ -59,7 +73,9 @@ public class Program
 
         app.UseZTRMiddleware();
 
-        app.UseHttpsRedirection();
+        // V1 FIXED: UseHttpsRedirection removed because we only bind http://
+        // Without an HTTPS endpoint, the redirect would 307 all clients to a non-existent URL.
+        // app.UseHttpsRedirection();
 
         app.UseCors("AllowAll");
 

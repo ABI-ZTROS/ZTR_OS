@@ -63,6 +63,8 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<DecisionLogger>();
         services.AddSingleton<OnlineLearner>();
         services.AddSingleton<PredictiveScheduler>();
+        // V5 FIXED: Singleton training state so status persists across requests
+        services.AddSingleton<MlpTrainingState>();
 
         services.AddSingleton<SensorSignalRBridge>();
         services.AddHostedService<SensorBackgroundService>();

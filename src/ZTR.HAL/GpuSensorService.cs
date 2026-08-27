@@ -181,11 +181,18 @@ public class GpuSensorService : IDisposable
     {
         try
         {
-            using var probe = new NvidiaGpuControl(0);
+            // P1c FIXED: Remove 'using' - probe is now owned by _gpuControls list.
+            // Previously 'using var' disposed the probe at end of block while keeping
+            // a reference in _gpuControls → use-after-free when later accessing the GPU.
+            var probe = new NvidiaGpuControl(0);
             if (probe.IsValid)
             {
                 _gpuControls.Add(probe);
                 _logger?.LogInformation("Detected NVIDIA GPU: {Name}", probe.FullName);
+            }
+            else
+            {
+                probe.Dispose();
             }
         }
         catch (Exception ex)
@@ -198,11 +205,16 @@ public class GpuSensorService : IDisposable
     {
         try
         {
-            using var probe = new AmdGpuControl(0);
+            // P1c FIXED: Same fix as DetectNvidiaGpus
+            var probe = new AmdGpuControl(0);
             if (probe.IsValid)
             {
                 _gpuControls.Add(probe);
                 _logger?.LogInformation("Detected AMD GPU: {Name}", probe.FullName);
+            }
+            else
+            {
+                probe.Dispose();
             }
         }
         catch (Exception ex)

@@ -1,12 +1,15 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Threading;
+using Microsoft.Extensions.DependencyInjection;
+using ZTR.Desktop.Features.WebView2.Services;
 
 namespace ZTR.Desktop;
 
 public partial class MainWindow : Window
 {
     private readonly ApiServerHost _apiServer = new();
+    private IWebView2BridgeService? _bridge;
 
     public MainWindow()
     {
@@ -32,6 +35,37 @@ public partial class MainWindow : Window
 
         await WebView.EnsureCoreWebView2Async();
         WebView.CoreWebView2.Settings.AreDevToolsEnabled = false;
+
+        // V4 FIXED: Attach WebView2 bridge after CoreWebView2 is initialized.
+        // Previously the bridge was registered in DI but never resolved or
+        // attached → JS↔C# bidirectional communication was 0% connected.
+        try
+        {
+            if (App.Services.GetService<IWebView2BridgeService>() is { } bridge)
+            {
+                _bridge = bridge;
+                bridge.Attach(WebView.CoreWebView2);
+                // Register core handlers for JS→C# bridge calls
+                bridge.RegisterHandler("getApiConfig", async _ =>
+                {
+                    var url = $"http://localhost:{_apiServer.Port}";
+                    return new { apiBaseUrl = url, isDesktop = true };
+                });
+                bridge.RegisterHandler("navigate", async args =>
+                {
+                    if (args.Length > 0 && args[0] is string path)
+                    {
+                        WebView.CoreWebView2.Navigate(path);
+                    }
+                    return null;
+                });
+                ForceLog.Write("[BRIDGE] WebView2Bridge attached - JS↔C# communication enabled");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            ForceLog.Write($"[BRIDGE] Failed to attach WebView2Bridge: {ex.Message}");
+        }
 
         await WebView.CoreWebView2.ExecuteScriptAsync(
             "localStorage.clear(); sessionStorage.clear();");
@@ -165,6 +199,14 @@ public partial class MainWindow : Window
     private void Window_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
     {
         StatusText.Text = "Shutting down...";
+
+        // V4 FIXED: Detach bridge before stopping API server
+        try
+        {
+            _bridge?.Detach();
+        }
+        catch { }
+
         _apiServer.StopAsync().Wait(TimeSpan.FromSeconds(5));
     }
 }

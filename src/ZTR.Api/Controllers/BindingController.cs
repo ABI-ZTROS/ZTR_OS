@@ -49,6 +49,12 @@ public class BindingController : ControllerBase
     [ProducesResponseType<ApiResponse>(StatusCodes.Status400BadRequest)]
     public ActionResult<ApiResponse> SetBinding(int processId, [FromBody] SetBindingRequest request)
     {
+        // P1 FIXED: Null guard on request.Affinity to prevent NRE
+        if (request.Affinity == null || request.Affinity.Count == 0)
+        {
+            return BadRequest(new ApiResponse(false, "Affinity list cannot be null or empty"));
+        }
+
         long affinityMask = 0;
         foreach (var coreId in request.Affinity)
         {
@@ -74,9 +80,15 @@ public class BindingController : ControllerBase
 
     [HttpDelete("{processId}")]
     [ProducesResponseType<ApiResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ApiResponse>(StatusCodes.Status404NotFound)]
     public ActionResult<ApiResponse> RemoveBinding(int processId)
     {
+        // P1 FIXED: Check actual result instead of ignoring it and always returning success
         var result = _cpuManager.SetAffinity(processId, -1);
+        if (!result)
+        {
+            return NotFound(new ApiResponse(false, $"Process {processId} not found or unbinding failed"));
+        }
         return Ok(new ApiResponse(true));
     }
 

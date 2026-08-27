@@ -94,20 +94,23 @@ class SignalRService {
   private registerHandlers(): void {
     if (!this.connection) return
 
+    // V6 FIXED: Subscribe to actual backend events.
+    // Backend sends: "HardwareUpdate" (hardware hub), "SensorUpdate" (sensor hub),
+    // "StateChange" (state hub). Previously subscribed to ghost events
+    // (MlpStateUpdate/MlpDecision/SystemEvent) that were never sent → callbacks never fired.
+
     this.connection.on('HardwareUpdate', (data: HardwareState) => {
       this.emit('hardware:update', data)
     })
 
-    this.connection.on('MlpStateUpdate', (data: MlpState) => {
-      this.emit('mlp:state', data)
+    this.connection.on('SensorUpdate', (data: HardwareState) => {
+      this.emit('sensor:update', data)
+      // Also forward as hardware update for compatibility
+      this.emit('hardware:update', data)
     })
 
-    this.connection.on('MlpDecision', (data: MlpDecision) => {
-      this.emit('mlp:decision', data)
-    })
-
-    this.connection.on('SystemEvent', (data: { type: string; payload: unknown }) => {
-      this.emit(`system:${data.type}`, data.payload)
+    this.connection.on('StateChange', (data: { type: string; payload: unknown }) => {
+      this.emit(`state:${data.type}`, data.payload)
     })
   }
 
