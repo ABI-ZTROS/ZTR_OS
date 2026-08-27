@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.Extensions.Logging;
 using Microsoft.Win32;
@@ -67,6 +68,12 @@ public class AutomationService : IDisposable
     public bool IsMonitoring => _isMonitoring;
 
     /// <summary>
+    /// Gets a value indicating whether the automation engine is
+    /// currently running (monitoring power events).
+    /// </summary>
+    public bool IsRunning => _isMonitoring;
+
+    /// <summary>
     /// Gets a value indicating whether the automation engine is enabled
     /// via configuration.
     /// </summary>
@@ -92,6 +99,89 @@ public class AutomationService : IDisposable
             {
                 _config = value;
             }
+        }
+    }
+
+    /// <summary>
+    /// Gets the current automation configuration.
+    /// </summary>
+    /// <returns>The current <see cref="AutomationConfig"/>.</returns>
+    public AutomationConfig GetConfig() => _config;
+
+    /// <summary>
+    /// Updates the automation configuration with the specified config.
+    /// </summary>
+    /// <param name="config">The new configuration to apply.</param>
+    public void UpdateConfig(AutomationConfig config)
+    {
+        ArgumentNullException.ThrowIfNull(config);
+        lock (_lock)
+        {
+            _config = config;
+        }
+    }
+
+    /// <summary>
+    /// Adds an automation rule to the configuration.
+    /// </summary>
+    /// <param name="rule">The rule to add.</param>
+    public void AddRule(AutomationRule rule)
+    {
+        ArgumentNullException.ThrowIfNull(rule);
+        lock (_lock)
+        {
+            _config.AddRule(rule);
+        }
+    }
+
+    /// <summary>
+    /// Removes an automation rule by name.
+    /// </summary>
+    /// <param name="name">The name of the rule to remove.</param>
+    public void RemoveRule(string name)
+    {
+        lock (_lock)
+        {
+            var rule = _config.Rules.FirstOrDefault(r => r.Name == name);
+            if (rule != null)
+            {
+                _config.RemoveRule(rule);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Applies all rules configured for the specified power trigger.
+    /// </summary>
+    /// <param name="trigger">The power trigger to apply rules for.</param>
+    /// <returns>A tuple indicating success and a message.</returns>
+    public (bool success, string message) ApplyRulesForTrigger(PowerTrigger trigger)
+    {
+        lock (_lock)
+        {
+            var rules = _config.GetAllRulesForTrigger(trigger);
+            if (rules.Count == 0)
+            {
+                return (false, $"No rules configured for trigger: {trigger}");
+            }
+
+            bool anyApplied = false;
+            foreach (var rule in rules)
+            {
+                try
+                {
+                    if (ApplyRule(rule, trigger))
+                        anyApplied = true;
+                }
+                catch (Exception ex)
+                {
+                    _logger?.LogError(ex, "Error applying automation rule: {Rule}", rule.Name);
+                }
+            }
+
+            return anyApplied
+                ? (true, $"Applied {rules.Count} rule(s) for trigger: {trigger}")
+                : (false, $"Failed to apply any rules for trigger: {trigger}");
         }
     }
 
