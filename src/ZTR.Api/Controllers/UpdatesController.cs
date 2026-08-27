@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using ZTR.HAL;
+using ZTR.Models;
 
 namespace ZTR.Api.Controllers;
 

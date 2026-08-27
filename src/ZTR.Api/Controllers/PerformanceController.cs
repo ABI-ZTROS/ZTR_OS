@@ -195,8 +195,3 @@ public class SetCpuPowerRequest
 {
     public int Watts { get; set; }
 }
-
-public class SetGpuPowerRequest
-{
-    public int Watts { get; set; }
-}

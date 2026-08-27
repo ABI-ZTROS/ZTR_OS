@@ -42,24 +42,27 @@ public class AsusAcpiTests : IDisposable
     public void DeviceSet_IntStatus_CallsDeviceWithCorrectArgs()
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(true);
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(BitConverter.GetBytes(1));
 
-        bool result = _acpi.DeviceSet(AsusDevice.PerformanceMode, (int)AsusMode.PerformanceTurbo);
+        int result = _acpi.DeviceSet(AsusDevice.PerformanceMode, (int)AsusMode.PerformanceTurbo);
 
-        Assert.True(result);
-        _mockDevice.Verify(d => d.CallControl(It.IsAny<byte[]>(), 256), Times.Once);
+        Assert.Equal(1, result);
+        _mockDevice.Verify(d => d.CallControlBuffer(It.IsAny<byte[]>(), 256), Times.Once);
     }
 
     [Fact]
     public void DeviceSet_ByteArray_CallsDeviceWithCorrectArgs()
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(true);
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        byte[] expected = { 0x01, 0x02, 0x03 };
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(expected);
         byte[] curve = { 0x01, 0x02, 0x03 };
 
-        bool result = _acpi.DeviceSet(AsusDevice.DevsCPUFanCurve, curve);
+        byte[] result = _acpi.DeviceSet(AsusDevice.DevsCPUFanCurve, curve);
 
-        Assert.True(result);
+        Assert.NotEmpty(result);
     }
 
     [Fact]
@@ -67,20 +70,21 @@ public class AsusAcpiTests : IDisposable
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(false);
 
-        bool result = _acpi.DeviceSet(AsusDevice.PerformanceMode, 1);
+        int result = _acpi.DeviceSet(AsusDevice.PerformanceMode, 1);
 
-        Assert.False(result);
+        Assert.Equal(-1, result);
     }
 
     [Fact]
     public void DeviceSet_WhenCallControlFails_ReturnsFalse()
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(true);
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(false);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(Array.Empty<byte>());
 
-        bool result = _acpi.DeviceSet(AsusDevice.PerformanceMode, 1);
+        int result = _acpi.DeviceSet(AsusDevice.PerformanceMode, 1);
 
-        Assert.False(result);
+        Assert.Equal(-1, result);
     }
 
     #endregion
@@ -91,11 +95,12 @@ public class AsusAcpiTests : IDisposable
     public void DeviceSetWmi_CallsDeviceWithCorrectArgs()
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(true);
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(BitConverter.GetBytes(1));
 
-        bool result = _acpi.DeviceSetWmi(AsusDevice.GPUEco, (int)AsusGPU.Ultimate);
+        int result = _acpi.DeviceSetWmi(AsusDevice.GPUEco, (int)AsusGPU.Ultimate);
 
-        Assert.True(result);
+        Assert.Equal(1, result);
     }
 
     [Fact]
@@ -103,9 +108,9 @@ public class AsusAcpiTests : IDisposable
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(false);
 
-        bool result = _acpi.DeviceSetWmi(AsusDevice.GPUEco, 2);
+        int result = _acpi.DeviceSetWmi(AsusDevice.GPUEco, 2);
 
-        Assert.False(result);
+        Assert.Equal(-1, result);
     }
 
     #endregion
@@ -264,12 +269,12 @@ public class AsusAcpiTests : IDisposable
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(true);
         int callCount = 0;
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()))
-            .Returns(() => ++callCount < 3 ? false : true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(() => ++callCount < 3 ? Array.Empty<byte>() : BitConverter.GetBytes(1));
 
-        bool result = _acpi.DeviceSet(AsusDevice.PerformanceMode, 1);
+        int result = _acpi.DeviceSet(AsusDevice.PerformanceMode, 1);
 
-        Assert.True(result);
+        Assert.Equal(1, result);
         Assert.True(callCount >= 3);
     }
 
@@ -292,12 +297,13 @@ public class AsusAcpiTests : IDisposable
     public void DeviceSet_FailsAfterMaxRetries()
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(true);
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(false);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(Array.Empty<byte>());
 
-        bool result = _acpi.DeviceSet(AsusDevice.PerformanceMode, 1);
+        int result = _acpi.DeviceSet(AsusDevice.PerformanceMode, 1);
 
-        Assert.False(result);
-        _mockDevice.Verify(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()), Times.AtLeast(3));
+        Assert.Equal(-1, result);
+        _mockDevice.Verify(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()), Times.AtLeast(3));
     }
 
     [Fact]
@@ -317,7 +323,8 @@ public class AsusAcpiTests : IDisposable
     public void Retry_LogsWarningOnFailure()
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(true);
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(false);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(Array.Empty<byte>());
 
         _acpi.DeviceSet(AsusDevice.PerformanceMode, 1);
 
@@ -334,7 +341,8 @@ public class AsusAcpiTests : IDisposable
     public void SetPerformanceMode_CorrectDeviceId()
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(true);
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(BitConverter.GetBytes(1));
 
         bool result = _acpi.SetPerformanceMode(AsusMode.PerformanceTurbo);
 
@@ -357,7 +365,8 @@ public class AsusAcpiTests : IDisposable
     public void SetStatusMode_CorrectDeviceId()
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(true);
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(BitConverter.GetBytes(1));
 
         bool result = _acpi.SetStatusMode(1);
 
@@ -368,7 +377,9 @@ public class AsusAcpiTests : IDisposable
     public void SetCpuFanCurve_CorrectDeviceId()
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(true);
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        byte[] expected = { 0x10, 0x20, 0x30 };
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(expected);
         byte[] curve = { 0x10, 0x20, 0x30 };
 
         bool result = _acpi.SetCpuFanCurve(curve);
@@ -380,7 +391,9 @@ public class AsusAcpiTests : IDisposable
     public void SetGpuFanCurve_CorrectDeviceId()
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(true);
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        byte[] expected = { 0x10, 0x20, 0x30 };
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(expected);
         byte[] curve = { 0x10, 0x20, 0x30 };
 
         bool result = _acpi.SetGpuFanCurve(curve);
@@ -416,7 +429,8 @@ public class AsusAcpiTests : IDisposable
     public void SetBatteryLimit_CorrectDeviceId()
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(true);
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(BitConverter.GetBytes(1));
 
         bool result = _acpi.SetBatteryLimit(80);
 
@@ -439,7 +453,8 @@ public class AsusAcpiTests : IDisposable
     public void SetKeyboardBrightness_CorrectDeviceId()
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(true);
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(BitConverter.GetBytes(1));
 
         bool result = _acpi.SetKeyboardBrightness(3);
 
@@ -450,7 +465,8 @@ public class AsusAcpiTests : IDisposable
     public void SetGPUMode_CorrectDeviceId()
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(true);
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(BitConverter.GetBytes(1));
 
         bool result = _acpi.SetGPUMode(AsusGPU.Ultimate);
 
@@ -478,9 +494,9 @@ public class AsusAcpiTests : IDisposable
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(false);
 
-        Assert.False(_acpi.DeviceSet(AsusDevice.PerformanceMode, 1));
-        Assert.False(_acpi.DeviceSet(AsusDevice.PerformanceMode, new byte[] { 1 }));
-        Assert.False(_acpi.DeviceSetWmi(AsusDevice.PerformanceMode, 1));
+        Assert.Equal(-1, _acpi.DeviceSet(AsusDevice.PerformanceMode, 1));
+        Assert.Empty(_acpi.DeviceSet(AsusDevice.PerformanceMode, new byte[] { 1 }));
+        Assert.Equal(-1, _acpi.DeviceSetWmi(AsusDevice.PerformanceMode, 1));
         Assert.Equal(-1, _acpi.DeviceGet(AsusDevice.PerformanceMode));
         Assert.Empty(_acpi.DeviceGetBuffer(AsusDevice.PerformanceMode, 0));
         Assert.Empty(_acpi.DeviceGetLarge(AsusDevice.PerformanceMode, 0, 512));
@@ -523,17 +539,17 @@ public class AsusAcpiTests : IDisposable
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(true);
         int callCount = 0;
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()))
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
             .Returns(() =>
             {
                 callCount++;
                 if (callCount < 3) throw new InvalidOperationException("Device error");
-                return true;
+                return BitConverter.GetBytes(1);
             });
 
-        bool result = _acpi.DeviceSet(AsusDevice.PerformanceMode, 1);
+        int result = _acpi.DeviceSet(AsusDevice.PerformanceMode, 1);
 
-        Assert.True(result);
+        Assert.Equal(1, result);
     }
 
     [Fact]
