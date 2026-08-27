@@ -267,14 +267,6 @@ public class AutomationService : IDisposable
 
         switch (e.Mode)
         {
-            case PowerModes.AcFullOn:
-                HandlePowerTransition(PowerTrigger.AC);
-                break;
-
-            case PowerModes.Battery:
-                HandlePowerTransition(PowerTrigger.Battery);
-                break;
-
             case PowerModes.Suspend:
                 HandleSuspend();
                 break;
