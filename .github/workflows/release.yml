@@ -18,7 +18,7 @@ env:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -42,17 +42,16 @@ jobs:
 
       - name: Copy frontend to API wwwroot for testing
         run: |
-          rm -rf src/ZTR.Api/wwwroot
-          mkdir -p src/ZTR.Api/wwwroot
-          cp -r frontend/dist/* src/ZTR.Api/wwwroot/
+          Remove-Item -Recurse -Force src/ZTR.Api/wwwroot -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force -Path src/ZTR.Api/wwwroot
+          Copy-Item -Recurse frontend/dist/* src/ZTR.Api/wwwroot/
 
       - name: Build and test backend
         run: |
-          dotnet restore src/ZTR.Api/ZTR.Api.csproj
-          dotnet build src/ZTR.Api/ZTR.Api.csproj --no-restore -c Release
-          dotnet test tests/ZTR.HAL.Tests/ZTR.HAL.Tests.csproj --no-build -c Release --results-directory ./TestResults
-          dotnet test tests/ZTR.Intelligence.Tests/ZTR.Intelligence.Tests.csproj --no-build -c Release --results-directory ./TestResults
-          dotnet test tests/ZTR.Api.Tests/ZTR.Api.Tests.csproj --no-build -c Release --results-directory ./TestResults
+          dotnet restore ZTR_OS.sln
+          dotnet test tests/ZTR.HAL.Tests/ZTR.HAL.Tests.csproj -c Release --results-directory ./TestResults
+          dotnet test tests/ZTR.Intelligence.Tests/ZTR.Intelligence.Tests.csproj -c Release --results-directory ./TestResults
+          dotnet test tests/ZTR.Api.Tests/ZTR.Api.Tests.csproj -c Release --results-directory ./TestResults
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -63,7 +62,7 @@ jobs:
 
   publish-win-x64:
     needs: build-and-test
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -86,26 +85,27 @@ jobs:
       - name: Publish API
         run: |
           dotnet publish src/ZTR.Api/ZTR.Api.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -p:DebugSymbols=false -o ./artifacts/win-x64/api
+        shell: pwsh
 
       - name: Publish Service
         run: |
           dotnet publish src/ZTR.Service/ZTR.Service.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -p:DebugSymbols=false -o ./artifacts/win-x64/service
+        shell: pwsh
 
       - name: Copy frontend to publish output
         run: |
-          mkdir -p ./artifacts/win-x64/api/wwwroot
-          cp -r frontend/dist/* ./artifacts/win-x64/api/wwwroot/
-          mkdir -p ./artifacts/win-x64/frontend
-          cp -r frontend/dist/* ./artifacts/win-x64/frontend/
+          New-Item -ItemType Directory -Force -Path ./artifacts/win-x64/api/wwwroot
+          Copy-Item -Recurse frontend/dist/* ./artifacts/win-x64/api/wwwroot/
+          New-Item -ItemType Directory -Force -Path ./artifacts/win-x64/frontend
+          Copy-Item -Recurse frontend/dist/* ./artifacts/win-x64/frontend/
+        shell: pwsh
 
       - name: Package release
         run: |
-          echo "ZTR_OS ${TAG} Windows Release" > ./artifacts/win-x64/README.txt
-          echo "Self-contained single-file. No .NET runtime required." >> ./artifacts/win-x64/README.txt
-          cd artifacts/win-x64
-          zip -r "../../ZTR_OS-${TAG}-win-x64.zip" .
-          cd ../../
-          ls -lh ZTR_OS-${TAG}-win-x64.zip
+          "ZTR_OS $env:TAG Windows Release`nSelf-contained single-file. No .NET runtime required." | Out-File -FilePath ./artifacts/win-x64/README.txt -Encoding utf8
+          Compress-Archive -Path ./artifacts/win-x64/* -DestinationPath "ZTR_OS-$env:TAG-win-x64.zip" -Force
+          Get-ChildItem "ZTR_OS-$env:TAG-win-x64.zip" | Select-Object Name, Length
+        shell: pwsh
 
       - uses: softprops/action-gh-release@v2
         with:
@@ -184,6 +184,12 @@ jobs:
       - name: Publish Desktop (self-contained, frontend bundled via csproj)
         run: |
           dotnet publish src/ZTR.Desktop/ZTR.Desktop.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -p:DebugSymbols=false -p:BuildFrontend=false -o ./artifacts/desktop-win-x64
+        shell: pwsh
+
+      - name: Copy frontend to desktop publish output
+        run: |
+          New-Item -ItemType Directory -Force -Path ./artifacts/desktop-win-x64/wwwroot
+          Copy-Item -Recurse frontend/dist/* ./artifacts/desktop-win-x64/wwwroot/
         shell: pwsh
 
       - name: Verify frontend in wwwroot

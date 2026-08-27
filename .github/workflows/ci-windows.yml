@@ -55,7 +55,7 @@ jobs:
         run: dotnet build src/ZTR.Api/ZTR.Api.csproj --no-restore -c Release
 
       - name: Build Desktop (WPF, net9.0-windows)
-        run: dotnet build src/ZTR.Desktop/ZTR.Desktop.csproj --no-restore -c Release
+        run: dotnet build src/ZTR.Desktop/ZTR.Desktop.csproj --no-restore -c Release -p:BuildFrontend=false
 
       - name: Verify frontend in output
         run: |
