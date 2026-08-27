@@ -12,6 +12,14 @@
     <ApplicationIcon />
     <StartupObject />
 
+    <PublishAot>true</PublishAot>
+    <PublishSingleFile>true</PublishSingleFile>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+    <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
+
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <CodeAnalysisTreatWarningsAsErrors>false</CodeAnalysisTreatWarningsAsErrors>
     <AnalysisMode>All</AnalysisMode>
@@ -104,5 +112,30 @@
     <ProjectReference Include="..\ZTR.Models\ZTR.Models.csproj" />
     <ProjectReference Include="..\ZTR.Common\ZTR.Common.csproj" />
   </ItemGroup>
+
+  <ItemGroup>
+    <TrimmingRootAssemblies Include="ZTR.Desktop" />
+    <TrimmingRootAssemblies Include="ZTR.Api" />
+    <TrimmingRootAssemblies Include="ZTR.HAL" />
+    <TrimmingRootAssemblies Include="ZTR.Intelligence" />
+    <TrimmingRootAssemblies Include="ZTR.Models" />
+    <TrimmingRootAssemblies Include="ZTR.Common" />
+    <TrimmingRootAssemblies Include="ZTR.Service" />
+  </ItemGroup>
+
+  <Target Name="PublishWwwroot" AfterTargets="Publish" Condition="'$(BuildFrontend)' != 'false'">
+    <PropertyGroup>
+      <_FrontendDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\..\frontend'))</_FrontendDir>
+      <_FrontendDistDir>$(_FrontendDir)\dist</_FrontendDistDir>
+    </PropertyGroup>
+    <ItemGroup Condition="Exists('$(_FrontendDistDir)')">
+      <_PublishWwwrootFiles Include="$(_FrontendDistDir)\**\*.*" />
+    </ItemGroup>
+    <Copy
+      SourceFiles="@(_PublishWwwrootFiles)"
+      DestinationFolder="$(PublishDir)wwwroot\"
+      Condition="Exists('$(_FrontendDistDir)')"
+      SkipUnchangedFiles="false" />
+  </Target>
 
 </Project>

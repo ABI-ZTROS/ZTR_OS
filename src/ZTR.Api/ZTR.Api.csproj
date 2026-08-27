@@ -20,10 +20,38 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>1591</NoWarn>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+
+    <PublishAot>true</PublishAot>
+    <PublishSingleFile>true</PublishSingleFile>
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="ZTR.Api.Tests" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="wwwroot\**\*.*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <Target Name="EnsureWwwroot" BeforeTargets="Publish" Condition="'$(BuildFrontend)' != 'false' AND !Exists('$(MSBuildProjectDirectory)\wwwroot\index.html')">
+    <PropertyGroup>
+      <_FrontendDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\..\frontend'))</_FrontendDir>
+      <_FrontendDistDir>$(_FrontendDir)\dist</_FrontendDistDir>
+    </PropertyGroup>
+    <MakeDir Directories="$(MSBuildProjectDirectory)\wwwroot" Condition="Exists('$(_FrontendDistDir)')" />
+    <ItemGroup Condition="Exists('$(_FrontendDistDir)')">
+      <_WwwrootPublishFiles Include="$(_FrontendDistDir)\**\*.*" />
+    </ItemGroup>
+    <Copy
+      SourceFiles="@(_WwwrootPublishFiles)"
+      DestinationFolder="$(MSBuildProjectDirectory)\wwwroot\"
+      Condition="Exists('$(_FrontendDistDir)')"
+      SkipUnchangedFiles="false" />
+  </Target>
 
 </Project>

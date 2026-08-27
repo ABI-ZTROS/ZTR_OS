@@ -82,14 +82,14 @@ jobs:
           npm ci
           npm run build
 
-      - name: Publish API
+      - name: Publish API (NativeAOT, self-contained)
         run: |
-          dotnet publish src/ZTR.Api/ZTR.Api.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -p:DebugSymbols=false -o ./artifacts/win-x64/api
+          dotnet publish src/ZTR.Api/ZTR.Api.csproj -c Release -r win-x64 --self-contained true -p:PublishAot=true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -p:DebugSymbols=false -p:BuildFrontend=false -o ./artifacts/win-x64/api
         shell: pwsh
 
-      - name: Publish Service
+      - name: Publish Service (NativeAOT, self-contained)
         run: |
-          dotnet publish src/ZTR.Service/ZTR.Service.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -p:DebugSymbols=false -o ./artifacts/win-x64/service
+          dotnet publish src/ZTR.Service/ZTR.Service.csproj -c Release -r win-x64 --self-contained true -p:PublishAot=true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -p:DebugSymbols=false -p:BuildFrontend=false -o ./artifacts/win-x64/service
         shell: pwsh
 
       - name: Copy frontend to publish output
@@ -100,9 +100,18 @@ jobs:
           Copy-Item -Recurse frontend/dist/* ./artifacts/win-x64/frontend/
         shell: pwsh
 
-      - name: Package release
+      - name: Verify frontend in API output
         run: |
-          "ZTR_OS $env:TAG Windows Release`nSelf-contained single-file. No .NET runtime required." | Out-File -FilePath ./artifacts/win-x64/README.txt -Encoding utf8
+          if (-not (Test-Path ./artifacts/win-x64/api/wwwroot/index.html)) {
+            Write-Error "wwwroot/index.html not found in API output!"
+            exit 1
+          }
+          Write-Output "API wwwroot verified"
+        shell: pwsh
+
+      - name: Package Windows release
+        run: |
+          "ZTR_OS $env:TAG Windows Release`nNativeAOT compiled, self-contained single-file binary. No .NET runtime required." | Out-File -FilePath ./artifacts/win-x64/README.txt -Encoding utf8
           Compress-Archive -Path ./artifacts/win-x64/* -DestinationPath "ZTR_OS-$env:TAG-win-x64.zip" -Force
           Get-ChildItem "ZTR_OS-$env:TAG-win-x64.zip" | Select-Object Name, Length
         shell: pwsh
@@ -118,10 +127,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0'
-
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -134,21 +139,27 @@ jobs:
           npm ci
           npm run build
 
-      - name: Publish API
+      - name: Package Linux frontend distribution
         run: |
-          dotnet publish src/ZTR.Api/ZTR.Api.csproj -c Release -r linux-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -p:DebugSymbols=false -o ./artifacts/linux-x64/api
-
-      - name: Copy frontend to publish output
-        run: |
-          mkdir -p ./artifacts/linux-x64/api/wwwroot
-          cp -r frontend/dist/* ./artifacts/linux-x64/api/wwwroot/
           mkdir -p ./artifacts/linux-x64/frontend
           cp -r frontend/dist/* ./artifacts/linux-x64/frontend/
 
-      - name: Package release
-        run: |
-          echo "ZTR_OS ${TAG} Linux Release" > ./artifacts/linux-x64/README.txt
-          echo "Self-contained single-file. No .NET runtime required." >> ./artifacts/linux-x64/README.txt
+          cat > ./artifacts/linux-x64/README.txt << 'READMEEOF'
+ZTR_OS ${TAG} Linux Frontend Release
+
+This package contains the ZTR_OS frontend (React SPA) which can be served by any static web server.
+
+The ZTR_OS API backend requires Windows (ASUS hardware ACPI access) and is not included in this Linux package.
+
+To serve the frontend:
+  cd frontend
+  python3 -m http.server 5000
+  # or: npx serve .
+
+For the full Windows Desktop experience (WPF + WebView2 + embedded API),
+please use the Windows release build instead.
+READMEEOF
+
           cd artifacts/linux-x64
           tar -czf "../../ZTR_OS-${TAG}-linux-x64.tar.gz" .
           cd ../../
@@ -181,9 +192,9 @@ jobs:
           npm ci
           npm run build
 
-      - name: Publish Desktop (self-contained, frontend bundled via csproj)
+      - name: Publish Desktop (NativeAOT, self-contained, single-file)
         run: |
-          dotnet publish src/ZTR.Desktop/ZTR.Desktop.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -p:DebugSymbols=false -p:BuildFrontend=false -o ./artifacts/desktop-win-x64
+          dotnet publish src/ZTR.Desktop/ZTR.Desktop.csproj -c Release -r win-x64 --self-contained true -p:PublishAot=true -p:PublishSingleFile=true -p:EnableCompressionInSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -p:DebugSymbols=false -p:BuildFrontend=false -o ./artifacts/desktop-win-x64
         shell: pwsh
 
       - name: Copy frontend to desktop publish output
@@ -192,19 +203,29 @@ jobs:
           Copy-Item -Recurse frontend/dist/* ./artifacts/desktop-win-x64/wwwroot/
         shell: pwsh
 
-      - name: Verify frontend in wwwroot
+      - name: Verify artifacts
         run: |
+          Write-Output "=== Desktop publish output ==="
+          Get-ChildItem ./artifacts/desktop-win-x64 -Name
+          Write-Output "=== wwwroot contents ==="
+          if (Test-Path ./artifacts/desktop-win-x64/wwwroot) {
+            Get-ChildItem ./artifacts/desktop-win-x64/wwwroot -Recurse | Select-Object FullName, Length
+          }
           if (-not (Test-Path ./artifacts/desktop-win-x64/wwwroot/index.html)) {
             Write-Error "wwwroot/index.html not found! Frontend bundling failed."
             exit 1
           }
-          Write-Output "wwwroot contains:"
-          Get-ChildItem ./artifacts/desktop-win-x64/wwwroot -Recurse | Select-Object FullName, Length
+          $exeCount = (Get-ChildItem ./artifacts/desktop-win-x64 -Filter "*.exe" -ErrorAction SilentlyContinue).Count
+          Write-Output "Found $exeCount .exe file(s) in output"
+          if ($exeCount -eq 0) {
+            Write-Error "No .exe found in publish output!"
+            exit 1
+          }
         shell: pwsh
 
       - name: Package desktop release
         run: |
-          "ZTR_OS $env:TAG Desktop Release`nWPF + WebView2 + Virtual Host Frontend`nEmbedded Kestrel API on port 5000-5010`nSingle-file self-contained. No .NET runtime required." | Out-File -FilePath ./artifacts/desktop-win-x64/README.txt -Encoding utf8
+          "ZTR_OS $env:TAG Desktop Release`nWPF + WebView2 + Virtual Host Frontend`nNativeAOT compiled, self-contained single-file binary. No .NET runtime required.`nEmbedded Kestrel API on port 5000-5010." | Out-File -FilePath ./artifacts/desktop-win-x64/README.txt -Encoding utf8
           Compress-Archive -Path ./artifacts/desktop-win-x64/* -DestinationPath "ZTR_OS-$env:TAG-desktop-win-x64.zip" -Force
           Get-ChildItem "ZTR_OS-$env:TAG-desktop-win-x64.zip" | Select-Object Name, Length
         shell: pwsh
