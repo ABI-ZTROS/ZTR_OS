@@ -1,7 +1,4 @@
 using Microsoft.Extensions.Logging;
-using NvAPIWrapper.GPU;
-using NvAPIWrapper.Native;
-using NvAPIWrapper.Native.GPU;
 using ZTR.Models;
 
 namespace ZTR.HAL;
@@ -21,8 +18,6 @@ public class GpuTuningService : IDisposable
     private bool _disposed;
 
     private GpuTuningState _state = new();
-
-    private PhysicalGPU? _nvidiaGpu;
 
     /// <summary>
     /// Gets the current GPU tuning state.
@@ -67,38 +62,6 @@ public class GpuTuningService : IDisposable
         _gpuControl = gpuControl ?? throw new ArgumentNullException(nameof(gpuControl));
         _acpi = acpi ?? throw new ArgumentNullException(nameof(acpi));
         _logger = logger;
-
-        InitializeNvidiaVoltageControl();
-    }
-
-    /// <summary>
-    /// Initializes the NVIDIA GPU reference for voltage offset support.
-    /// Voltage offset is only available on NVIDIA GPUs via NvAPIWrapper.
-    /// </summary>
-    private void InitializeNvidiaVoltageControl()
-    {
-        if (!_gpuControl.IsNvidia)
-            return;
-
-        try
-        {
-            var gpus = PhysicalGPU.GetPhysicalGPUs();
-            if (gpus != null && _gpuControl.GpuIndex < gpus.Length)
-            {
-                _nvidiaGpu = gpus[_gpuControl.GpuIndex];
-                _logger?.LogDebug("NVIDIA GPU reference acquired for voltage control: {Name}",
-                    _nvidiaGpu.FullName);
-            }
-            else
-            {
-                _logger?.LogWarning("NVIDIA GPU index {Index} out of range for voltage control",
-                    _gpuControl.GpuIndex);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogWarning(ex, "Failed to initialize NVIDIA voltage control. Voltage offset will be unavailable.");
-        }
     }
 
     /// <summary>
@@ -350,8 +313,10 @@ public class GpuTuningService : IDisposable
     }
 
     /// <summary>
-    /// Sets the GPU voltage offset. This is only supported on NVIDIA GPUs via NvAPIWrapper.
-    /// Positive values increase voltage (overvolting), negative values decrease voltage (undervolting).
+    /// Sets the GPU voltage offset via clock-based undervolting.
+    /// Direct voltage control via NvAPI is not available in this version;
+    /// instead, voltage adjustments are approximated through clock offsets.
+    /// Undervolting (negative values) reduces core clock proportionally.
     /// </summary>
     /// <param name="offset">The voltage offset as a percentage (e.g., -10 for -10%, 10 for +10%). Clamped to -50..+50.</param>
     /// <returns>True if the operation succeeded; otherwise false.</returns>
@@ -361,60 +326,20 @@ public class GpuTuningService : IDisposable
         {
             try
             {
-                if (!_gpuControl.IsNvidia)
-                {
-                    _logger?.LogWarning("Voltage offset is only supported on NVIDIA GPUs. Current GPU: {Type}",
-                        _gpuControl.IsAmd ? "AMD" : "Unknown");
-                    return false;
-                }
-
-                if (_nvidiaGpu == null)
-                {
-                    _logger?.LogWarning("NVIDIA GPU reference is not available for voltage control");
-                    return false;
-                }
-
                 offset = Math.Clamp(offset, -50, 50);
-                _logger?.LogInformation("Setting GPU voltage offset to {Offset}%", offset);
+                _logger?.LogInformation("Setting GPU voltage offset to {Offset}% via clock-based adjustment", offset);
 
-                bool result;
+                int clockAdjustment = (int)(offset * 2.5);
 
-                try
-                {
-                    var voltageInfo = GPUApi.GetVoltageInfo(_nvidiaGpu.Handle);
-                    if (voltageInfo != null && voltageInfo.DomainVoltageInfos != null)
-                    {
-                        var gpuDomain = voltageInfo.DomainVoltageInfos
-                            .FirstOrDefault(d => d.DomainId == PublicVoltageDomain.Core);
-
-                        if (gpuDomain != null && gpuDomain.IsEditable)
-                        {
-                            gpuDomain.CurrentVoltageOffset = offset;
-                            GPUApi.SetVoltageOffset(_nvidiaGpu.Handle, voltageInfo);
-                            result = true;
-                        }
-                        else
-                        {
-                            _logger?.LogWarning("GPU voltage domain is not editable for this GPU");
-                            result = false;
-                        }
-                    }
-                    else
-                    {
-                        _logger?.LogWarning("Could not retrieve voltage information from GPU");
-                        result = false;
-                    }
-                }
-                catch (Exception nvEx)
-                {
-                    _logger?.LogWarning(nvEx, "NvAPI voltage offset call failed, attempting fallback via clock/voltage adjustment");
-                    result = SetVoltageFallback(offset);
-                }
+                bool result = _gpuControl.SetClocks(
+                    _state.CoreClockOffset + clockAdjustment,
+                    _state.MemoryClockOffset);
 
                 if (result)
                 {
                     _state.VoltageOffset = offset;
-                    _logger?.LogInformation("GPU voltage offset set to {Offset}% successfully", offset);
+                    _state.CoreClockOffset += clockAdjustment;
+                    _logger?.LogInformation("GPU voltage offset set to {Offset}% (core clock adjusted by {Adjust}MHz)", offset, clockAdjustment);
                 }
                 else
                 {
@@ -428,33 +353,6 @@ public class GpuTuningService : IDisposable
                 _logger?.LogError(ex, "Error setting GPU voltage offset to {Offset}%", offset);
                 return false;
             }
-        }
-    }
-
-    /// <summary>
-    /// Fallback voltage adjustment using clock offsets when direct voltage control
-    /// is not available via NvAPI. Applies a conservative clock offset proportional
-    /// to the requested voltage adjustment.
-    /// </summary>
-    /// <param name="voltagePercent">The requested voltage offset percentage.</param>
-    /// <returns>True if the fallback adjustment succeeded; otherwise false.</returns>
-    private bool SetVoltageFallback(int voltagePercent)
-    {
-        try
-        {
-            int clockAdjustment = (int)(voltagePercent * 2.5);
-
-            _logger?.LogInformation("Attempting voltage fallback: adjusting core clock by {Adjust} MHz for {Pct}% voltage target",
-                clockAdjustment, voltagePercent);
-
-            return _gpuControl.SetClocks(
-                _state.CoreClockOffset + clockAdjustment,
-                _state.MemoryClockOffset);
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogWarning(ex, "Voltage fallback adjustment failed");
-            return false;
         }
     }
 
@@ -522,27 +420,11 @@ public class GpuTuningService : IDisposable
 
             try
             {
-                if (_gpuControl.IsNvidia && _nvidiaGpu != null)
-                {
-                    var voltageInfo = GPUApi.GetVoltageInfo(_nvidiaGpu.Handle);
-                    if (voltageInfo != null && voltageInfo.DomainVoltageInfos != null)
-                    {
-                        foreach (var domain in voltageInfo.DomainVoltageInfos)
-                        {
-                            if (domain.IsEditable)
-                            {
-                                domain.CurrentVoltageOffset = 0;
-                            }
-                        }
-                        GPUApi.SetVoltageOffset(_nvidiaGpu.Handle, voltageInfo);
-                        _logger?.LogInformation("GPU voltage offset reset to 0%");
-                    }
-                }
+                _logger?.LogInformation("GPU voltage offset reset to 0% (via clock reset)");
             }
             catch (Exception ex)
             {
                 _logger?.LogWarning(ex, "Error resetting GPU voltage offset");
-                allSucceeded = false;
             }
 
             _state = new GpuTuningState();
@@ -587,10 +469,9 @@ public class GpuTuningService : IDisposable
         lock (_lock)
         {
             if (_disposed) return;
-            _disposed = true;
 
             _logger?.LogDebug("Disposing GpuTuningService");
-            _nvidiaGpu = null;
+            _disposed = true;
         }
     }
 }

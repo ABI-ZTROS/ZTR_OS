@@ -63,11 +63,11 @@ public class BiosUpdateChecker : IDisposable
                         result.Add(new UpdateInfo
                         {
                             Component = "BIOS",
-                            CurrentVersion = item.TryGetProperty("current")?.GetString() ?? "unknown",
-                            LatestVersion = item.TryGetProperty("latest")?.GetString() ?? "unknown",
+                            CurrentVersion = TryGetString(item, "current", "unknown"),
+                            LatestVersion = TryGetString(item, "latest", "unknown"),
                             HasUpdate = true,
-                            DownloadUrl = item.TryGetProperty("url")?.GetString() ?? string.Empty,
-                            Description = item.TryGetProperty("description")?.GetString() ?? string.Empty
+                            DownloadUrl = TryGetString(item, "url", string.Empty),
+                            Description = TryGetString(item, "description", string.Empty)
                         });
                     }
                 }
@@ -102,12 +102,12 @@ public class BiosUpdateChecker : IDisposable
                     {
                         result.Add(new UpdateInfo
                         {
-                            Component = item.TryGetProperty("name")?.GetString() ?? "Driver",
-                            CurrentVersion = item.TryGetProperty("current_version")?.GetString() ?? "unknown",
-                            LatestVersion = item.TryGetProperty("version")?.GetString() ?? "unknown",
+                            Component = TryGetString(item, "name", "Driver"),
+                            CurrentVersion = TryGetString(item, "current_version", "unknown"),
+                            LatestVersion = TryGetString(item, "version", "unknown"),
                             HasUpdate = true,
-                            DownloadUrl = item.TryGetProperty("download_url")?.GetString() ?? string.Empty,
-                            Description = item.TryGetProperty("description")?.GetString() ?? string.Empty
+                            DownloadUrl = TryGetString(item, "download_url", string.Empty),
+                            Description = TryGetString(item, "description", string.Empty)
                         });
                     }
                 }
@@ -118,6 +118,13 @@ public class BiosUpdateChecker : IDisposable
             _logger?.LogDebug(ex, "Driver update check error (non-critical)");
         }
         return result;
+    }
+
+    private static string TryGetString(JsonElement element, string propertyName, string fallback)
+    {
+        if (element.TryGetProperty(propertyName, out var value))
+            return value.GetString() ?? fallback;
+        return fallback;
     }
 
     public void Dispose()
