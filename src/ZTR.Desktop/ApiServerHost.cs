@@ -11,6 +11,7 @@ using ZTR.Api.Controllers;
 using ZTR.Api.Extensions;
 using ZTR.Api.Hubs;
 using ZTR.Api.Middleware;
+using ZTR.HAL;
 
 namespace ZTR.Desktop;
 
@@ -23,26 +24,38 @@ public class ApiServerHost : IDisposable
 
     public async Task<bool> StartAsync()
     {
+        ForceLog.Write("[API] Embedded API server starting...");
+
         foreach (int port in Enumerable.Range(5000, 11))
         {
             if (!IsPortAvailable(port)) continue;
 
             try
             {
-                return await TryStartOnPort(port);
+                ForceLog.Write($"[API] Trying port {port}...");
+                var result = await TryStartOnPort(port);
+                if (result)
+                {
+                    ForceLog.Write($"[API] Successfully started on port {port}");
+                    return true;
+                }
             }
-            catch
+            catch (Exception ex)
             {
+                ForceLog.Write($"[API] Port {port} failed: {ex.Message}");
                 continue;
             }
         }
 
+        ForceLog.Write("[API] No available port in range 5000-5010");
         return false;
     }
 
     private async Task<bool> TryStartOnPort(int port)
     {
         Port = port;
+
+        ForceLog.Write($"[API] Creating WebApplication builder for port {port}...");
 
         var builder = WebApplication.CreateBuilder(new WebApplicationOptions
         {
@@ -56,6 +69,7 @@ public class ApiServerHost : IDisposable
         });
 
         var apiAssembly = typeof(HardwareController).Assembly;
+        ForceLog.Write($"[API] Using API assembly: {apiAssembly.FullName}");
 
         builder.Services.AddControllers()
             .AddApplicationPart(apiAssembly)
@@ -102,7 +116,23 @@ public class ApiServerHost : IDisposable
         builder.Services.AddHealthChecks();
         builder.Services.AddZTRServices();
 
-        _app = builder.Build();
+        ForceLog.Write("[API] Building WebApplication (resolving DI services)...");
+
+        try
+        {
+            _app = builder.Build();
+            ForceLog.Write("[API] WebApplication built successfully");
+        }
+        catch (Exception ex)
+        {
+            ForceLog.Write($"[API] Build FAILED: {ex.Message}");
+            ForceLog.Write($"[API] Stack: {ex.StackTrace}");
+            if (ex.InnerException != null)
+                ForceLog.Write($"[API] Inner: {ex.InnerException.Message}");
+            return false;
+        }
+
+        ForceLog.Write("[API] Configuring middleware pipeline...");
 
         _app.UseSwagger();
         _app.UseSwaggerUI(c =>
@@ -115,8 +145,36 @@ public class ApiServerHost : IDisposable
 
         _app.MapZTREndpoints();
 
-        await _app.StartAsync();
+        // V9 FIXED: Resolve SensorSignalRBridge after building to activate SignalR push chain.
+        // Previously registered in DI but never resolved → StateEnqueued event had no
+        // subscribers → sensor data collected but never pushed to frontend.
+        try
+        {
+            var bridge = _app.Services.GetRequiredService<SensorSignalRBridge>();
+            ForceLog.Write("[API] SensorSignalRBridge resolved - SignalR push chain active");
+        }
+        catch (Exception ex)
+        {
+            ForceLog.Write($"[API] WARNING: SensorSignalRBridge resolve failed: {ex.Message}");
+        }
 
+        ForceLog.Write("[API] Starting Kestrel server...");
+
+        try
+        {
+            await _app.StartAsync();
+            ForceLog.Write($"[API] Kestrel listening on http://localhost:{port}");
+        }
+        catch (Exception ex)
+        {
+            ForceLog.Write($"[API] StartAsync FAILED: {ex.Message}");
+            ForceLog.Write($"[API] Stack: {ex.StackTrace}");
+            _app.Dispose();
+            _app = null;
+            return false;
+        }
+
+        ForceLog.Write("[API] Embedded API server is fully operational");
         return true;
     }
 
