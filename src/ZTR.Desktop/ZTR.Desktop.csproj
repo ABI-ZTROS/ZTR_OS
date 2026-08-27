@@ -39,6 +39,31 @@
     <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
   </PropertyGroup>
 
+  <!-- Auto-build frontend before C# compilation (skip with /p:BuildFrontend=false) -->
+  <Target Name="BuildFrontend" BeforeTargets="Build" Condition="'$(BuildFrontend)' != 'false'">
+    <PropertyGroup>
+      <_FrontendDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\..\frontend'))</_FrontendDir>
+      <_FrontendDistDir>$(_FrontendDir)\dist</_FrontendDistDir>
+      <_ApiWwwrootDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\ZTR.Api\wwwroot'))</_ApiWwwrootDir>
+    </PropertyGroup>
+
+    <Message Text="ZTR_OS: Auto-building frontend..." Importance="low" Condition="Exists('$(_FrontendDir)\package.json')" />
+
+    <Exec
+      Command="npm --prefix &quot;$(_FrontendDir)&quot; run build"
+      WorkingDirectory="$(_FrontendDir)"
+      Condition="Exists('$(_FrontendDir)\package.json')"
+      ContinueOnError="WarnAndContinue" />
+
+    <RemoveDir Directory="$(_ApiWwwrootDir)" Condition="Exists('$(_ApiWwwrootDir)')" />
+    <MakeDir Directories="$(_ApiWwwrootDir)" Condition="Exists('$(_FrontendDistDir)')" />
+    <Copy
+      SourceFiles="$(_FrontendDistDir)\**\*.*"
+      DestinationFiles="@(_FrontendDistDir\**\*.* -> '$(_ApiWwwrootDir)\%(RecursiveDir)%(Filename)%(Extension)')"
+      Condition="Exists('$(_FrontendDistDir)')"
+      SkipUnchangedFiles="false" />
+  </Target>
+
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
