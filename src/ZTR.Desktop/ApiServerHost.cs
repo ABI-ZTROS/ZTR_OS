@@ -169,7 +169,10 @@ public class ApiServerHost : IDisposable
         {
             ForceLog.Write($"[API] StartAsync FAILED: {ex.Message}");
             ForceLog.Write($"[API] Stack: {ex.StackTrace}");
-            _app.Dispose();
+            if (_app is IDisposable disposable)
+            {
+                disposable.Dispose();
+            }
             _app = null;
             return false;
         }
