@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { ErrorBoundary } from '@/components/common/ErrorBoundary'
-import { UserAgreement } from '@/components/common/UserAgreement'
 import { GameOverlay } from '@/components/common/GameOverlay'
 import { Dashboard } from '@/pages/Dashboard'
 import { Performance } from '@/pages/Performance'
@@ -14,38 +13,12 @@ import { Automation } from '@/pages/Automation'
 import { Updates } from '@/pages/Updates'
 import { Settings } from '@/pages/Settings'
 import { useSignalR } from '@/hooks/useSignalR'
-import { useState, useEffect } from 'react'
-
-const AGREEMENT_STORAGE_KEY = 'ztr_os_agreed_v3'
 
 function AppContent() {
   useSignalR()
 
-  const [showAgreement, setShowAgreement] = useState(false)
-
-  useEffect(() => {
-    const agreed = localStorage.getItem(AGREEMENT_STORAGE_KEY)
-    if (!agreed) {
-      setShowAgreement(true)
-    }
-  }, [])
-
-  const handleAgree = () => {
-    localStorage.setItem(AGREEMENT_STORAGE_KEY, new Date().toISOString())
-    setShowAgreement(false)
-  }
-
-  const handleDisagree = () => {
-    setShowAgreement(false)
-  }
-
   return (
     <ErrorBoundary>
-      <UserAgreement
-        open={showAgreement}
-        onAgree={handleAgree}
-        onDisagree={handleDisagree}
-      />
       <GameOverlay />
       <Routes>
         <Route element={<MainLayout />}>
