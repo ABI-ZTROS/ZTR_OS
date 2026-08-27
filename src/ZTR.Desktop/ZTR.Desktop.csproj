@@ -12,7 +12,6 @@
     <ApplicationIcon />
     <StartupObject />
 
-    <PublishAot>true</PublishAot>
     <PublishSingleFile>true</PublishSingleFile>
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
@@ -111,16 +110,6 @@
     <ProjectReference Include="..\ZTR.Intelligence\ZTR.Intelligence.csproj" />
     <ProjectReference Include="..\ZTR.Models\ZTR.Models.csproj" />
     <ProjectReference Include="..\ZTR.Common\ZTR.Common.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <TrimmingRootAssemblies Include="ZTR.Desktop" />
-    <TrimmingRootAssemblies Include="ZTR.Api" />
-    <TrimmingRootAssemblies Include="ZTR.HAL" />
-    <TrimmingRootAssemblies Include="ZTR.Intelligence" />
-    <TrimmingRootAssemblies Include="ZTR.Models" />
-    <TrimmingRootAssemblies Include="ZTR.Common" />
-    <TrimmingRootAssemblies Include="ZTR.Service" />
   </ItemGroup>
 
   <Target Name="PublishWwwroot" AfterTargets="Publish" Condition="'$(BuildFrontend)' != 'false'">
