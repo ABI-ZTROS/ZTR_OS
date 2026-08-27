@@ -47,6 +47,10 @@
       <_ApiWwwrootDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\ZTR.Api\wwwroot'))</_ApiWwwrootDir>
     </PropertyGroup>
 
+    <!-- Clean old frontend artifacts to prevent stale agreement page from leaking -->
+    <RemoveDir Directories="$(_FrontendDistDir)" Condition="Exists('$(_FrontendDistDir)')" />
+    <RemoveDir Directories="$(_ApiWwwrootDir)" Condition="Exists('$(_ApiWwwrootDir)')" />
+
     <Message Text="ZTR_OS: Auto-building frontend..." Importance="low" Condition="Exists('$(_FrontendDir)\package.json')" />
 
     <Exec
@@ -55,7 +59,6 @@
       Condition="Exists('$(_FrontendDir)\package.json')"
       ContinueOnError="WarnAndContinue" />
 
-    <RemoveDir Directories="$(_ApiWwwrootDir)" Condition="Exists('$(_ApiWwwrootDir)')" />
     <MakeDir Directories="$(_ApiWwwrootDir)" Condition="Exists('$(_FrontendDistDir)')" />
 
     <!-- Collect files into item group (wildcard expanded at runtime), then copy -->
