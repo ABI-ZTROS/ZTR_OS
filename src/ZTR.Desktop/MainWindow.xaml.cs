@@ -32,12 +32,9 @@ public partial class MainWindow : Window
 
         await WebView.EnsureCoreWebView2Async();
         WebView.CoreWebView2.Settings.AreDevToolsEnabled = false;
-        WebView.CoreWebView2.Settings.IsBrowserCodeCacheEnabled = false;
 
-        await WebView.CoreWebView2.ClearBrowserDataAsync(
-            Microsoft.Web.WebView2.Core.CoreWebView2ClearDataKind.All,
-            string.Empty,
-            true);
+        await WebView.CoreWebView2.ExecuteScriptAsync(
+            "localStorage.clear(); sessionStorage.clear();");
 
         string wwwrootPath = Path.Combine(AppContext.BaseDirectory, "wwwroot");
 

@@ -33,7 +33,7 @@ public class PerformanceControllerTests : IClassFixture<TestWebApplicationFactor
     [Fact]
     public async Task SetMode_ReturnsApiResponseFormat()
     {
-        var request = new SetPerformanceModeRequest(AsusMode.PerformanceBalanced);
+        var request = new SetPerformanceModeRequest("balanced");
         var content = new StringContent(
             JsonSerializer.Serialize(request),
             System.Text.Encoding.UTF8,

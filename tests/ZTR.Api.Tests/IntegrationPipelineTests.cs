@@ -256,10 +256,10 @@ public class IntegrationPipelineTests : IClassFixture<TestWebApplicationFactory>
 
         Assert.True(state.Cpu.Temperature >= -1, "CPU Temperature should be non-negative or -1 (unavailable)");
         Assert.True(state.Cpu.Usage >= -1, "CPU Usage should be non-negative or -1 (unavailable)");
-        Assert.True(state.Cpu.Power >= -1, "CPU Power should be non-negative or -1 (unavailable)");
+        Assert.True(state.Cpu.PowerDraw >= -1, "CPU Power should be non-negative or -1 (unavailable)");
         Assert.True(state.Gpu.Temperature >= -1, "GPU Temperature should be non-negative or -1 (unavailable)");
         Assert.True(state.Gpu.Usage >= -1, "GPU Usage should be non-negative or -1 (unavailable)");
-        Assert.True(state.Battery.ChargePercent >= -1, "Battery charge should be non-negative or -1 (unavailable)");
+        Assert.True(state.Battery.Percentage >= -1, "Battery charge should be non-negative or -1 (unavailable)");
     }
 
     [Fact]
