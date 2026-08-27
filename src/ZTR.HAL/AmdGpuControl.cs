@@ -324,6 +324,7 @@ public class AmdGpuControl : IGpuControl
         if (!_disposed)
         {
             _disposed = true;
+            _adl2.Dispose();
         }
     }
 }

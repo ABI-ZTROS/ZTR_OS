@@ -3,7 +3,7 @@ namespace ZTR.HAL;
 /// <summary>
 /// Abstracts AMD ADL2 (AMD Display Library) hardware operations to enable unit testing without GPU hardware.
 /// </summary>
-public interface IAdl2Gpu
+public interface IAdl2Gpu : IDisposable
 {
     /// <summary>
     /// Gets a value indicating whether the ADL2 library is available and initialized.

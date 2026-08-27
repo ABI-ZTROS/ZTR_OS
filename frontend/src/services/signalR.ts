@@ -1,5 +1,5 @@
 import * as SignalR from '@microsoft/signalr'
-import type { ConnectionStatus, HardwareState, MlpDecision, MlpState } from '@/types'
+import type { ConnectionStatus, HardwareState } from '@/types'
 import { getHubUrl } from '@/config/apiConfig'
 
 type EventCallback<T> = (data: T) => void

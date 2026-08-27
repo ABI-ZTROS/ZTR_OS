@@ -54,7 +54,7 @@ export function Screen() {
       }
 
       if (miniLedRes.status === 'fulfilled' && miniLedRes.value.success) {
-        setMiniLedMode(miniLedRes.value.data.mode)
+        setMiniLedMode(miniLedRes.value.data.mode?.toLowerCase() ?? 'off')
       }
 
       if (hdrRes.status === 'fulfilled' && hdrRes.value.success) {

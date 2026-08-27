@@ -17,7 +17,7 @@ export const bindingApi = {
 export const auraApi = {
   getDevices: () => api.get<Array<Record<string, unknown>>>('/api/aura/devices'),
   setEffect: (deviceId: string, effect: string, params?: Record<string, unknown>) =>
-    api.post<void>(`/api/aura/devices/${deviceId}/effect`, { effect, ...params }),
+    api.post<void>(`/api/aura/devices/${deviceId}/effect`, { effect, params }),
   setColor: (deviceId: string, color: string) =>
     api.post<void>(`/api/aura/devices/${deviceId}/color`, { color }),
   setBrightness: (deviceId: string, brightness: number) =>

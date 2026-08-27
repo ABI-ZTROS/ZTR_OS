@@ -15,7 +15,7 @@ export const performanceApi = {
     return {
       success: modeRes.success && curvesRes.success,
       data: {
-        mode: modeRes.data,
+        mode: modeRes.data?.mode ?? 'balanced',
         curves: curvesRes.data,
       },
     }

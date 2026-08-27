@@ -33,9 +33,15 @@ public class Program
         {
             options.AddPolicy("AllowAll", policy =>
             {
-                policy.AllowAnyOrigin()
+                // Allow file:// origin for WebView2 desktop mode (not a valid CORS origin by default)
+                // Allow localhost origins for development and local API access
+                policy.SetIsOriginAllowed(origin =>
+                    origin == null || // Same-origin (WebView2)
+                    origin.StartsWith("http://localhost:") ||
+                    origin.StartsWith("http://127.0.0.1:"))
                       .AllowAnyMethod()
-                      .AllowAnyHeader();
+                      .AllowAnyHeader()
+                      .AllowCredentials();
             });
         });
 
@@ -98,7 +104,12 @@ public class Program
 
         app.MapZTREndpoints();
 
-        app.MapFallbackToFile("index.html");
+        // SPA fallback: only serve index.html for non-API routes.
+        // API routes that don't match should return 404, not the SPA shell.
+        app.MapWhen(context => !context.Request.Path.StartsWithSegments("/api"), builder =>
+        {
+            builder.MapFallbackToFile("index.html");
+        });
 
         app.Run();
     }

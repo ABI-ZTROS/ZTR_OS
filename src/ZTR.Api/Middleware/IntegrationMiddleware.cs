@@ -126,8 +126,10 @@ public class IntegrationMiddleware
                     }
                 }
 
+                // Only validate fan-related speed fields (0-100 range).
+                // clockSpeed, gpuSpeed, etc. can exceed 100 and should not be rejected.
                 if (property.Value.ValueKind == JsonValueKind.Number &&
-                    (name.Contains("speed")) && !name.Contains("fan"))
+                    name == "speed")
                 {
                     var value = property.Value.GetDouble();
                     if (value < _validRanges["fanspeed"].Min ||

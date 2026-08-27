@@ -3,7 +3,7 @@ namespace ZTR.HAL;
 /// <summary>
 /// Abstracts NVIDIA NVAPI hardware operations to enable unit testing without GPU hardware.
 /// </summary>
-public interface INvApiGpu
+public interface INvApiGpu : IDisposable
 {
     /// <summary>
     /// Gets a value indicating whether the NVAPI library is available and initialized.

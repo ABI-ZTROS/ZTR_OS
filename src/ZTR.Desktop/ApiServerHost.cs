@@ -87,8 +87,10 @@ public class ApiServerHost : IDisposable
         {
             options.AddPolicy("Desktop", policy =>
             {
-                policy.WithOrigins("http://app.local")
-                      .WithOrigins("file://")
+                // file:// is not a valid CORS origin. WebView2 in desktop mode
+                // sends requests without an Origin header (null), so we allow null origins.
+                policy.SetIsOriginAllowed(origin => origin == null)
+                      .WithOrigins("http://app.local")
                       .WithOrigins(Enumerable.Range(5000, 11).Select(p => $"http://localhost:{p}").ToArray())
                       .AllowAnyMethod()
                       .AllowAnyHeader()

@@ -290,6 +290,7 @@ public class NvidiaGpuControl : IGpuControl
         if (!_disposed)
         {
             _disposed = true;
+            _nvApi.Dispose();
         }
     }
 }

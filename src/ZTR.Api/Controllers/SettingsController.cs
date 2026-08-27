@@ -103,23 +103,41 @@ public class SettingsController : ControllerBase
 
     [HttpPut]
     [ProducesResponseType<ApiResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ApiResponse>(StatusCodes.Status400BadRequest)]
     public ActionResult<ApiResponse> UpdateSettings([FromBody] PerformanceConfig config)
     {
+        if (config == null)
+        {
+            return BadRequest(new ApiResponse(false, "Config cannot be null"));
+        }
+
         if (config.Mode != _modeControl.CurrentMode)
         {
-            _modeControl.SetMode(config.Mode);
+            var modeResult = _modeControl.SetMode(config.Mode);
+            if (!modeResult)
+            {
+                return BadRequest(new ApiResponse(false, "Failed to set performance mode"));
+            }
         }
 
         if (config.CpuFanCurve.Length > 0)
         {
             var cpuCurve = FanCurveCalculator.BytesToCurve(config.CpuFanCurve);
-            _modeControl.SetCpuFanCurve(cpuCurve);
+            var cpuResult = _modeControl.SetCpuFanCurve(cpuCurve);
+            if (!cpuResult)
+            {
+                return BadRequest(new ApiResponse(false, "Failed to set CPU fan curve"));
+            }
         }
 
         if (config.GpuFanCurve.Length > 0)
         {
             var gpuCurve = FanCurveCalculator.BytesToCurve(config.GpuFanCurve);
-            _modeControl.SetGpuFanCurve(gpuCurve);
+            var gpuResult = _modeControl.SetGpuFanCurve(gpuCurve);
+            if (!gpuResult)
+            {
+                return BadRequest(new ApiResponse(false, "Failed to set GPU fan curve"));
+            }
         }
 
         return Ok(new ApiResponse(true));

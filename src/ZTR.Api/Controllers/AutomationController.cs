@@ -61,13 +61,40 @@ public class AutomationController : ControllerBase
     }
 
     [HttpPost("rules")]
+    [ProducesResponseType<ApiResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ApiResponse>(StatusCodes.Status400BadRequest)]
     public ActionResult<ApiResponse> AddRule([FromBody] AutomationRuleRequest request)
     {
+        if (!Enum.TryParse<PowerTrigger>(request.Trigger, true, out var trigger))
+        {
+            return BadRequest(new ApiResponse(false, $"Invalid trigger: {request.Trigger}"));
+        }
+
+        AsusMode? performanceMode = null;
+        if (request.PerformanceMode.HasValue)
+        {
+            if (!Enum.TryParse<AsusMode>(request.PerformanceMode.Value.ToString(), true, out var pm))
+            {
+                return BadRequest(new ApiResponse(false, $"Invalid performance mode: {request.PerformanceMode}"));
+            }
+            performanceMode = pm;
+        }
+
+        AsusGPU? gpuMode = null;
+        if (request.GpuMode.HasValue)
+        {
+            if (!Enum.TryParse<AsusGPU>(request.GpuMode.Value.ToString(), true, out var gm))
+            {
+                return BadRequest(new ApiResponse(false, $"Invalid GPU mode: {request.GpuMode}"));
+            }
+            gpuMode = gm;
+        }
+
         var rule = new AutomationRule
         {
-            Trigger = Enum.Parse<PowerTrigger>(request.Trigger, true),
-            PerformanceMode = request.PerformanceMode.HasValue ? Enum.Parse<AsusMode>(request.PerformanceMode.Value.ToString(), true) : null,
-            GpuMode = request.GpuMode.HasValue ? Enum.Parse<AsusGPU>(request.GpuMode.Value.ToString(), true) : null,
+            Trigger = trigger,
+            PerformanceMode = performanceMode,
+            GpuMode = gpuMode,
             RefreshRate = request.RefreshRate,
             KeyboardTimeoutSeconds = request.KeyboardTimeoutSeconds,
             ChargeLimit = request.ChargeLimit,
@@ -96,9 +123,16 @@ public class AutomationController : ControllerBase
     }
 
     [HttpPost("apply")]
+    [ProducesResponseType<ApiResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ApiResponse>(StatusCodes.Status400BadRequest)]
     public ActionResult<ApiResponse> ApplyNow([FromBody] ApplyAutomationRequest request)
     {
-        var result = _automationService.ApplyRulesForTrigger(Enum.Parse<PowerTrigger>(request.Trigger, true));
+        if (!Enum.TryParse<PowerTrigger>(request.Trigger, true, out var trigger))
+        {
+            return BadRequest(new ApiResponse(false, $"Invalid trigger: {request.Trigger}"));
+        }
+
+        var result = _automationService.ApplyRulesForTrigger(trigger);
         return Ok(new ApiResponse(result.success, result.message));
     }
 }

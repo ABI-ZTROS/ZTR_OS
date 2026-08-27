@@ -52,7 +52,7 @@ public class ScreenController : ControllerBase
     public ActionResult<ApiResponse<object>> GetMiniLed()
     {
         var mode = _screenControl.GetMiniLed();
-        return Ok(new ApiResponse<object>(true, new { mode = mode.ToString() }));
+        return Ok(new ApiResponse<object>(true, new { mode = mode.ToString().ToLowerInvariant() }));
     }
 
     [HttpPost("mini-led")]

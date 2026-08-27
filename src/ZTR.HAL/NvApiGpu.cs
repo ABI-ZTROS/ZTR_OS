@@ -376,4 +376,13 @@ public class NvApiGpu : INvApiGpu
             return null;
         return _gpus[index];
     }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        // NvAPIWrapper's PhysicalGPU objects are managed wrappers around native handles.
+        // The NvAPI library doesn't require explicit shutdown for individual GPU handles.
+        // This method exists to satisfy IDisposable and allow proper cleanup in the chain.
+        // If future versions of NvAPIWrapper require explicit disposal, add cleanup here.
+    }
 }

@@ -261,4 +261,11 @@ public class Adl2Gpu : IAdl2Gpu
     public void KillGpuApps(int index)
     {
     }
+
+    /// <inheritdoc />
+    public void Dispose()
+    {
+        // Adl2Gpu uses WMI queries which don't require explicit disposal.
+        // This method exists to satisfy IDisposable and allow proper cleanup in the chain.
+    }
 }
