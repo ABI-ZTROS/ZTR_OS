@@ -34,10 +34,6 @@
     <InternalsVisibleTo Include="ZTR.Api.Tests" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Content Include="wwwroot\**\*.*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
-  </ItemGroup>
-
   <Target Name="EnsureWwwroot" BeforeTargets="Publish" Condition="'$(BuildFrontend)' != 'false' AND !Exists('$(MSBuildProjectDirectory)\wwwroot\index.html')">
     <PropertyGroup>
       <_FrontendDir>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)\..\..\frontend'))</_FrontendDir>
