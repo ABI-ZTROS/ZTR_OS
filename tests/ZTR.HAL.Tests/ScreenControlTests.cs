@@ -92,7 +92,7 @@ public class ScreenControlTests : IDisposable
     [Fact]
     public void SetRefreshRate_ValidRate_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetRefreshRate(120);
 
@@ -102,7 +102,7 @@ public class ScreenControlTests : IDisposable
     [Fact]
     public void SetRefreshRate_60Hz_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetRefreshRate(60);
 
@@ -112,7 +112,7 @@ public class ScreenControlTests : IDisposable
     [Fact]
     public void SetRefreshRate_240Hz_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetRefreshRate(240);
 
@@ -122,7 +122,7 @@ public class ScreenControlTests : IDisposable
     [Fact]
     public void SetRefreshRate_300Hz_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetRefreshRate(300);
 
@@ -164,7 +164,7 @@ public class ScreenControlTests : IDisposable
     [Fact]
     public void SetRefreshRate_WhenCallFails_ReturnsFalse()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(false);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(Array.Empty<byte>());
 
         bool result = _control.SetRefreshRate(120);
 
@@ -234,7 +234,7 @@ public class ScreenControlTests : IDisposable
     [Fact]
     public void SetOverdrive_Enable_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetOverdrive(true);
 
@@ -244,7 +244,7 @@ public class ScreenControlTests : IDisposable
     [Fact]
     public void SetOverdrive_Disable_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetOverdrive(false);
 
@@ -264,7 +264,7 @@ public class ScreenControlTests : IDisposable
     [Fact]
     public void SetOverdrive_WhenCallFails_ReturnsFalse()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(false);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(Array.Empty<byte>());
 
         bool result = _control.SetOverdrive(true);
 
@@ -274,7 +274,7 @@ public class ScreenControlTests : IDisposable
     [Fact]
     public void SetOverdrive_LogsInformation_WhenEnabled()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         _control.SetOverdrive(true);
 
@@ -320,7 +320,7 @@ public class ScreenControlTests : IDisposable
     [Fact]
     public void SetMiniLed_Off_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetMiniLed(MiniLedMode.Off);
 
@@ -330,7 +330,7 @@ public class ScreenControlTests : IDisposable
     [Fact]
     public void SetMiniLed_Standard_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetMiniLed(MiniLedMode.Standard);
 
@@ -340,7 +340,7 @@ public class ScreenControlTests : IDisposable
     [Fact]
     public void SetMiniLed_Advanced_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetMiniLed(MiniLedMode.Advanced);
 
@@ -360,7 +360,7 @@ public class ScreenControlTests : IDisposable
     [Fact]
     public void SetMiniLed_WhenFirstCallFails_ReturnsFalse()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(false);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(Array.Empty<byte>());
 
         bool result = _control.SetMiniLed(MiniLedMode.Standard);
 
@@ -413,7 +413,7 @@ public class ScreenControlTests : IDisposable
     [Fact]
     public void SetHDR_Enable_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetHDR(true);
 
@@ -423,7 +423,7 @@ public class ScreenControlTests : IDisposable
     [Fact]
     public void SetHDR_Disable_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetHDR(false);
 
@@ -443,7 +443,7 @@ public class ScreenControlTests : IDisposable
     [Fact]
     public void SetHDR_WhenCallFails_ReturnsFalse()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(false);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(Array.Empty<byte>());
 
         bool result = _control.SetHDR(true);
 
@@ -487,7 +487,7 @@ public class ScreenControlTests : IDisposable
     [Fact]
     public void SetOptimalBrightness_Enable_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetOptimalBrightness(true);
 
@@ -497,7 +497,7 @@ public class ScreenControlTests : IDisposable
     [Fact]
     public void SetOptimalBrightness_Disable_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetOptimalBrightness(false);
 
@@ -517,7 +517,7 @@ public class ScreenControlTests : IDisposable
     [Fact]
     public void SetOptimalBrightness_WhenCallFails_ReturnsFalse()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(false);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(Array.Empty<byte>());
 
         bool result = _control.SetOptimalBrightness(true);
 
@@ -603,7 +603,7 @@ public class ScreenControlTests : IDisposable
     [Fact]
     public void SetRefreshRate_LogsInformation_WhenSuccessful()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         _control.SetRefreshRate(144);
 
@@ -615,7 +615,7 @@ public class ScreenControlTests : IDisposable
     [Fact]
     public void SetRefreshRate_LogsWarning_WhenCallFails()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(false);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(Array.Empty<byte>());
 
         _control.SetRefreshRate(120);
 
@@ -627,41 +627,41 @@ public class ScreenControlTests : IDisposable
     [Fact]
     public void SetMiniLed_CallsBothDeviceIds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         _control.SetMiniLed(MiniLedMode.Advanced);
 
-        _mockDevice.Verify(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()), Times.AtLeast(2));
+        _mockDevice.Verify(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()), Times.AtLeast(2));
     }
 
     [Fact]
     public void SetHDR_CorrectDeviceId()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         _control.SetHDR(true);
 
-        _mockDevice.Verify(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()), Times.Once);
+        _mockDevice.Verify(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()), Times.Once);
     }
 
     [Fact]
     public void SetOptimalBrightness_CorrectDeviceId()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         _control.SetOptimalBrightness(true);
 
-        _mockDevice.Verify(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()), Times.Once);
+        _mockDevice.Verify(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()), Times.Once);
     }
 
     [Fact]
     public void SetOverdrive_CorrectDeviceId()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         _control.SetOverdrive(true);
 
-        _mockDevice.Verify(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()), Times.Once);
+        _mockDevice.Verify(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()), Times.Once);
     }
 
     [Fact]
@@ -680,7 +680,7 @@ public class ScreenControlTests : IDisposable
     public void SetRefreshRate_LogsWarning_WhenAcpiFailsAfterException()
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(true);
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()))
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
             .Throws(new InvalidOperationException("Hardware error"));
 
         bool result = _control.SetRefreshRate(120);

@@ -19,9 +19,9 @@ public class PowerLimitManagerTests : IDisposable
         _mockLogger = new Mock<ILogger<PowerLimitManager>>();
 
         _mockAtkDevice.Setup(d => d.IsAvailable).Returns(true);
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
         _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
-            .Returns(Array.Empty<byte>());
+            .Returns(BitConverter.GetBytes(1));
 
         _acpi = new AsusAcpi(_mockAtkDevice.Object);
         _manager = new PowerLimitManager(_acpi, _mockLogger.Object);
@@ -52,7 +52,7 @@ public class PowerLimitManagerTests : IDisposable
     {
         _manager.SetSPL(45);
 
-        _mockAtkDevice.Verify(d => d.CallControl(It.IsAny<byte[]>(), 256), Times.AtLeastOnce);
+        _mockAtkDevice.Verify(d => d.CallControlBuffer(It.IsAny<byte[]>(), 256), Times.AtLeastOnce);
     }
 
     [Fact]
@@ -82,8 +82,8 @@ public class PowerLimitManagerTests : IDisposable
     [Fact]
     public void SetSPL_WhenAcpiFails_ReturnsFalse()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()))
-            .Returns(false);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(Array.Empty<byte>());
 
         var result = _manager.SetSPL(45);
 
@@ -120,7 +120,7 @@ public class PowerLimitManagerTests : IDisposable
     {
         _manager.SetSPPT(35);
 
-        _mockAtkDevice.Verify(d => d.CallControl(It.IsAny<byte[]>(), 256), Times.AtLeastOnce);
+        _mockAtkDevice.Verify(d => d.CallControlBuffer(It.IsAny<byte[]>(), 256), Times.AtLeastOnce);
     }
 
     [Fact]
@@ -142,8 +142,8 @@ public class PowerLimitManagerTests : IDisposable
     [Fact]
     public void SetSPPT_WhenAcpiFails_ReturnsFalse()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()))
-            .Returns(false);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(Array.Empty<byte>());
 
         var result = _manager.SetSPPT(35);
 
@@ -180,7 +180,7 @@ public class PowerLimitManagerTests : IDisposable
     {
         _manager.SetFPPT(20);
 
-        _mockAtkDevice.Verify(d => d.CallControl(It.IsAny<byte[]>(), 256), Times.AtLeastOnce);
+        _mockAtkDevice.Verify(d => d.CallControlBuffer(It.IsAny<byte[]>(), 256), Times.AtLeastOnce);
     }
 
     [Fact]
@@ -202,8 +202,8 @@ public class PowerLimitManagerTests : IDisposable
     [Fact]
     public void SetFPPT_WhenAcpiFails_ReturnsFalse()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()))
-            .Returns(false);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(Array.Empty<byte>());
 
         var result = _manager.SetFPPT(20);
 
@@ -238,8 +238,8 @@ public class PowerLimitManagerTests : IDisposable
     [Fact]
     public void SetAllPowerLimits_AllFail_ReturnsFalse()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()))
-            .Returns(false);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(Array.Empty<byte>());
 
         var result = _manager.SetAllPowerLimits(45, 35, 20);
 
@@ -250,8 +250,8 @@ public class PowerLimitManagerTests : IDisposable
     public void SetAllPowerLimits_OneFails_ReturnsFalse()
     {
         int callCount = 0;
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()))
-            .Returns(() => ++callCount == 1);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(Array.Empty<byte>());
 
         var result = _manager.SetAllPowerLimits(45, 35, 20);
 
@@ -334,8 +334,8 @@ public class PowerLimitManagerTests : IDisposable
     [Fact]
     public void SetDynamicBoost_WhenAcpiFails_ReturnsFalse()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()))
-            .Returns(false);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(Array.Empty<byte>());
 
         var result = _manager.SetDynamicBoost(15);
 
@@ -462,8 +462,8 @@ public class PowerLimitManagerTests : IDisposable
     [Fact]
     public void ResetToDefaults_NoModeApplied_ReturnsFalse()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()))
-            .Returns(false);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(Array.Empty<byte>());
 
         var result = _manager.ResetToDefaults();
 

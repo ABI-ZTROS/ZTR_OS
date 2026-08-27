@@ -207,7 +207,7 @@ public class AllyControlTests : IDisposable
     [Fact]
     public void SetFpsLimit_30Fps_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetFpsLimit(30);
 
@@ -217,7 +217,7 @@ public class AllyControlTests : IDisposable
     [Fact]
     public void SetFpsLimit_60Fps_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetFpsLimit(60);
 
@@ -227,7 +227,7 @@ public class AllyControlTests : IDisposable
     [Fact]
     public void SetFpsLimit_120Fps_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetFpsLimit(120);
 
@@ -237,7 +237,7 @@ public class AllyControlTests : IDisposable
     [Fact]
     public void SetFpsLimit_240Fps_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetFpsLimit(240);
 
@@ -283,7 +283,7 @@ public class AllyControlTests : IDisposable
     [Fact]
     public void SetFpsLimit_LogsInformation()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         _control.SetFpsLimit(60);
 
@@ -336,7 +336,7 @@ public class AllyControlTests : IDisposable
     [Fact]
     public void SetAutoTDP_6W_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetAutoTDP(6);
 
@@ -346,7 +346,7 @@ public class AllyControlTests : IDisposable
     [Fact]
     public void SetAutoTDP_15W_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetAutoTDP(15);
 
@@ -356,7 +356,7 @@ public class AllyControlTests : IDisposable
     [Fact]
     public void SetAutoTDP_25W_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetAutoTDP(25);
 
@@ -679,7 +679,7 @@ public class AllyControlTests : IDisposable
     [Fact]
     public void SetAndGetFpsLimit_RoundTrip()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
         _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
             .Returns(BitConverter.GetBytes(60));
 
@@ -693,7 +693,7 @@ public class AllyControlTests : IDisposable
     [Fact]
     public void SetAndGetAutoTDP_RoundTrip()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
         _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
             .Returns(BitConverter.GetBytes(15));
 
@@ -707,7 +707,7 @@ public class AllyControlTests : IDisposable
     [Fact]
     public void AllFpsLimits_AreValidated()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         Assert.True(_control.SetFpsLimit(30));
         Assert.True(_control.SetFpsLimit(40));

@@ -48,7 +48,7 @@ public class BatteryControlTests : IDisposable
     [Fact]
     public void SetChargeLimit_60Percent_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetChargeLimit(60);
 
@@ -58,7 +58,7 @@ public class BatteryControlTests : IDisposable
     [Fact]
     public void SetChargeLimit_80Percent_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetChargeLimit(80);
 
@@ -68,7 +68,7 @@ public class BatteryControlTests : IDisposable
     [Fact]
     public void SetChargeLimit_100Percent_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetChargeLimit(100);
 
@@ -128,7 +128,7 @@ public class BatteryControlTests : IDisposable
     [Fact]
     public void SetChargeLimit_WhenCallFails_ReturnsFalse()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(false);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(Array.Empty<byte>());
 
         bool result = _control.SetChargeLimit(80);
 
@@ -148,7 +148,7 @@ public class BatteryControlTests : IDisposable
     [Fact]
     public void SetChargeLimit_LogsInformation_WhenSuccessful()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         _control.SetChargeLimit(80);
 
@@ -161,7 +161,7 @@ public class BatteryControlTests : IDisposable
     public void SetChargeLimit_LogsWarning_WhenAcpiFailsAfterException()
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(true);
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()))
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
             .Throws(new InvalidOperationException("Hardware error"));
 
         bool result = _control.SetChargeLimit(80);
@@ -238,7 +238,7 @@ public class BatteryControlTests : IDisposable
     [Fact]
     public void SetChargerMode_ACOnly_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetChargerMode(ChargerMode.ACOnly);
 
@@ -248,7 +248,7 @@ public class BatteryControlTests : IDisposable
     [Fact]
     public void SetChargerMode_BatteryOnly_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetChargerMode(ChargerMode.BatteryOnly);
 
@@ -258,7 +258,7 @@ public class BatteryControlTests : IDisposable
     [Fact]
     public void SetChargerMode_Both_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetChargerMode(ChargerMode.Both);
 
@@ -278,7 +278,7 @@ public class BatteryControlTests : IDisposable
     [Fact]
     public void SetChargerMode_WhenCallFails_ReturnsFalse()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(false);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(Array.Empty<byte>());
 
         bool result = _control.SetChargerMode(ChargerMode.ACOnly);
 
@@ -288,7 +288,7 @@ public class BatteryControlTests : IDisposable
     [Fact]
     public void SetChargerMode_LogsInformation()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         _control.SetChargerMode(ChargerMode.Both);
 
@@ -492,7 +492,7 @@ public class BatteryControlTests : IDisposable
     [Fact]
     public void SetDischargeLevel_ValidLevel_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetDischargeLevel(50);
 
@@ -502,7 +502,7 @@ public class BatteryControlTests : IDisposable
     [Fact]
     public void SetDischargeLevel_Zero_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetDischargeLevel(0);
 
@@ -512,7 +512,7 @@ public class BatteryControlTests : IDisposable
     [Fact]
     public void SetDischargeLevel_100_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetDischargeLevel(100);
 
@@ -558,7 +558,7 @@ public class BatteryControlTests : IDisposable
     [Fact]
     public void SetDischargeLevel_LogsInformation_WhenSuccessful()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         _control.SetDischargeLevel(30);
 
@@ -651,7 +651,7 @@ public class BatteryControlTests : IDisposable
     [Fact]
     public void SetAndGetChargeLimit_RoundTrip()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
         _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
             .Returns(BitConverter.GetBytes(80));
 
@@ -665,7 +665,7 @@ public class BatteryControlTests : IDisposable
     [Fact]
     public void SetAndGetChargerMode_RoundTrip()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
         _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
             .Returns(BitConverter.GetBytes((int)ChargerMode.BatteryOnly));
 
@@ -679,7 +679,7 @@ public class BatteryControlTests : IDisposable
     [Fact]
     public void AllChargeLimits_AreValidated()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         Assert.True(_control.SetChargeLimit(60));
         Assert.True(_control.SetChargeLimit(80));

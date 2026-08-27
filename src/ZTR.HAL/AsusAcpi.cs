@@ -20,6 +20,7 @@ public class AsusAcpi : IDisposable
     /// Gets a value indicating whether the ATKACPI device handle is available.
     /// </summary>
     public bool IsAvailable => _device.IsAvailable;
+    public string OpenedPath => _device.OpenedPath;
 
     /// <summary>
     /// Creates a new instance of the <see cref="AsusAcpi"/> class using the default ATK device.

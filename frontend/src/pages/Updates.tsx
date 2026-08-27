@@ -54,7 +54,7 @@ export function Updates() {
         setUpdates(data.updates ?? [])
         setLastChecked(data.lastChecked ?? new Date().toISOString())
       } else {
-        setError(res.message ?? 'Failed to check for updates')
+        setError(res.error ?? 'Failed to check for updates')
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to check for updates')

@@ -48,7 +48,7 @@ public class KeyboardControlTests : IDisposable
     [Fact]
     public void SetBrightness_Level0_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetBrightness(0);
 
@@ -58,7 +58,7 @@ public class KeyboardControlTests : IDisposable
     [Fact]
     public void SetBrightness_Level1_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetBrightness(1);
 
@@ -68,7 +68,7 @@ public class KeyboardControlTests : IDisposable
     [Fact]
     public void SetBrightness_Level2_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetBrightness(2);
 
@@ -78,7 +78,7 @@ public class KeyboardControlTests : IDisposable
     [Fact]
     public void SetBrightness_Level3_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetBrightness(3);
 
@@ -122,7 +122,7 @@ public class KeyboardControlTests : IDisposable
     [Fact]
     public void SetBrightness_WhenCallFails_ReturnsFalse()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(false);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(Array.Empty<byte>());
 
         bool result = _control.SetBrightness(2);
 
@@ -142,7 +142,7 @@ public class KeyboardControlTests : IDisposable
     [Fact]
     public void SetBrightness_LogsInformation_WhenSuccessful()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         _control.SetBrightness(2);
 
@@ -155,7 +155,7 @@ public class KeyboardControlTests : IDisposable
     public void SetBrightness_LogsWarning_WhenAcpiFailsAfterException()
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(true);
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()))
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
             .Throws(new InvalidOperationException("Keyboard error"));
 
         bool result = _control.SetBrightness(2);
@@ -232,7 +232,7 @@ public class KeyboardControlTests : IDisposable
     [Fact]
     public void SetBacklightZone_Zone1_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetBacklightZone(KeyboardZone.Zone1);
 
@@ -242,7 +242,7 @@ public class KeyboardControlTests : IDisposable
     [Fact]
     public void SetBacklightZone_Zone2_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetBacklightZone(KeyboardZone.Zone2);
 
@@ -252,7 +252,7 @@ public class KeyboardControlTests : IDisposable
     [Fact]
     public void SetBacklightZone_Zone3_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetBacklightZone(KeyboardZone.Zone3);
 
@@ -262,7 +262,7 @@ public class KeyboardControlTests : IDisposable
     [Fact]
     public void SetBacklightZone_Zone4_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetBacklightZone(KeyboardZone.Zone4);
 
@@ -282,7 +282,7 @@ public class KeyboardControlTests : IDisposable
     [Fact]
     public void SetBacklightZone_LogsInformation()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         _control.SetBacklightZone(KeyboardZone.Zone2);
 
@@ -337,7 +337,7 @@ public class KeyboardControlTests : IDisposable
     [Fact]
     public void TurnOffBacklight_CallsSetBrightnessWith0()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.TurnOffBacklight();
 
@@ -361,7 +361,7 @@ public class KeyboardControlTests : IDisposable
     [Fact]
     public void SetMaxBrightness_CallsSetBrightnessWith3()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetMaxBrightness();
 
@@ -427,7 +427,7 @@ public class KeyboardControlTests : IDisposable
     [Fact]
     public void SetAndGetBrightness_RoundTrip()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
         _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
             .Returns(BitConverter.GetBytes(2));
 
@@ -441,7 +441,7 @@ public class KeyboardControlTests : IDisposable
     [Fact]
     public void SetAndGetBacklightZone_RoundTrip()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
         _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
             .Returns(BitConverter.GetBytes((int)KeyboardZone.Zone3));
 
@@ -455,7 +455,7 @@ public class KeyboardControlTests : IDisposable
     [Fact]
     public void AllBrightnessLevels_AreValidated()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         Assert.True(_control.SetBrightness(0));
         Assert.True(_control.SetBrightness(1));
@@ -466,7 +466,7 @@ public class KeyboardControlTests : IDisposable
     [Fact]
     public void AllKeyboardZones_AreValidated()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         Assert.True(_control.SetBacklightZone(KeyboardZone.Zone1));
         Assert.True(_control.SetBacklightZone(KeyboardZone.Zone2));

@@ -20,9 +20,9 @@ public class ModeControlTests : IDisposable
         _mockLogger = new Mock<ILogger<ModeControl>>();
 
         _mockAtkDevice.Setup(d => d.IsAvailable).Returns(true);
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
         _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
-            .Returns(Array.Empty<byte>());
+            .Returns(BitConverter.GetBytes(1));
 
         _acpi = new AsusAcpi(_mockAtkDevice.Object);
         _powerManager = new PowerLimitManager(_acpi);
@@ -93,8 +93,8 @@ public class ModeControlTests : IDisposable
     [Fact]
     public void SetMode_WhenAcpiFails_ReturnsFalse()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()))
-            .Returns(false);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(Array.Empty<byte>());
 
         var result = _modeControl.SetMode(AsusMode.PerformanceTurbo);
 
@@ -120,7 +120,7 @@ public class ModeControlTests : IDisposable
     {
         _modeControl.SetMode(AsusMode.PerformanceTurbo);
 
-        _mockAtkDevice.Verify(d => d.CallControl(It.IsAny<byte[]>(), 256), Times.AtLeastOnce);
+        _mockAtkDevice.Verify(d => d.CallControlBuffer(It.IsAny<byte[]>(), 256), Times.AtLeastOnce);
     }
 
     [Fact]
@@ -195,7 +195,7 @@ public class ModeControlTests : IDisposable
 
         _modeControl.SetCpuFanCurve(curve);
 
-        _mockAtkDevice.Verify(d => d.CallControl(It.IsAny<byte[]>(), 256), Times.AtLeastOnce);
+        _mockAtkDevice.Verify(d => d.CallControlBuffer(It.IsAny<byte[]>(), 256), Times.AtLeastOnce);
     }
 
     [Fact]
@@ -207,8 +207,8 @@ public class ModeControlTests : IDisposable
     [Fact]
     public void SetCpuFanCurve_WhenAcpiFails_ReturnsFalse()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()))
-            .Returns(false);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(Array.Empty<byte>());
         var curve = CreateTestCurve();
 
         var result = _modeControl.SetCpuFanCurve(curve);
@@ -239,8 +239,8 @@ public class ModeControlTests : IDisposable
     [Fact]
     public void SetGpuFanCurve_WhenAcpiFails_ReturnsFalse()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()))
-            .Returns(false);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(Array.Empty<byte>());
         var curve = CreateTestCurve();
 
         var result = _modeControl.SetGpuFanCurve(curve);
@@ -271,8 +271,8 @@ public class ModeControlTests : IDisposable
     [Fact]
     public void SetMidFanCurve_WhenAcpiFails_ReturnsFalse()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()))
-            .Returns(false);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(Array.Empty<byte>());
         var curve = CreateTestCurve();
 
         var result = _modeControl.SetMidFanCurve(curve);
@@ -368,8 +368,8 @@ public class ModeControlTests : IDisposable
     [Fact]
     public void SetPowerLimits_WhenAcpiFails_ReturnsFalse()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()))
-            .Returns(false);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(Array.Empty<byte>());
 
         var result = _modeControl.SetPowerLimits(45, 35, 20);
 
@@ -441,8 +441,8 @@ public class ModeControlTests : IDisposable
     [Fact]
     public void SetCpuTempLimit_WhenAcpiFails_ReturnsFalse()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()))
-            .Returns(false);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(Array.Empty<byte>());
 
         var result = _modeControl.SetCpuTempLimit(90);
 
@@ -488,8 +488,8 @@ public class ModeControlTests : IDisposable
     [Fact]
     public void AutoApplySettings_WhenAcpiFails_ReturnsFalse()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()))
-            .Returns(false);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
+            .Returns(Array.Empty<byte>());
 
         var result = _modeControl.AutoApplySettings();
 

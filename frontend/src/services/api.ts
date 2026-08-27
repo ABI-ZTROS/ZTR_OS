@@ -23,8 +23,8 @@ export async function apiRequest<T>(
     const parsed = text ? JSON.parse(text) : null
 
     if (!response.ok) {
-      const message = parsed?.message || `HTTP ${response.status}`
-      return { success: false, data: defaultData<T>(), message }
+      const message = parsed?.error || `HTTP ${response.status}`
+      return { success: false, data: defaultData<T>(), error: message }
     }
 
     if (parsed && typeof parsed === 'object' && 'success' in parsed) {
@@ -34,7 +34,7 @@ export async function apiRequest<T>(
     return { success: true, data: parsed as T }
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
-    return { success: false, data: defaultData<T>(), message }
+    return { success: false, data: defaultData<T>(), error: message }
   }
 }
 

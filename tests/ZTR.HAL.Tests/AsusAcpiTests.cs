@@ -242,7 +242,7 @@ public class AsusAcpiTests : IDisposable
     public void Initialize_CallsDevice()
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(true);
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _acpi.Initialize();
 
@@ -253,7 +253,7 @@ public class AsusAcpiTests : IDisposable
     public void SetWatchdog_CallsDevice()
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(true);
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _acpi.SetWatchdog(30);
 

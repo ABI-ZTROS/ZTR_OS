@@ -48,7 +48,7 @@ public class AudioControlTests : IDisposable
     [Fact]
     public void SetMasterMute_Mute_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetMasterMute(true);
 
@@ -58,7 +58,7 @@ public class AudioControlTests : IDisposable
     [Fact]
     public void SetMasterMute_Unmute_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetMasterMute(false);
 
@@ -78,7 +78,7 @@ public class AudioControlTests : IDisposable
     [Fact]
     public void SetMasterMute_WhenCallFails_ReturnsFalse()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(false);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(Array.Empty<byte>());
 
         bool result = _control.SetMasterMute(true);
 
@@ -88,7 +88,7 @@ public class AudioControlTests : IDisposable
     [Fact]
     public void SetMasterMute_LogsInformation_WhenMuted()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         _control.SetMasterMute(true);
 
@@ -100,7 +100,7 @@ public class AudioControlTests : IDisposable
     [Fact]
     public void SetMasterMute_LogsInformation_WhenUnmuted()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         _control.SetMasterMute(false);
 
@@ -112,7 +112,7 @@ public class AudioControlTests : IDisposable
     [Fact]
     public void SetMasterMute_LogsWarning_WhenCallFails()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(false);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(Array.Empty<byte>());
 
         _control.SetMasterMute(true);
 
@@ -125,7 +125,7 @@ public class AudioControlTests : IDisposable
     public void SetMasterMute_LogsWarning_WhenAcpiFailsAfterException()
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(true);
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()))
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
             .Throws(new InvalidOperationException("Audio error"));
 
         bool result = _control.SetMasterMute(true);
@@ -139,11 +139,11 @@ public class AudioControlTests : IDisposable
     [Fact]
     public void SetMasterMute_CorrectDeviceId()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         _control.SetMasterMute(true);
 
-        _mockDevice.Verify(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()), Times.Once);
+        _mockDevice.Verify(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()), Times.Once);
     }
 
     #endregion
@@ -193,7 +193,7 @@ public class AudioControlTests : IDisposable
     [Fact]
     public void SetMicMute_Mute_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetMicMute(true);
 
@@ -203,7 +203,7 @@ public class AudioControlTests : IDisposable
     [Fact]
     public void SetMicMute_Unmute_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetMicMute(false);
 
@@ -223,7 +223,7 @@ public class AudioControlTests : IDisposable
     [Fact]
     public void SetMicMute_WhenCallFails_ReturnsFalse()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(false);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(Array.Empty<byte>());
 
         bool result = _control.SetMicMute(true);
 
@@ -233,7 +233,7 @@ public class AudioControlTests : IDisposable
     [Fact]
     public void SetMicMute_LogsInformation()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         _control.SetMicMute(true);
 
@@ -246,7 +246,7 @@ public class AudioControlTests : IDisposable
     public void SetMicMute_LogsWarning_WhenAcpiFailsAfterException()
     {
         _mockDevice.Setup(d => d.IsAvailable).Returns(true);
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>()))
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
             .Throws(new InvalidOperationException("Mic error"));
 
         bool result = _control.SetMicMute(true);
@@ -331,7 +331,7 @@ public class AudioControlTests : IDisposable
     [Fact]
     public void SetMasterVolume_ValidLevel_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetMasterVolume(50);
 
@@ -341,7 +341,7 @@ public class AudioControlTests : IDisposable
     [Fact]
     public void SetMasterVolume_Zero_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetMasterVolume(0);
 
@@ -351,7 +351,7 @@ public class AudioControlTests : IDisposable
     [Fact]
     public void SetMasterVolume_100_Succeeds()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         bool result = _control.SetMasterVolume(100);
 
@@ -397,7 +397,7 @@ public class AudioControlTests : IDisposable
     [Fact]
     public void SetMasterVolume_LogsInformation()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         _control.SetMasterVolume(50);
 
@@ -455,7 +455,7 @@ public class AudioControlTests : IDisposable
     [Fact]
     public void SetAndGetMasterMute_RoundTrip()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
         _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
             .Returns(BitConverter.GetBytes(1));
 
@@ -469,7 +469,7 @@ public class AudioControlTests : IDisposable
     [Fact]
     public void SetAndGetMicMute_RoundTrip()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
         _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
             .Returns(BitConverter.GetBytes(1));
 
@@ -483,7 +483,7 @@ public class AudioControlTests : IDisposable
     [Fact]
     public void SetAndGetMasterVolume_RoundTrip()
     {
-        _mockDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
         _mockDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>()))
             .Returns(BitConverter.GetBytes(75));
 

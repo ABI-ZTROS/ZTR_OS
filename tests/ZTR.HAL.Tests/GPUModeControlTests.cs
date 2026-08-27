@@ -1,3 +1,4 @@
+using System.Linq;
 using Microsoft.Extensions.Logging;
 using Moq;
 using ZTR.HAL;
@@ -38,18 +39,18 @@ public class GPUModeControlTests : IDisposable
     [Fact]
     public void SetGpuMode_Eco_CallsAcpiCorrectly()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         var result = _modeControl.SetGpuMode(AsusGPU.Eco);
 
         Assert.True(result);
-        _mockAtkDevice.Verify(d => d.CallControl(It.IsAny<byte[]>(), 256), Times.AtLeastOnce);
+        _mockAtkDevice.Verify(d => d.CallControlBuffer(It.IsAny<byte[]>(), 256), Times.AtLeastOnce);
     }
 
     [Fact]
     public void SetGpuMode_Standard_CallsAcpiCorrectly()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         var result = _modeControl.SetGpuMode(AsusGPU.Standard);
 
@@ -59,7 +60,7 @@ public class GPUModeControlTests : IDisposable
     [Fact]
     public void SetGpuMode_Ultimate_CallsAcpiCorrectly()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         var result = _modeControl.SetGpuMode(AsusGPU.Ultimate);
 
@@ -69,7 +70,7 @@ public class GPUModeControlTests : IDisposable
     [Fact]
     public void SetGpuMode_WhenAcpiFails_ReturnsFalse()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(false);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(Array.Empty<byte>());
 
         var result = _modeControl.SetGpuMode(AsusGPU.Standard);
 
@@ -116,7 +117,7 @@ public class GPUModeControlTests : IDisposable
     [Fact]
     public void SetMux_Enable_CallsAcpi()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         var result = _modeControl.SetMux(true);
 
@@ -126,7 +127,7 @@ public class GPUModeControlTests : IDisposable
     [Fact]
     public void SetMux_Disable_CallsAcpi()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
 
         var result = _modeControl.SetMux(false);
 
@@ -136,7 +137,7 @@ public class GPUModeControlTests : IDisposable
     [Fact]
     public void SetMux_WhenAcpiFails_ReturnsFalse()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(false);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(Array.Empty<byte>());
 
         var result = _modeControl.SetMux(true);
 
@@ -189,7 +190,7 @@ public class GPUModeControlTests : IDisposable
     [Fact]
     public void SetGpuMode_AppliesFanSpeedForUltimate()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
         _mockGpuControl.Setup(g => g.SetFanSpeed(100)).Returns(true);
 
         _modeControl.SetGpuMode(AsusGPU.Ultimate);
@@ -200,7 +201,7 @@ public class GPUModeControlTests : IDisposable
     [Fact]
     public void SetGpuMode_AppliesFanSpeedForStandard()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
         _mockGpuControl.Setup(g => g.SetFanSpeed(50)).Returns(true);
 
         _modeControl.SetGpuMode(AsusGPU.Standard);
@@ -211,7 +212,7 @@ public class GPUModeControlTests : IDisposable
     [Fact]
     public void SetGpuMode_AppliesFanSpeedForEco()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
         _mockGpuControl.Setup(g => g.SetFanSpeed(0)).Returns(true);
 
         _modeControl.SetGpuMode(AsusGPU.Eco);
@@ -222,7 +223,7 @@ public class GPUModeControlTests : IDisposable
     [Fact]
     public void SetGpuMode_WhenGpuControlThrows_StillReturnsTrue()
     {
-        _mockAtkDevice.Setup(d => d.CallControl(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(true);
+        _mockAtkDevice.Setup(d => d.CallControlBuffer(It.IsAny<byte[]>(), It.IsAny<int>())).Returns(BitConverter.GetBytes(1));
         _mockGpuControl.Setup(g => g.SetFanSpeed(It.IsAny<int>())).Throws<InvalidOperationException>();
 
         var result = _modeControl.SetGpuMode(AsusGPU.Standard);

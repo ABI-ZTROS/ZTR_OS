@@ -57,10 +57,15 @@
 
     <RemoveDir Directories="$(_ApiWwwrootDir)" Condition="Exists('$(_ApiWwwrootDir)')" />
     <MakeDir Directories="$(_ApiWwwrootDir)" Condition="Exists('$(_FrontendDistDir)')" />
+
+    <!-- Collect files into item group (wildcard expanded at runtime), then copy -->
+    <ItemGroup Condition="Exists('$(_FrontendDistDir)')">
+      <_WwwrootFiles Include="$(_FrontendDistDir)\**\*.*" />
+    </ItemGroup>
     <Copy
-      SourceFiles="$(_FrontendDistDir)\**\*.*"
+      SourceFiles="@(_WwwrootFiles)"
       DestinationFolder="$(_ApiWwwrootDir)"
-      Condition="Exists('$(_FrontendDistDir)')"
+      Condition="@(_WwwrootFiles.Count) > 0"
       SkipUnchangedFiles="false" />
   </Target>
 

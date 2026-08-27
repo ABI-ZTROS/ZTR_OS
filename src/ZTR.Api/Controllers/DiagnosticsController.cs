@@ -126,12 +126,7 @@ public class DiagnosticsController : ControllerBase
     {
         try
         {
-            var field = typeof(AsusAcpi).GetField("_device", 
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            if (field?.GetValue(_acpi) is IAtkDevice device)
-            {
-                return device.OpenedPath;
-            }
+            return _acpi.OpenedPath;
         }
         catch { }
         return "unknown";
