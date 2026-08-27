@@ -143,23 +143,7 @@ jobs:
         run: |
           mkdir -p ./artifacts/linux-x64/frontend
           cp -r frontend/dist/* ./artifacts/linux-x64/frontend/
-
-          cat > ./artifacts/linux-x64/README.txt << 'READMEEOF'
-ZTR_OS ${TAG} Linux Frontend Release
-
-This package contains the ZTR_OS frontend (React SPA) which can be served by any static web server.
-
-The ZTR_OS API backend requires Windows (ASUS hardware ACPI access) and is not included in this Linux package.
-
-To serve the frontend:
-  cd frontend
-  python3 -m http.server 5000
-  # or: npx serve .
-
-For the full Windows Desktop experience (WPF + WebView2 + embedded API),
-please use the Windows release build instead.
-READMEEOF
-
+          printf 'ZTR_OS %s Linux Frontend Release\n\nThis package contains the ZTR_OS frontend (React SPA) which can be served by any static web server.\n\nThe ZTR_OS API backend requires Windows (ASUS hardware ACPI access) and is not included in this Linux package.\n\nTo serve the frontend:\n  cd frontend\n  python3 -m http.server 5000\n\nFor the full Windows Desktop experience (WPF + WebView2 + embedded API),\nplease use the Windows release build instead.\n' "${TAG}" > ./artifacts/linux-x64/README.txt
           cd artifacts/linux-x64
           tar -czf "../../ZTR_OS-${TAG}-linux-x64.tar.gz" .
           cd ../../
