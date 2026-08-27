@@ -55,7 +55,7 @@
       Condition="Exists('$(_FrontendDir)\package.json')"
       ContinueOnError="WarnAndContinue" />
 
-    <RemoveDir Directory="$(_ApiWwwrootDir)" Condition="Exists('$(_ApiWwwrootDir)')" />
+    <RemoveDir Directories="$(_ApiWwwrootDir)" Condition="Exists('$(_ApiWwwrootDir)')" />
     <MakeDir Directories="$(_ApiWwwrootDir)" Condition="Exists('$(_FrontendDistDir)')" />
     <Copy
       SourceFiles="$(_FrontendDistDir)\**\*.*"
