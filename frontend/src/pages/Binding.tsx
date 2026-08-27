@@ -8,6 +8,63 @@ import { bindingApi } from '@/services/otherApi'
 import type { ProcessInfo, CpuTopologyNode } from '@/types'
 import './Binding.css'
 
+/** Raw shape returned by the backend BindingController (ProcessBinding model).
+ * ASP.NET Core 默认使用 PascalCase JSON，但配置可能变化，所以我们接受两种情况。 */
+interface RawProcessBinding {
+  // camelCase (System.Text.Json 默认行为)
+  processId?: number
+  processName?: string
+  mainWindowTitle?: string
+  cpuAffinity?: {
+    enabled?: boolean
+    affinityMask?: number
+    coreIndices?: number[]
+  }
+  gpuAffinity?: {
+    enabled?: boolean
+    gpuIndex?: number
+  }
+  strategy?: string
+  // PascalCase (fallback)
+  ProcessId?: number
+  ProcessName?: string
+  MainWindowTitle?: string
+  CpuAffinity?: { CoreIndices?: number[] }
+  GpuAffinity?: { GpuIndex?: number }
+}
+
+function normalizeProcess(raw: unknown): ProcessInfo {
+  const r = raw as RawProcessBinding
+  const id = r.processId ?? r.ProcessId ?? 0
+  const name = r.processName ?? r.ProcessName ?? `PID ${id}`
+  const coreIndices =
+    r.cpuAffinity?.coreIndices ??
+    r.CpuAffinity?.CoreIndices ??
+    []
+  const windowTitle = r.mainWindowTitle ?? r.MainWindowTitle ?? ''
+  return {
+    id: toNumber(id),
+    name: name || `PID ${id}`,
+    cpuUsage: 0,
+    memoryUsage: 0,
+    affinity: Array.isArray(coreIndices) ? coreIndices : [],
+    gpuAffinity:
+      r.gpuAffinity?.gpuIndex != null
+        ? [toNumber(r.gpuAffinity.gpuIndex)]
+        : r.GpuAffinity?.GpuIndex != null
+          ? [toNumber(r.GpuAffinity.GpuIndex)]
+          : [],
+    isGame:
+      typeof windowTitle === 'string' &&
+      /game|steam|unity|unreal/i.test(windowTitle),
+  }
+}
+
+function toNumber(v: unknown): number {
+  const n = typeof v === 'number' ? v : Number(v)
+  return Number.isFinite(n) ? n : 0
+}
+
 export function Binding() {
   const hardware = useHardwareStore((s) => s.hardware)
   const isConnected = useHardwareStore((s) => s.isConnected)
@@ -29,11 +86,16 @@ export function Binding() {
       ])
 
       if (procRes.status === 'fulfilled' && procRes.value.success) {
-        const procs = procRes.value.data as unknown as ProcessInfo[]
-        setProcesses(Array.isArray(procs) ? procs : [])
+        const raw = procRes.value.data
+        const arr = Array.isArray(raw) ? raw : raw ? [raw] : []
+        const mapped: ProcessInfo[] = arr.map(normalizeProcess)
+        setProcesses(mapped)
+      } else if (procRes.status === 'fulfilled' && !procRes.value.success) {
+        setError(procRes.value.error || '加载进程列表失败')
       }
 
-      const cpuCount = hardware?.cpu.coreCount ?? 0
+      const cpuCount = toNumber(hardware?.cpu.coreCount)
+      const cores = hardware?.cpu.cores ?? []
       if (cpuCount > 0) {
         const nodes: CpuTopologyNode[] = [{
           id: 0,
@@ -43,8 +105,8 @@ export function Binding() {
             id: i + 1,
             type: 'core',
             name: `Core ${i}`,
-            usage: hardware?.cpu.cores[i]?.usage ?? 0,
-            temperature: hardware?.cpu.cores[i]?.temperature ?? 0,
+            usage: toNumber(cores[i]?.usage),
+            temperature: toNumber(cores[i]?.temperature),
           })),
         }]
         setTopology(nodes)
@@ -180,7 +242,7 @@ export function Binding() {
               <div className="metric-row">
                 <span className="metric-label">已绑定进程</span>
                 <span className="metric-value">
-                  {processes.filter((p) => p.affinity.length > 0).length}
+                  {processes.filter((p) => (p.affinity ?? []).length > 0).length}
                 </span>
               </div>
               <div className="metric-row">
@@ -196,13 +258,13 @@ export function Binding() {
         <GlowCard title="绑定操作" glowColor="secondary">
           <div className="binding-action-panel">
             <div className="binding-action-info">
-              <span className="binding-action-name">{selectedProcess.name}</span>
+              <span className="binding-action-name">{selectedProcess.name ?? '未知进程'}</span>
               <span className="binding-action-stats">
-                CPU: {selectedProcess.cpuUsage.toFixed(1)}% | MEM: {selectedProcess.memoryUsage.toFixed(1)}%
+                CPU: {toNumber(selectedProcess.cpuUsage).toFixed(1)}% | MEM: {toNumber(selectedProcess.memoryUsage).toFixed(1)}%
               </span>
-              {selectedProcess.affinity.length > 0 ? (
+              {(selectedProcess.affinity ?? []).length > 0 ? (
                 <span className="chip chip--active">
-                  已绑定核心：{selectedProcess.affinity.join(', ')}
+                  已绑定核心：{(selectedProcess.affinity ?? []).join(', ')}
                 </span>
               ) : (
                 <span className="chip">未绑定</span>
@@ -223,7 +285,7 @@ export function Binding() {
               <button
                 className="btn-ghost"
                 onClick={() => handleUnbindProcess(selectedProcess.id)}
-                disabled={selectedProcess.affinity.length === 0}
+                disabled={(selectedProcess.affinity ?? []).length === 0}
               >
                 解绑
               </button>
@@ -245,7 +307,11 @@ export function Binding() {
       <GlowCard title="游戏进程" glowColor="primary">
         {gameProcesses.length > 0 ? (
           <div className="process-list">
-            {gameProcesses.map((process) => (
+            {gameProcesses.map((process) => {
+              const cpu = toNumber(process.cpuUsage)
+              const mem = toNumber(process.memoryUsage)
+              const aff = process.affinity ?? []
+              return (
               <div
                 key={process.id}
                 className={`process-item ${selectedProcess?.id === process.id ? 'process-item--selected' : ''}`}
@@ -260,32 +326,33 @@ export function Binding() {
                     <span className="process-stat-label">CPU</span>
                     <div className="progress-bar">
                       <div
-                        className={`progress-bar-fill ${process.cpuUsage > 80 ? 'progress-bar-fill--danger' : 'progress-bar-fill--primary'}`}
-                        style={{ width: `${process.cpuUsage}%` }}
+                        className={`progress-bar-fill ${cpu > 80 ? 'progress-bar-fill--danger' : 'progress-bar-fill--primary'}`}
+                        style={{ width: `${cpu}%` }}
                       />
                     </div>
-                    <span className="process-stat-value">{process.cpuUsage.toFixed(1)}%</span>
+                    <span className="process-stat-value">{cpu.toFixed(1)}%</span>
                   </div>
                   <div className="process-stat">
                     <span className="process-stat-label">MEM</span>
                     <div className="progress-bar">
                       <div
                         className="progress-bar-fill progress-bar-fill--accent"
-                        style={{ width: `${process.memoryUsage}%` }}
+                        style={{ width: `${mem}%` }}
                       />
                     </div>
-                    <span className="process-stat-value">{process.memoryUsage.toFixed(1)}%</span>
+                    <span className="process-stat-value">{mem.toFixed(1)}%</span>
                   </div>
                 </div>
                 <div className="process-affinity">
-                  {process.affinity.length > 0 ? (
-                    <span className="chip chip--active">核心：{process.affinity.join(', ')}</span>
+                  {aff.length > 0 ? (
+                    <span className="chip chip--active">核心：{aff.join(', ')}</span>
                   ) : (
                     <span className="chip">未绑定</span>
                   )}
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
         ) : (
           <p className="placeholder-text">
@@ -297,7 +364,11 @@ export function Binding() {
       <GlowCard title="其他进程" glowColor="accent">
         {nonGameProcesses.length > 0 ? (
           <div className="process-list">
-            {nonGameProcesses.slice(0, 20).map((process) => (
+            {nonGameProcesses.slice(0, 20).map((process) => {
+              const cpu = toNumber(process.cpuUsage)
+              const mem = toNumber(process.memoryUsage)
+              const aff = process.affinity ?? []
+              return (
               <div
                 key={process.id}
                 className={`process-item ${selectedProcess?.id === process.id ? 'process-item--selected' : ''}`}
@@ -313,31 +384,32 @@ export function Binding() {
                     <div className="progress-bar">
                       <div
                         className="progress-bar-fill progress-bar-fill--primary"
-                        style={{ width: `${process.cpuUsage}%` }}
+                        style={{ width: `${cpu}%` }}
                       />
                     </div>
-                    <span className="process-stat-value">{process.cpuUsage.toFixed(1)}%</span>
+                    <span className="process-stat-value">{cpu.toFixed(1)}%</span>
                   </div>
                   <div className="process-stat">
                     <span className="process-stat-label">MEM</span>
                     <div className="progress-bar">
                       <div
                         className="progress-bar-fill progress-bar-fill--accent"
-                        style={{ width: `${process.memoryUsage}%` }}
+                        style={{ width: `${mem}%` }}
                       />
                     </div>
-                    <span className="process-stat-value">{process.memoryUsage.toFixed(1)}%</span>
+                    <span className="process-stat-value">{mem.toFixed(1)}%</span>
                   </div>
                 </div>
                 <div className="process-affinity">
-                  {process.affinity.length > 0 ? (
-                    <span className="chip chip--active">核心：{process.affinity.join(', ')}</span>
+                  {aff.length > 0 ? (
+                    <span className="chip chip--active">核心：{aff.join(', ')}</span>
                   ) : (
                     <span className="chip">未绑定</span>
                   )}
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
         ) : (
           <p className="placeholder-text">
