@@ -105,10 +105,25 @@ public class Program
         app.MapZTREndpoints();
 
         // SPA fallback: only serve index.html for non-API routes.
-        // API routes that don't match should return 404, not the SPA shell.
-        app.MapWhen(context => !context.Request.Path.StartsWithSegments("/api"), builder =>
+        // API routes that don't match should return 404, not the SPA shell being served as 200.
+        app.Use(async (context, next) =>
         {
-            builder.MapFallbackToFile("index.html");
+            await next();
+            
+            // If the request didn't match any endpoint (404) and is not an API path,
+            // serve index.html for SPA routing.
+            if (context.Response.StatusCode == StatusCodes.Status404NotFound &&
+                !context.Request.Path.StartsWithSegments("/api") &&
+                !context.Response.HasStarted)
+            {
+                context.Response.StatusCode = StatusCodes.Status200OK;
+                context.Response.ContentType = "text/html; charset=utf-8";
+                var filePath = Path.Combine(AppContext.BaseDirectory, "wwwroot", "index.html");
+                if (File.Exists(filePath))
+                {
+                    await context.Response.SendFileAsync(filePath);
+                }
+            }
         });
 
         app.Run();

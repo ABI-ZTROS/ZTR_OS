@@ -210,6 +210,52 @@ public class PerformanceDecisionEngine
 
         return validated;
     }
+
+    /// <summary>
+    /// Computes the ideal target output vector for a given hardware state.
+    /// This is used during training to provide the MLP with supervised learning targets.
+    /// Maps the current hardware conditions to the normalized [0,1] output space.
+    /// </summary>
+    /// <param name="state">The current hardware state.</param>
+    /// <returns>An 8-dimensional target output vector in [0,1] range.</returns>
+    public double[] ComputeTarget(HardwareState state)
+    {
+        var target = new double[8];
+
+        // Dimension 0: SPL (power limit) - higher when GPU is under load
+        double splScore = (state.Gpu.Usage > 70 || state.Cpu.Usage > 70) ? 0.8 : 0.5;
+        if (state.Battery.IsCharging) splScore = Math.Min(1.0, splScore + 0.1);
+        target[0] = splScore;
+
+        // Dimension 1: Fan speed offset - higher when temperatures are high
+        double tempScore = Math.Max(state.Cpu.Temperature, state.Gpu.Temperature) / 100.0;
+        target[1] = Math.Clamp(tempScore, 0.0, 1.0);
+
+        // Dimension 2: GPU clock offset - negative when hot, positive when cool
+        target[2] = state.Gpu.Temperature > 80 ? 0.2 : 0.7;
+
+        // Dimension 3: CPU clock offset - similar logic
+        target[3] = state.Cpu.Temperature > 75 ? 0.3 : 0.7;
+
+        // Dimension 4: GPU mode - Eco on low battery, Turbo on AC + high load
+        if (!state.Battery.IsCharging && state.Battery.ChargePercent < 30)
+            target[4] = 0.15; // Eco
+        else if (state.Gpu.Usage > 80)
+            target[4] = 0.85; // Max
+        else
+            target[4] = 0.5; // Performance
+
+        // Dimension 5: CPU affinity - group 2 (value 0.5) as default
+        target[5] = 0.5;
+
+        // Dimension 6: GPU affinity - group 2 (value 0.5) as default
+        target[6] = 0.5;
+
+        // Dimension 7: Boost level - higher when AC and high load
+        target[7] = (state.Battery.IsCharging && (state.Cpu.Usage > 60 || state.Gpu.Usage > 60)) ? 0.75 : 0.5;
+
+        return target;
+    }
 }
 
 /// <summary>
