@@ -59,7 +59,7 @@
     <MakeDir Directories="$(_ApiWwwrootDir)" Condition="Exists('$(_FrontendDistDir)')" />
     <Copy
       SourceFiles="$(_FrontendDistDir)\**\*.*"
-      DestinationFiles="@(_FrontendDistDir\**\*.* -> '$(_ApiWwwrootDir)\%(RecursiveDir)%(Filename)%(Extension)')"
+      DestinationFiles="@(_FrontendDistDir\**\*.* -> '$(_ApiWwwrootDir)\%(SourceFiles.RecursiveDir)%(SourceFiles.Filename)%(SourceFiles.Extension)')"
       Condition="Exists('$(_FrontendDistDir)')"
       SkipUnchangedFiles="false" />
   </Target>
