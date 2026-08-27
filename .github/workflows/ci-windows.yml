@@ -51,33 +51,94 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore ZTR_OS.sln
 
-      - name: Build API (net9.0-windows)
-        run: dotnet build src/ZTR.Api/ZTR.Api.csproj --no-restore -c Release
-
-      - name: Build Desktop (WPF, net9.0-windows)
-        run: dotnet build src/ZTR.Desktop/ZTR.Desktop.csproj --no-restore -c Release -p:BuildFrontend=false
-
-      - name: Verify frontend in output
+      - name: Publish Desktop (self-contained, single-file)
         run: |
-          $desktopBin = Get-ChildItem -Path src/ZTR.Desktop/bin/Release/net9.0-windows -Directory | Select-Object -First 1
-          if ($desktopBin) {
-            $wwwroot = Join-Path $desktopBin.FullName "wwwroot"
-            if (Test-Path $wwwroot) {
-              Write-Output "wwwroot exists: $wwwroot"
-              Get-ChildItem $wwwroot -Recurse | Select-Object FullName, Length
-            } else {
-              Write-Output "wwwroot not in output, checking if embedded resource..."
-              # Check if wwwroot.zip is embedded
-              Get-ChildItem -Path $desktopBin.FullName -Filter "*.zip" -ErrorAction SilentlyContinue
-            }
+          dotnet publish src/ZTR.Desktop/ZTR.Desktop.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:EnableCompressionInSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:DebugType=none `
+            -p:DebugSymbols=false `
+            -p:BuildFrontend=false `
+            -o publish/desktop
+
+      - name: Publish API (self-contained, single-file)
+        run: |
+          dotnet publish src/ZTR.Api/ZTR.Api.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:EnableCompressionInSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:DebugType=none `
+            -p:DebugSymbols=false `
+            -p:BuildFrontend=false `
+            -o publish/api
+
+      - name: Ensure wwwroot in publish outputs
+        run: |
+          # Desktop publish: Desktop doesn't auto-include wwwroot, copy it manually
+          if (-not (Test-Path publish/desktop/wwwroot)) {
+            New-Item -ItemType Directory -Force -Path publish/desktop/wwwroot
+          }
+          Copy-Item -Recurse -Force frontend/dist/* publish/desktop/wwwroot/
+          Write-Output "Desktop wwwroot:"
+          Get-ChildItem publish/desktop/wwwroot -Recurse | Select-Object FullName
+
+          # API publish: SDK.Web projects auto-include wwwroot, but verify
+          if (-not (Test-Path publish/api/wwwroot)) {
+            Write-Output "WARNING: API publish missing wwwroot - copying manually"
+            New-Item -ItemType Directory -Force -Path publish/api/wwwroot
+            Copy-Item -Recurse -Force frontend/dist/* publish/api/wwwroot/
+          } else {
+            Write-Output "API wwwroot exists:"
+            Get-ChildItem publish/api/wwwroot -Recurse | Select-Object FullName
           }
 
-      - name: Upload build artifacts
+      - name: Verify publish output
+        run: |
+          Write-Output "=== Desktop publish ==="
+          Get-ChildItem publish/desktop -File | Select-Object Name, Length
+          Write-Output "=== API publish ==="
+          Get-ChildItem publish/api -File | Select-Object Name, Length
+          Write-Output "=== Checking for .exe entry points ==="
+          $desktopExe = Get-ChildItem publish/desktop -Filter "*.exe" -ErrorAction SilentlyContinue
+          $apiExe = Get-ChildItem publish/api -Filter "*.exe" -ErrorAction SilentlyContinue
+          if ($desktopExe) {
+            Write-Output "Desktop exe: $($desktopExe.Name) ($([math]::Round($desktopExe.Length/1MB, 2)) MB)"
+          } else {
+            Write-Output "WARNING: No Desktop .exe found!"
+          }
+          if ($apiExe) {
+            Write-Output "API exe: $($apiExe.Name) ($([math]::Round($apiExe.Length/1MB, 2)) MB)"
+          } else {
+            Write-Output "WARNING: No API .exe found!"
+          }
+
+      - name: Create Desktop distribution zip
+        run: |
+          Compress-Archive -Path publish/desktop/* -DestinationPath ZTR-Desktop-win-x64.zip -Force
+          Write-Output "ZTR-Desktop-win-x64.zip: $([math]::Round((Get-Item ZTR-Desktop-win-x64.zip).Length/1MB, 2)) MB"
+
+      - name: Create API distribution zip
+        run: |
+          Compress-Archive -Path publish/api/* -DestinationPath ZTR-API-win-x64.zip -Force
+          Write-Output "ZTR-API-win-x64.zip: $([math]::Round((Get-Item ZTR-API-win-x64.zip).Length/1MB, 2)) MB"
+
+      - name: Upload Desktop artifact
         uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: windows-build
-          path: |
-            src/ZTR.Desktop/bin/Release/net9.0-windows/**
-            src/ZTR.Api/bin/Release/net9.0-windows/**
+          name: ZTR-Desktop-win-x64
+          path: ZTR-Desktop-win-x64.zip
+          retention-days: 7
+
+      - name: Upload API artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ZTR-API-win-x64
+          path: ZTR-API-win-x64.zip
           retention-days: 7
